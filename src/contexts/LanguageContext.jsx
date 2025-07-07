@@ -320,6 +320,9 @@ const translations = {
     "purchased": "a acheté",
     "satisfied_customers": "clients satisfaits",
     "average_rating": "note moyenne",
+    "testimonial_2_text": "J'ai trouvé la paire parfaite pour mon fils, le service client a été très réactif et la livraison super rapide. Merci !",
+    "testimonial_3_text": "Des prix imbattables et une qualité au rendez-vous. Je recommande ce site à tous mes amis !",
+    "testimonial_4_text": "Un large choix de modèles et un site facile à utiliser. J'ai adoré mon expérience d'achat !",
     
     // Section vidéo
     "discover_our_videos": "Découvrez nos vidéos",
@@ -371,7 +374,9 @@ const translations = {
     "days": "jours",
     "hours": "heures",
     "minutes": "minutes",
-    "seconds": "secondes"
+    "seconds": "secondes",
+    "watch_featured": "Regarder la vidéo",
+    "share_video": "Partager la vidéo"
   },
   EN: {
     // Header
@@ -667,6 +672,9 @@ const translations = {
     "purchased": "purchased",
     "satisfied_customers": "satisfied customers",
     "average_rating": "average rating",
+    "testimonial_2_text": "I found the perfect pair for my son, customer service was very responsive and delivery super fast. Thank you!",
+    "testimonial_3_text": "Unbeatable prices and great quality. I recommend this site to all my friends!",
+    "testimonial_4_text": "A wide choice of models and an easy-to-use site. I loved my shopping experience!",
     
     // Video Section
     "discover_our_videos": "Discover Our Videos",
@@ -718,7 +726,9 @@ const translations = {
     "days": "days",
     "hours": "hours",
     "minutes": "minutes",
-    "seconds": "seconds"
+    "seconds": "seconds",
+    "watch_featured": "Watch video",
+    "share_video": "Share video"
   },
   ES: {
     // Header
@@ -997,6 +1007,9 @@ const translations = {
     "purchased": "compró",
     "satisfied_customers": "clientes satisfechos",
     "average_rating": "calificación promedio",
+    "testimonial_2_text": "¡Encontré el par perfecto para mi hijo, el servicio al cliente fue muy receptivo y la entrega súper rápida. ¡Gracias!",
+    "testimonial_3_text": "Precios inmejorables y calidad garantizada. ¡Recomiendo este sitio a todos mis amigos!",
+    "testimonial_4_text": "Gran variedad de modelos y un sitio fácil de usar. ¡Me encantó mi experiencia de compra!",
     
     // Videosektion
     "discover_our_videos": "Entdecken Sie unsere Videos",
@@ -1048,7 +1061,9 @@ const translations = {
     "days": "días",
     "hours": "horas",
     "minutes": "minutos",
-    "seconds": "segundos"
+    "seconds": "segundos",
+    "watch_featured": "Ver video",
+    "share_video": "Compartir video"
   },
   DE: {
     // Header
@@ -1344,6 +1359,9 @@ const translations = {
     "purchased": "gekauft",
     "satisfied_customers": "zufriedene Kunden",
     "average_rating": "durchschnittliche Bewertung",
+    "testimonial_2_text": "Ich habe das perfekte Paar für meinen Sohn gefunden, der Kundenservice war sehr reaktionsschnell und die Lieferung super schnell. Danke!",
+    "testimonial_3_text": "Unschlagbare Preise und tolle Qualität. Ich empfehle diese Seite all meinen Freunden!",
+    "testimonial_4_text": "Eine große Auswahl an Modellen und eine benutzerfreundliche Seite. Ich habe mein Einkaufserlebnis geliebt!",
     
     // Videosektion
     "discover_our_videos": "Entdecken Sie unsere Videos",
@@ -1395,7 +1413,9 @@ const translations = {
     "days": "Tage",
     "hours": "Stunden",
     "minutes": "Minuten",
-    "seconds": "Sekunden"
+    "seconds": "Sekunden",
+    "watch_featured": "Video ansehen",
+    "share_video": "Video teilen"
   }
 };
 

@@ -6,27 +6,27 @@ const videos = [
     id: 1,
     title: "video_collection_title",
     description: "video_collection_desc",
-    thumbnail: "/assets/videos/collection-thumbnail.jpg",
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    duration: "2:30",
+    thumbnail: "/assets/videopromo/Partie1DDLAvec Drop.mp4",
+    videoUrl: "/assets/videopromo/Partie1DDLAvec Drop.mp4",
+    duration: "",
     category: "collection"
   },
   {
     id: 2,
     title: "video_quality_title",
     description: "video_quality_desc",
-    thumbnail: "/assets/videos/quality-thumbnail.jpg",
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    duration: "1:45",
+    thumbnail: "/assets/videopromo/Partie1DDLAlter.mp4",
+    videoUrl: "/assets/videopromo/Partie1DDLAlter.mp4",
+    duration: "",
     category: "quality"
   },
   {
     id: 3,
     title: "video_trends_title",
     description: "video_trends_desc",
-    thumbnail: "/assets/videos/trends-thumbnail.jpg",
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    duration: "3:15",
+    thumbnail: "/assets/videopromo/Partie1DDL.mp4",
+    videoUrl: "/assets/videopromo/Partie1DDL.mp4",
+    duration: "",
     category: "trends"
   }
 ];

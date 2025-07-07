@@ -142,7 +142,7 @@ export default function Testimonials() {
                     </div>
                     
                     <blockquote className="mb-3" style={{ fontSize: "18px", fontStyle: "italic", color: "#495057" }}>
-                      "{t(testimonials[activeIndex].text)}"
+                      "{testimonials[activeIndex].text.startsWith('testimonial_') ? t(testimonials[activeIndex].text) : testimonials[activeIndex].text}"
                     </blockquote>
                     
                     <div className="d-flex align-items-center justify-content-between">
