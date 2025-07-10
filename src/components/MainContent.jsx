@@ -495,7 +495,7 @@ export default function MainContent() {
                             transition: 'all 0.25s cubic-bezier(.4,2,.6,1)',
                             cursor: 'pointer',
                             zIndex: hoveredBrand === idx ? 2 : 1,
-                          }}
+                      }}
                           onMouseEnter={() => setHoveredBrand(idx)}
                           onMouseLeave={() => setHoveredBrand(null)}
                         >
@@ -747,7 +747,7 @@ export default function MainContent() {
                       transition: 'box-shadow 0.2s, transform 0.2s, filter 0.2s',
                       cursor: 'pointer',
                       border: '1.5px solid #f2f2f2',
-                    }}
+                }}
                     onMouseEnter={e => {
                       e.currentTarget.style.boxShadow = '0 8px 32px rgba(251,191,36,0.10)';
                       e.currentTarget.style.transform = 'translateY(-4px) scale(1.04)';

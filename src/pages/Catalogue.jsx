@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProductPageAmazonLike from '../components/ProductPageAmazonLike';
 import '../amazon-like.css';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const mockCategories = [
   'Cuir', 'Affaire', 'Sac', 'Extensible', 'Sport', 'Voyage', 'Randonnée', 'Business', 'École', 'Week-end'
@@ -438,10 +440,13 @@ if (typeof document !== 'undefined' && !document.getElementById('catalogue-anima
 
 const Catalogue = () => {
   const [selectedSizes, setSelectedSizes] = useState([]);
-  const [cart, setCart] = useState([
-    { id: 1, name: 'Nike Air Max 270', price: 129.99, image: '/assets/categorie/arriver (1).png', qty: 2 },
-    { id: 6, name: 'Sac à dos Adidas', price: 39.99, image: '/assets/categorie/arriver (2).png', qty: 1 }
-  ]);
+  const [cart, setCart] = useState(() => {
+    const stored = localStorage.getItem('cart');
+    return stored ? JSON.parse(stored) : [
+      { id: 1, name: 'Nike Air Max 270', price: 129.99, image: '/assets/categorie/arriver (1).png', qty: 2 },
+      { id: 6, name: 'Sac à dos Adidas', price: 39.99, image: '/assets/categorie/arriver (2).png', qty: 1 }
+    ];
+  });
   const [favorites, setFavorites] = useState([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [compareList, setCompareList] = useState([]);
@@ -470,6 +475,10 @@ const Catalogue = () => {
   
   const productsPerPage = 6;
   
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+
   // Filtrage produits selon la taille sélectionnée et les badges
   const filteredProducts = mockProducts.filter(p => {
     if (selectedSizes.length > 0 && !p.sizes.some(size => selectedSizes.includes(size))) return false;
@@ -611,10 +620,14 @@ const Catalogue = () => {
   };
 
   return (
-    <div className="container-fluid py-4">
-      {/* Affichage temporaire du rendu Amazon-like pour test */}
-      <ProductPageAmazonLike />
-    </div>
+    <>
+      <Header />
+      <div className="container-fluid py-4">
+        {/* Affichage temporaire du rendu Amazon-like pour test */}
+        <ProductPageAmazonLike />
+      </div>
+      <Footer />
+    </>
   );
 };
 

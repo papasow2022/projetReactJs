@@ -1,6 +1,7 @@
 // src/components/Header.jsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
+import { Link } from "react-router-dom";
 // import 'bootstrap/dist/css/bootstrap.min.css';
 
 const LANGUAGES = [
@@ -18,6 +19,14 @@ const CATEGORIES = [
   { key: 'promotions', label: 'Promotions', sub: ['Offres en cours', 'Nouveautés', 'Produits récents', 'Meilleures ventes'] },
 ];
 
+const CATEGORY_ICONS = {
+  chaussures: 'bi-shoe',
+  pantalons: 'bi-list',
+  vestes: 'bi-journal',
+  accessoires: 'bi-bag',
+  promotions: 'bi-lightning',
+};
+
 export default function Header() {
   const { currentLanguage, changeLanguage, t } = useLanguage();
   const [langDropdown, setLangDropdown] = useState(false);
@@ -31,6 +40,31 @@ export default function Header() {
   const [searchCategory, setSearchCategory] = useState(CATEGORIES[0]);
   const [searchCatOpen, setSearchCatOpen] = useState(false);
   const searchCatBtnRef = useRef(null);
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    function updateCartCount() {
+      const stored = localStorage.getItem('cart');
+      if (stored) {
+        try {
+          const cart = JSON.parse(stored);
+          const total = Array.isArray(cart) ? cart.reduce((sum, item) => sum + (item.qty || 1), 0) : 0;
+          setCartCount(total);
+        } catch {
+          setCartCount(0);
+        }
+      } else {
+        setCartCount(0);
+      }
+    }
+    updateCartCount();
+    window.addEventListener('storage', updateCartCount);
+    const interval = setInterval(updateCartCount, 500);
+    return () => {
+      window.removeEventListener('storage', updateCartCount);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Fermer le menu si clic à l'extérieur
   React.useEffect(() => {
@@ -57,7 +91,7 @@ export default function Header() {
     function handleClickOutside(event) {
       if (
         allMenuOpen &&
-        !event.target.closest('.menu-toutes-dropdown') &&
+        !event.target.closest('.menu-toutes-drawer') &&
         !event.target.closest('.btn-toutes-dropdown')
       ) {
         setAllMenuOpen(false);
@@ -187,33 +221,84 @@ export default function Header() {
             {t('accountLists')} <span style={{ fontSize: 12, color: '#fff', marginLeft: 2 }}>▼</span>
           </button>
           {accountDropdown && (
-            <ul className="dropdown-menu show" ref={accountMenuRef}
-              style={{ display: 'block', position: 'absolute', top: 38, left: 0, minWidth: 260, zIndex: 1000, background: '#fff', color: '#222', border: '1px solid #ddd', borderRadius: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', padding: 0, margin: 0 }}
-            >
-              <li><button className="dropdown-item py-2 px-3" style={{ fontWeight: 600, color: '#232f3e' }} onClick={() => handleAccountClick('Connexion')}>{t('signIn')}</button></li>
-              <li><hr className="dropdown-divider" /></li>
-              <li><button className="dropdown-item py-2 px-3" onClick={() => handleAccountClick('Commandes')}>{t('orders')}</button></li>
-              <li><button className="dropdown-item py-2 px-3" onClick={() => handleAccountClick('Favoris')}>{t('favourites')}</button></li>
-              <li><button className="dropdown-item py-2 px-3" onClick={() => handleAccountClick('Retours')}>{t('returns')}</button></li>
-              <li><button className="dropdown-item py-2 px-3" onClick={() => handleAccountClick('Adresses')}>{t('addresses')}</button></li>
-              <li><button className="dropdown-item py-2 px-3" onClick={() => handleAccountClick('Paiement')}>{t('payment')}</button></li>
-              <li><button className="dropdown-item py-2 px-3" onClick={() => handleAccountClick('Listes')}>{t('lists')}</button></li>
-              <li><hr className="dropdown-divider" /></li>
-              <li><button className="dropdown-item py-2 px-3" style={{ color: '#b12704' }} onClick={() => handleAccountClick('Déconnexion')}>{t('logout')}</button></li>
-            </ul>
+            <div ref={accountMenuRef} style={{
+              position: 'absolute', top: 38, left: 0, minWidth: 340, zIndex: 1000, background: '#fff', color: '#232f3e', border: '1px solid #ddd', borderRadius: 6, boxShadow: '0 2px 16px rgba(0,0,0,0.18)', padding: 0, margin: 0, fontSize: 15
+            }}>
+              {/* Connexion / Inscription */}
+              <div style={{ borderBottom: '1px solid #eee', padding: '16px 20px 12px 20px', background: '#f7fafc' }}>
+                <Link to="/connexion" style={{ fontWeight: 700, color: '#232f3e', textDecoration: 'none', fontSize: 16 }}>
+                  Se connecter
+                </Link>
+                <div style={{ fontSize: 13, marginTop: 4 }}>
+                  Nouveau client ? <Link to="/inscription" style={{ color: '#007185', textDecoration: 'none', fontWeight: 500 }}>Commencez ici</Link>
+                </div>
+              </div>
+              {/* Mon compte */}
+              <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Mon compte</div>
+                <Link to="/profil" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Mon profil</Link><br/>
+                <Link to="/adresses" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Mes adresses</Link><br/>
+                <Link to="/paiement" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Mes moyens de paiement</Link><br/>
+                <Link to="/securite" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Paramètres de sécurité</Link><br/>
+                <Link to="/preferences" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Préférences de communication</Link>
+              </div>
+              {/* Mes commandes */}
+              <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Mes commandes</div>
+                <Link to="/commandes" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Historique des commandes</Link><br/>
+                <Link to="/commandes" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Suivi des livraisons</Link><br/>
+                <Link to="/commandes" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Retours et remboursements</Link>
+              </div>
+              {/* Mes listes */}
+              <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Mes listes</div>
+                <Link to="/listes/envies" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Listes d'envies</Link><br/>
+                <Link to="/listes/cadeaux" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Listes cadeaux</Link><br/>
+                <Link to="/listes/categories" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Listes par catégorie</Link><br/>
+                <Link to="/listes/sauvegardes" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Articles sauvegardés pour plus tard</Link>
+              </div>
+              {/* Abonnements et programmes */}
+              <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Abonnements et programmes</div>
+                <Link to="/cartes-cadeaux" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Gestion des cartes-cadeaux et crédits</Link>
+              </div>
+              {/* Mes avis */}
+              <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Mes avis</div>
+                <Link to="/avis" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Mes évaluations et commentaires</Link>
+              </div>
+              {/* Aide et assistance */}
+              <div style={{ padding: '12px 20px' }}>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Aide et assistance</div>
+                <Link to="/service-client" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Centre d'aide</Link><br/>
+                <Link to="/service-client" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Contact service client</Link><br/>
+                <Link to="/service-client" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>FAQ</Link>
+              </div>
+            </div>
           )}
         </div>
         {/* Retours et Commandes */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginRight: 18, minWidth: 100 }}>
+        <Link
+          to="/commandes"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            marginRight: 18,
+            minWidth: 100,
+            textDecoration: 'none',
+            cursor: 'pointer'
+          }}
+        >
           <span style={{ fontSize: 11, color: '#ddd', lineHeight: 1 }}>{t('returnsShort')}</span>
           <span style={{ fontWeight: 600, fontSize: 15, color: '#fff', lineHeight: 1.1 }}>{t('andOrders')}</span>
-        </div>
+        </Link>
         {/* Panier */}
         <div style={{ display: 'flex', alignItems: 'center', position: 'relative', marginRight: 8, minWidth: 70 }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#fff" viewBox="0 0 16 16">
             <path d="M0 1.5A.5.5 0 0 1 .5 1h1a.5.5 0 0 1 .485.379L2.89 5H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 14H4a.5.5 0 0 1-.491-.408L1.01 2H.5a.5.5 0 0 1-.5-.5zm3.14 4l1.25 6.5h7.22l1.25-6.5H3.14z" />
           </svg>
-          <span style={{ position: 'absolute', top: -8, right: -2, background: '#ffd814', color: '#232f3e', borderRadius: '50%', fontSize: 13, fontWeight: 700, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>0</span>
+          <span style={{ position: 'absolute', top: -8, right: -2, background: '#ffd814', color: '#232f3e', borderRadius: '50%', fontSize: 13, fontWeight: 700, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{cartCount}</span>
           <span style={{ fontWeight: 600, fontSize: 15, color: '#fff', marginLeft: 6 }}>{t('cart')}</span>
         </div>
       </nav>
@@ -276,27 +361,99 @@ export default function Header() {
                     </button>
                   </div>
                   <ul style={{ listStyle: 'none', margin: 0, padding: 0, width: '100%' }}>
-                    {CATEGORIES.map(cat => (
-                      <li key={cat.key} style={{ position: 'relative', padding: 0 }}>
-                        <button
-                          className="dropdown-item py-3 px-4 d-flex justify-content-between align-items-center"
-                          style={{ fontWeight: 600, color: '#232f3e', fontSize: 17, textAlign: 'left', width: '100%', background: 'none', border: 'none', outline: 'none', borderBottom: '1px solid #f2f2f2' }}
+                    {CATEGORIES.map((cat, catIdx) => (
+                      <li
+                        key={cat.key}
+                        style={{ position: 'relative', padding: 0 }}
+                        className={`category-hover${openSubMenu === cat.key ? ' active' : ''}`}
+                        tabIndex={0}
+                        aria-haspopup="true"
+                        aria-expanded={openSubMenu === cat.key}
+                        aria-controls={`submenu-${cat.key}`}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') setOpenSubMenu(openSubMenu === cat.key ? null : cat.key);
+                          if (e.key === 'ArrowDown') {
+                            const next = document.querySelector(`[data-cat-idx='${catIdx + 1}']`);
+                            if (next) next.focus();
+                          }
+                          if (e.key === 'ArrowUp') {
+                            const prev = document.querySelector(`[data-cat-idx='${catIdx - 1}']`);
+                            if (prev) prev.focus();
+                          }
+                          if (e.key === 'Escape') setOpenSubMenu(null);
+                        }}
+                        data-cat-idx={catIdx}
+                      >
+                        <div
+                          className="category-hover d-flex align-items-center justify-content-between"
+                          style={{ borderBottom: '1px solid #f2f2f2', background: openSubMenu === cat.key ? '#f3f6fa' : 'transparent', transition: 'background 0.18s' }}
                           onClick={() => setOpenSubMenu(openSubMenu === cat.key ? null : cat.key)}
                         >
-                          <span>{t(cat.key)}</span>
-                          <span style={{ fontSize: 15, marginLeft: 8 }}>{openSubMenu === cat.key ? '▲' : '▶'}</span>
-                        </button>
+                          <span style={{ fontWeight: 600, color: '#232f3e', fontSize: 17, padding: '18px 0 18px 32px', display: 'flex', alignItems: 'center' }}>
+                            <i className={`bi ${CATEGORY_ICONS[cat.key] || 'bi-list'} me-2`} style={{ fontSize: 18 }}></i>
+                            {t(cat.key)}
+                          </span>
+                          <button
+                            className="btn btn-link p-0"
+                            style={{ fontSize: 18, color: '#232f3e', fontWeight: 700, textDecoration: 'none', cursor: 'pointer', background: 'none', border: 'none', marginRight: 24 }}
+                            aria-label={openSubMenu === cat.key ? t('close') : t('open')}
+                            tabIndex={-1}
+                          >
+                            {openSubMenu === cat.key ? '▲' : '▶'}
+                          </button>
+                        </div>
                         {openSubMenu === cat.key && cat.sub && (
-                          <ul style={{ listStyle: 'none', margin: 0, padding: 0, background: '#f8f9fa', borderRadius: 0, boxShadow: 'none', border: 'none', position: 'relative', left: 0, top: 0 }}>
+                          <ul
+                            id={`submenu-${cat.key}`}
+                            className="submenu-accordion"
+                            style={{
+                              listStyle: 'none',
+                              margin: 0,
+                              padding: '0 0 0 32px',
+                              background: '#f9f9f9',
+                              borderRadius: 0,
+                              border: 'none',
+                              position: 'relative',
+                              minWidth: 'unset',
+                              zIndex: 1,
+                              boxShadow: 'none',
+                              transition: 'max-height 0.25s cubic-bezier(.4,1.2,.6,1)',
+                              overflow: 'hidden',
+                              maxHeight: cat.sub.length * 44 + 48
+                            }}
+                            tabIndex={0}
+                            aria-label={`Sous-catégories de ${t(cat.key)}`}
+                            onKeyDown={e => {
+                              if (e.key === 'Escape') setOpenSubMenu(null);
+                            }}
+                          >
                             {cat.sub.map((sub, idx) => (
-                              <li key={sub}>
-                                <button
-                                  className="dropdown-item py-2 px-5"
-                                  style={{ fontWeight: 400, color: '#232f3e', fontSize: 15, textAlign: 'left', width: '100%', background: 'none', border: 'none', outline: 'none' }}
-                                  onClick={() => console.log(`Catégorie : ${t(cat.key)} > ${sub}`)}
+                              <li key={sub} className="subcategory-hover" style={{ transition: 'background 0.18s', borderRadius: 6 }}>
+                                <a
+                                  href="#"
+                                  style={{
+                                    display: 'block',
+                                    fontWeight: 400,
+                                    color: '#232f3e',
+                                    fontSize: 15,
+                                    textAlign: 'left',
+                                    width: '100%',
+                                    background: 'none',
+                                    border: 'none',
+                                    outline: 'none',
+                                    padding: '10px 0 10px 16px',
+                                    textDecoration: 'none',
+                                    borderRadius: 6
+                                  }}
+                                  onClick={e => { e.preventDefault(); setOpenSubMenu(null); }}
+                                  tabIndex={0}
+                                  aria-label={t(sub)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Escape') setOpenSubMenu(null);
+                                  }}
                                 >
                                   {t(sub)}
-                                </button>
+                                </a>
                               </li>
                             ))}
                           </ul>
@@ -314,12 +471,47 @@ export default function Header() {
               </>
             )}
           </li>
-          <li style={{ marginRight: 18, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>{t('dailyDeals')}</li>
-          <li style={{ marginRight: 18, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>{t('customerService')}</li>
-          <li style={{ marginRight: 18, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>{t('giftCards')}</li>
+          <li style={{ marginRight: 18, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>
+            <Link to="/offres-du-jour" style={{ color: '#ffd814', fontWeight: 700, textDecoration: 'none' }}>{t('dailyDeals')}</Link>
+          </li>
+          <li style={{ marginRight: 18, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>
+            <Link to="/commandes" style={{ color: '#ffd814', fontWeight: 700, textDecoration: 'none' }}>Retours et Commandes</Link>
+          </li>
+          <li style={{ marginRight: 18, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>
+            <Link to="/service-client" style={{ color: '#ffd814', fontWeight: 700, textDecoration: 'none' }}>{t('customerService')}</Link>
+          </li>
+          <li style={{ marginRight: 18, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>
+            <Link to="/cartes-cadeaux" style={{ color: '#ffd814', fontWeight: 700, textDecoration: 'none' }}>{t('giftCards')}</Link>
+          </li>
           <li style={{ marginRight: 0, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>{t('sell')}</li>
         </ul>
       </nav>
     </header>
   );
 }
+
+/*
+.category-hover:hover, .category-hover.active {
+  background: #f3f6fa !important;
+  transition: background 0.18s;
+}
+.category-hover:focus {
+  outline: 2px solid #007185;
+  background: #e9ecef !important;
+}
+.subcategory-hover:hover, .subcategory-hover:focus-within {
+  background: #e9ecef !important;
+  transition: background 0.18s;
+}
+.submenu-animated {
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: submenuIn 0.25s cubic-bezier(.4,1.2,.6,1) forwards;
+}
+@keyframes submenuIn {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+*/

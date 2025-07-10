@@ -73,7 +73,7 @@ export default function WhyChooseUs() {
         </div>
 
         {/* Advantages Grid */}
-        <div className="row g-4 mb-5">
+        <div className="row g-4 mb-2">
           {advantages.map((advantage) => (
             <div key={advantage.id} className="col-lg-4 col-md-6">
               <div 
@@ -140,7 +140,7 @@ export default function WhyChooseUs() {
         </div>
 
         {/* Trust indicators */}
-        <div className="row mt-5 pt-5">
+        <div className="row mt-3 pt-2">
           <div className="col-12">
             <div className="text-center">
               <h5 className="fw-bold mb-4" style={{ color: "#232f3e" }}>
