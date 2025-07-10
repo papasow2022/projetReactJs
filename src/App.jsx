@@ -11,6 +11,9 @@ import CartesCadeaux from "./pages/CartesCadeaux";
 import Orders from "./pages/Orders";
 import Connexion from "./pages/Connexion";
 import Inscription from "./pages/Inscription";
+import MotDePasseOublie from "./pages/MotDePasseOublie";
+import Panier from "./pages/Panier";
+import Comparaison from "./pages/Comparaison";
 import Profil from "./pages/Profil";
 import Adresses from "./pages/Adresses";
 import Paiement from "./pages/Paiement";
@@ -37,6 +40,9 @@ export default function App() {
           <Route path="/commandes" element={<Orders />} />
           <Route path="/connexion" element={<Connexion />} />
           <Route path="/inscription" element={<Inscription />} />
+          <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
+          <Route path="/panier" element={<Panier />} />
+          <Route path="/comparaison" element={<Comparaison />} />
           <Route path="/profil" element={<Profil />} />
           <Route path="/adresses" element={<Adresses />} />
           <Route path="/paiement" element={<Paiement />} />
