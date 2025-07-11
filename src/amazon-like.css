@@ -140,4 +140,62 @@ input[type="number"], select.form-select, .form-control {
     width: 100% !important;
     max-width: 100% !important;
   }
+}
+
+/* Styles pour la page Service Client */
+.nav-tabs .nav-link {
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6c757d;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  padding: 1rem 1.5rem;
+}
+
+.nav-tabs .nav-link:hover {
+  border-bottom-color: #ffd814;
+  color: #007185;
+  background: transparent;
+}
+
+.nav-tabs .nav-link.active {
+  border-bottom-color: #007185;
+  color: #007185;
+  background: transparent;
+  font-weight: 700;
+}
+
+.hover-shadow {
+  transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #e7f1fa;
+  color: #007185;
+  border-color: #007185;
+}
+
+.accordion-button:focus {
+  box-shadow: 0 0 0 0.25rem rgba(0, 113, 133, 0.25);
+  border-color: #007185;
+}
+
+.tab-pane {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 } 

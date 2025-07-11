@@ -245,9 +245,9 @@ export default function Header() {
               {/* Mes commandes */}
               <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
                 <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Mes commandes</div>
-                <Link to="/commandes" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Historique des commandes</Link><br/>
-                <Link to="/commandes" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Suivi des livraisons</Link><br/>
-                <Link to="/commandes" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Retours et remboursements</Link>
+                <Link to="/commandes#historique" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Historique des commandes</Link><br/>
+                <Link to="/commandes#suivi" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Suivi des livraisons</Link><br/>
+                <Link to="/commandes#retours" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Retours et remboursements</Link>
               </div>
               {/* Mes listes */}
               <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
@@ -270,9 +270,9 @@ export default function Header() {
               {/* Aide et assistance */}
               <div style={{ padding: '12px 20px' }}>
                 <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Aide et assistance</div>
-                <Link to="/service-client" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Centre d'aide</Link><br/>
-                <Link to="/service-client" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Contact service client</Link><br/>
-                <Link to="/service-client" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>FAQ</Link>
+                <Link to="/service-client#centre-aide" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Centre d'aide</Link><br/>
+                <Link to="/service-client#contact" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Contact service client</Link><br/>
+                <Link to="/service-client#faq" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>FAQ</Link>
               </div>
             </div>
           )}
