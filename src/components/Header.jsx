@@ -294,197 +294,24 @@ export default function Header() {
           <span style={{ fontWeight: 600, fontSize: 15, color: '#fff', lineHeight: 1.1 }}>{t('andOrders')}</span>
         </Link>
         {/* Panier */}
-        <div style={{ display: 'flex', alignItems: 'center', position: 'relative', marginRight: 8, minWidth: 70 }}>
+        <Link
+          to="/panier"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            position: 'relative',
+            marginRight: 8,
+            minWidth: 70,
+            textDecoration: 'none',
+            cursor: 'pointer'
+          }}
+        >
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#fff" viewBox="0 0 16 16">
             <path d="M0 1.5A.5.5 0 0 1 .5 1h1a.5.5 0 0 1 .485.379L2.89 5H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 14H4a.5.5 0 0 1-.491-.408L1.01 2H.5a.5.5 0 0 1-.5-.5zm3.14 4l1.25 6.5h7.22l1.25-6.5H3.14z" />
           </svg>
           <span style={{ position: 'absolute', top: -8, right: -2, background: '#ffd814', color: '#232f3e', borderRadius: '50%', fontSize: 13, fontWeight: 700, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{cartCount}</span>
           <span style={{ fontWeight: 600, fontSize: 15, color: '#fff', marginLeft: 6 }}>{t('cart')}</span>
-        </div>
-      </nav>
-      {/* Barre secondaire */}
-      <nav style={{ background: '#37475a', color: '#fff', width: '100%', minHeight: 36, display: 'flex', alignItems: 'center', padding: '0 16px', position: 'relative' }}>
-        <ul style={{ display: 'flex', alignItems: 'center', listStyle: 'none', margin: 0, padding: 0, width: '100%' }}>
-          <li style={{ fontWeight: 700, marginRight: 18, fontSize: 15, cursor: 'pointer', position: 'relative' }}>
-            <button
-              className="btn btn-link p-0 text-white btn-toutes-dropdown"
-              style={{ fontWeight: 700, fontSize: 15, textDecoration: 'none', cursor: 'pointer' }}
-              onClick={() => setAllMenuOpen((v) => !v)}
-            >
-              {t('all')} <span style={{ fontSize: 12, marginLeft: 2 }}>▼</span>
-            </button>
-            {allMenuOpen && (
-              <>
-                <div
-                  onClick={() => setAllMenuOpen(false)}
-                  style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100vw',
-                    height: '100vh',
-                    background: 'rgba(0,0,0,0.45)',
-                    zIndex: 1100,
-                    transition: 'opacity 0.2s',
-                  }}
-                />
-                <aside
-                  className="menu-toutes-drawer"
-                  style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    height: '100vh',
-                    width: 340,
-                    background: '#fff',
-                    color: '#232f3e',
-                    zIndex: 1200,
-                    boxShadow: '2px 0 16px rgba(0,0,0,0.18)',
-                    borderRight: '1px solid #ddd',
-                    borderRadius: 0,
-                    padding: 0,
-                    margin: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    animation: 'slideInLeft 0.22s cubic-bezier(.4,1.2,.6,1)'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#232f3e', color: '#fff', padding: '16px 18px', fontWeight: 700, fontSize: 18, borderBottom: '1px solid #eee' }}>
-                    <span>{t('all')}</span>
-                    <button
-                      className="btn btn-link p-0"
-                      style={{ fontSize: 26, color: '#fff', fontWeight: 700, textDecoration: 'none', cursor: 'pointer', background: 'none', border: 'none' }}
-                      onClick={() => setAllMenuOpen(false)}
-                      aria-label={t('close')}
-                    >
-                      ×
-                    </button>
-                  </div>
-                  <ul style={{ listStyle: 'none', margin: 0, padding: 0, width: '100%' }}>
-                    {CATEGORIES.map((cat, catIdx) => (
-                      <li
-                        key={cat.key}
-                        style={{ position: 'relative', padding: 0 }}
-                        className={`category-hover${openSubMenu === cat.key ? ' active' : ''}`}
-                        tabIndex={0}
-                        aria-haspopup="true"
-                        aria-expanded={openSubMenu === cat.key}
-                        aria-controls={`submenu-${cat.key}`}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' || e.key === ' ') setOpenSubMenu(openSubMenu === cat.key ? null : cat.key);
-                          if (e.key === 'ArrowDown') {
-                            const next = document.querySelector(`[data-cat-idx='${catIdx + 1}']`);
-                            if (next) next.focus();
-                          }
-                          if (e.key === 'ArrowUp') {
-                            const prev = document.querySelector(`[data-cat-idx='${catIdx - 1}']`);
-                            if (prev) prev.focus();
-                          }
-                          if (e.key === 'Escape') setOpenSubMenu(null);
-                        }}
-                        data-cat-idx={catIdx}
-                      >
-                        <div
-                          className="category-hover d-flex align-items-center justify-content-between"
-                          style={{ borderBottom: '1px solid #f2f2f2', background: openSubMenu === cat.key ? '#f3f6fa' : 'transparent', transition: 'background 0.18s' }}
-                          onClick={() => setOpenSubMenu(openSubMenu === cat.key ? null : cat.key)}
-                        >
-                          <span style={{ fontWeight: 600, color: '#232f3e', fontSize: 17, padding: '18px 0 18px 32px', display: 'flex', alignItems: 'center' }}>
-                            <i className={`bi ${CATEGORY_ICONS[cat.key] || 'bi-list'} me-2`} style={{ fontSize: 18 }}></i>
-                            {t(cat.key)}
-                          </span>
-                          <button
-                            className="btn btn-link p-0"
-                            style={{ fontSize: 18, color: '#232f3e', fontWeight: 700, textDecoration: 'none', cursor: 'pointer', background: 'none', border: 'none', marginRight: 24 }}
-                            aria-label={openSubMenu === cat.key ? t('close') : t('open')}
-                            tabIndex={-1}
-                          >
-                            {openSubMenu === cat.key ? '▲' : '▶'}
-                          </button>
-                        </div>
-                        {openSubMenu === cat.key && cat.sub && (
-                          <ul
-                            id={`submenu-${cat.key}`}
-                            className="submenu-accordion"
-                            style={{
-                              listStyle: 'none',
-                              margin: 0,
-                              padding: '0 0 0 32px',
-                              background: '#f9f9f9',
-                              borderRadius: 0,
-                              border: 'none',
-                              position: 'relative',
-                              minWidth: 'unset',
-                              zIndex: 1,
-                              boxShadow: 'none',
-                              transition: 'max-height 0.25s cubic-bezier(.4,1.2,.6,1)',
-                              overflow: 'hidden',
-                              maxHeight: cat.sub.length * 44 + 48
-                            }}
-                            tabIndex={0}
-                            aria-label={`Sous-catégories de ${t(cat.key)}`}
-                            onKeyDown={e => {
-                              if (e.key === 'Escape') setOpenSubMenu(null);
-                            }}
-                          >
-                            {cat.sub.map((sub, idx) => (
-                              <li key={sub} className="subcategory-hover" style={{ transition: 'background 0.18s', borderRadius: 6 }}>
-                                <a
-                                  href="#"
-                                  style={{
-                                    display: 'block',
-                                    fontWeight: 400,
-                                    color: '#232f3e',
-                                    fontSize: 15,
-                                    textAlign: 'left',
-                                    width: '100%',
-                                    background: 'none',
-                                    border: 'none',
-                                    outline: 'none',
-                                    padding: '10px 0 10px 16px',
-                                    textDecoration: 'none',
-                                    borderRadius: 6
-                                  }}
-                                  onClick={e => { e.preventDefault(); setOpenSubMenu(null); }}
-                                  tabIndex={0}
-                                  aria-label={t(sub)}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Escape') setOpenSubMenu(null);
-                                  }}
-                                >
-                                  {t(sub)}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </aside>
-                <style>{`
-                  @keyframes slideInLeft {
-                    from { transform: translateX(-100%); }
-                    to { transform: translateX(0); }
-                  }
-                `}</style>
-              </>
-            )}
-          </li>
-          <li style={{ marginRight: 18, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>
-            <Link to="/offres-du-jour" style={{ color: '#ffd814', fontWeight: 700, textDecoration: 'none' }}>{t('dailyDeals')}</Link>
-          </li>
-          <li style={{ marginRight: 18, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>
-            <Link to="/commandes" style={{ color: '#ffd814', fontWeight: 700, textDecoration: 'none' }}>Retours et Commandes</Link>
-          </li>
-          <li style={{ marginRight: 18, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>
-            <Link to="/service-client" style={{ color: '#ffd814', fontWeight: 700, textDecoration: 'none' }}>{t('customerService')}</Link>
-          </li>
-          <li style={{ marginRight: 18, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>
-            <Link to="/cartes-cadeaux" style={{ color: '#ffd814', fontWeight: 700, textDecoration: 'none' }}>{t('giftCards')}</Link>
-          </li>
-          <li style={{ marginRight: 0, fontSize: 15, color: '#ddd', cursor: 'pointer' }}>{t('sell')}</li>
-        </ul>
+        </Link>
       </nav>
     </header>
   );
