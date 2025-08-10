@@ -1,0 +1,240 @@
+/* Amazon-like CSS : polices, couleurs, boutons, badges, encarts, ombres, marges, etc. */
+
+body, .container-fluid {
+  font-family: 'Amazon Ember', Arial, sans-serif;
+  background: #fff;
+  color: #111;
+}
+
+.breadcrumb {
+  background: none;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+.breadcrumb-item a {
+  color: #007185;
+  text-decoration: none;
+}
+.breadcrumb-item.active {
+  color: #555;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Amazon Ember', Arial, sans-serif;
+  font-weight: 700;
+}
+
+.card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  border: 1px solid #e3e6e6;
+}
+
+.btn-warning {
+  background: #ffd814;
+  color: #111;
+  border: 1px solid #fcd200;
+  font-weight: 700;
+  transition: background 0.2s;
+}
+.btn-warning:hover {
+  background: #f7ca00;
+  color: #111;
+}
+.btn-orange {
+  background: #ffa41c;
+  color: #111;
+  border: 1px solid #ff9900;
+  font-weight: 700;
+  transition: background 0.2s;
+}
+.btn-orange:hover {
+  background: #ff9900;
+  color: #fff;
+}
+
+.badge {
+  border-radius: 4px;
+  font-size: 0.85em;
+  padding: 0.35em 0.6em;
+  font-weight: 600;
+}
+.bg-warning {
+  background: #ffd814 !important;
+  color: #111 !important;
+}
+.bg-primary {
+  background: #007185 !important;
+  color: #fff !important;
+}
+.bg-danger {
+  background: #b12704 !important;
+  color: #fff !important;
+}
+.bg-success {
+  background: #008a00 !important;
+  color: #fff !important;
+}
+.bg-info {
+  background: #e7f1fa !important;
+  color: #007185 !important;
+}
+
+.table {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.table th, .table td {
+  border: 1px solid #e3e6e6 !important;
+  padding: 0.5em 0.75em;
+}
+
+.img-thumbnail {
+  border-radius: 6px;
+  border: 1px solid #e3e6e6;
+  transition: box-shadow 0.2s;
+}
+.img-thumbnail:hover {
+  box-shadow: 0 0 0 2px #ffd814;
+}
+
+.card-body, .card-header {
+  background: #fff;
+}
+
+input[type="number"], select.form-select, .form-control {
+  border-radius: 6px;
+  border: 1px solid #d5d9d9;
+  font-size: 1rem;
+}
+
+.btn-outline-primary {
+  border: 1px solid #007185;
+  color: #007185;
+  background: #fff;
+  font-weight: 600;
+}
+.btn-outline-primary:hover {
+  background: #e7f1fa;
+  color: #007185;
+}
+
+.btn-link {
+  color: #007185;
+  text-decoration: underline;
+}
+.btn-link:hover {
+  color: #c7511f;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 0 0.5rem;
+  }
+  .row {
+    flex-direction: column;
+  }
+  .col-md-1, .col-md-4, .col-md-6 {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Styles pour la page Service Client */
+.nav-tabs .nav-link {
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6c757d;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  padding: 1rem 1.5rem;
+}
+
+.nav-tabs .nav-link:hover {
+  border-bottom-color: #ffd814;
+  color: #007185;
+  background: transparent;
+}
+
+.nav-tabs .nav-link.active {
+  border-bottom-color: #007185;
+  color: #007185;
+  background: transparent;
+  font-weight: 700;
+}
+
+.hover-shadow {
+  transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #e7f1fa;
+  color: #007185;
+  border-color: #007185;
+}
+
+.accordion-button:focus {
+  box-shadow: 0 0 0 0.25rem rgba(0, 113, 133, 0.25);
+  border-color: #007185;
+}
+
+.tab-pane {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 
+
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 999;
+  background: rgba(33,33,33,0.35);
+  /* backdrop-filter: blur(6px); */
+  transition: background 0.2s;
+} 
+
+.modal-custom {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* Pour éviter de bloquer l'overlay */
+}
+
+.modal-custom > * {
+  pointer-events: auto; /* Pour permettre l'interaction avec la modale */
+} 
+
+.modal-box {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 4px rgba(0,0,0,0.08);
+  padding: 2.2rem 2rem 1.5rem 2rem;
+  min-width: 370px;
+  max-width: 95vw;
+  width: 420px;
+  margin: 0 auto;
+  font-family: 'Amazon Ember', Arial, sans-serif;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+} 

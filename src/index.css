@@ -1,0 +1,82 @@
+/* Ajoutez dans votre fichier CSS global */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.hover-warning:hover {
+  color: #ffc107 !important;
+}
+
+.letter-spacing-1 {
+  letter-spacing: 1px;
+}
+
+.transition-all {
+  transition: all 0.2s ease;
+}
+
+.hover-warning:hover .bi-chevron-right {
+  transform: translateX(3px);
+}
+
+/* Styles globaux pour assurer l'affichage des chiffres et icônes */
+.bi {
+  font-family: "bootstrap-icons" !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-variant: normal !important;
+  text-transform: none !important;
+  line-height: 1 !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Assurer que les chiffres sont toujours visibles */
+.fw-bold {
+  font-weight: bold !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Styles pour les pourcentages */
+.text-primary {
+  color: #0d6efd !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-success {
+  color: #198754 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+/* Assurer que les icônes Bootstrap s'affichent */
+.bi-percent::before {
+  content: "\F4B1" !important;
+}
+
+.bi-lightning::before {
+  content: "\F4B2" !important;
+}
+
+.bi-clock::before {
+  content: "\F4B3" !important;
+}
+
+.bi-clock-history::before {
+  content: "\F4B4" !important;
+}
+
+.bi-graph-down::before {
+  content: "\F4B5" !important;
+}

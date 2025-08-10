@@ -1,0 +1,225 @@
+/* Styles pour le sidebar du panier Amazon */
+.amazon-cart-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.amazon-cart-sidebar .sidebar-header {
+  flex-shrink: 0;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  z-index: 10;
+}
+
+.amazon-cart-sidebar .sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding: 0;
+}
+
+.amazon-cart-sidebar .sidebar-footer {
+  flex-shrink: 0;
+  background: #fff;
+  border-top: 1px solid #e0e0e0;
+  z-index: 10;
+  margin-top: auto;
+}
+
+/* Styles pour les articles du panier */
+.cart-item-card {
+  transition: all 0.2s ease;
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+.cart-item-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  transform: translateY(-1px);
+}
+
+.cart-item-image {
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #f0f0f0;
+}
+
+/* Styles pour les contrôles de quantité */
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quantity-controls .btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.quantity-controls input {
+  width: 40px;
+  text-align: center;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Styles pour les boutons d'action */
+.cart-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cart-action-buttons .btn {
+  padding: 12px 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.cart-action-buttons .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Styles pour le total */
+.cart-total {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #dc3545;
+}
+
+/* Styles pour les informations de livraison */
+.shipping-info {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.shipping-info small {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+/* Animation d'entrée du sidebar */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.amazon-cart-sidebar {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+/* Styles pour le scrollbar */
+.amazon-cart-sidebar .sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.amazon-cart-sidebar .sidebar-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.amazon-cart-sidebar .sidebar-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.amazon-cart-sidebar .sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Styles responsive */
+@media (max-width: 768px) {
+  .amazon-cart-sidebar {
+    width: 100% !important;
+    max-width: 100vw;
+  }
+  
+  .cart-item-card .card-body {
+    padding: 12px !important;
+  }
+  
+  .quantity-controls {
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .quantity-controls .btn {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+  
+  .quantity-controls input {
+    width: 36px;
+    font-size: 11px;
+  }
+}
+
+/* Styles pour l'état vide */
+.cart-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.cart-empty-state i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.cart-empty-state h6 {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.cart-empty-state p {
+  font-size: 0.9rem;
+  margin-bottom: 0;
+}
+
+/* Styles pour les notifications */
+.cart-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  animation: slideInFromTop 0.3s ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+} 

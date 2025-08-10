@@ -1,0 +1,243 @@
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import { AuthProvider } from "./hooks/useAuth.jsx";
+import ProtectedRoute from "./components/ProtectedRoute";
+import VendorProtectedRoute from "./components/VendorProtectedRoute";
+import Header from "./components/Header";
+import Home from "./pages/Home";
+import ProductDetail from "./pages/ProductDetail";
+import Catalogue from "./pages/Catalogue";
+import OffreDuJour from "./pages/OffreDuJour";
+import OffresUrgentes from "./pages/OffresUrgentes";
+import Nouveautes from "./pages/Nouveautes";
+
+import ServiceClient from "./pages/ServiceClient";
+import CartesCadeaux from "./pages/CartesCadeaux";
+import Orders from "./pages/Orders";
+import Connexion from "./pages/Connexion";
+import Inscription from "./pages/Inscription";
+import MotDePasseOublie from "./pages/MotDePasseOublie";
+import Panier from "./pages/Panier";
+import Comparaison from "./pages/Comparaison";
+import Profil from "./pages/Profil";
+import Adresses from "./pages/Adresses";
+import Paiement from "./pages/Paiement";
+import Securite from "./pages/Securite";
+import Preferences from "./pages/Preferences";
+import ListesEnvies from "./pages/ListesEnvies";
+import ListesCadeaux from "./pages/ListesCadeaux";
+import ListesCategories from "./pages/ListesCategories";
+import ListesSauvegardes from "./pages/ListesSauvegardes";
+import Avis from "./pages/Avis";
+import Vendeur from './pages/Vendeur.jsx';
+import SupportVendeur from './pages/SupportVendeur.jsx';
+import InscriptionVendeur from './pages/InscriptionVendeur.jsx';
+import ConfirmationVendeur from './pages/ConfirmationVendeur.jsx';
+import ConditionsVente from './pages/ConditionsVente.jsx';
+import PolitiqueConfidentialite from './pages/PolitiqueConfidentialite.jsx';
+import DashboardVendeur from './pages/DashboardVendeur';
+import ConfigurationCompte from './pages/ConfigurationCompte';
+import CentreFormation from './pages/CentreFormation';
+import GestionProduits from './pages/GestionProduits';
+import CentreCommandes from './pages/CentreCommandes';
+import OnboardingVendeur from './pages/OnboardingVendeur';
+import BoutiqueVendeur from './pages/BoutiqueVendeur';
+import ListeBoutiques from './pages/ListeBoutiques';
+import { CommandesProvider } from "./contexts/CommandesContext";
+import { ProductsProvider } from "./contexts/ProductsContext";
+import ConnexionVendeur from './pages/ConnexionVendeur';
+import RetoursVendeur from './pages/RetoursVendeur';
+import HistoriqueEchanges from './pages/HistoriqueEchanges';
+import MesEchanges from './pages/MesEchanges';
+import ValidationEchange from './pages/ValidationEchange';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { DailyDealsProvider } from './contexts/DailyDealsContext';
+import { CartProvider } from './contexts/CartContext';
+
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <DailyDealsProvider>
+            <CartProvider>
+              <CommandesProvider>
+                <ProductsProvider>
+              <Router>
+                <Header />
+                <Routes>
+                  {/* Routes publiques */}
+                  <Route path="/" element={<Home />} />
+                  <Route path="/catalogue" element={<Catalogue />} />
+                  <Route path="/product/:productId" element={<ProductDetail />} />
+                  <Route path="/offres-du-jour" element={<OffreDuJour />} />
+                  <Route path="/offres-urgentes" element={<OffresUrgentes />} />
+                  <Route path="/nouveautes" element={<Nouveautes />} />
+
+                  <Route path="/service-client" element={<ServiceClient />} />
+                  <Route path="/connexion" element={<Connexion />} />
+                  <Route path="/inscription" element={<Inscription />} />
+                  <Route path="/inscription-vendeur" element={<InscriptionVendeur />} />
+                  <Route path="/confirmation-vendeur" element={<ConfirmationVendeur />} />
+                  <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
+                  <Route path="/comparaison" element={<Comparaison />} />
+                  <Route path="/avis" element={<Avis />} />
+                  <Route path="/vendeur" element={<Vendeur />} />
+                  <Route path="/vendeur/:vendeurId" element={<BoutiqueVendeur />} />
+                  <Route path="/support-vendeur" element={<SupportVendeur />} />
+                  <Route path="/conditions-vente" element={<ConditionsVente />} />
+                  <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
+                  <Route path="/boutiques" element={<ListeBoutiques />} />
+                  <Route path="/connexion-vendeur" element={<ConnexionVendeur />} />
+                  <Route path="/vendeur/retours" element={
+                    <VendorProtectedRoute>
+                      <RetoursVendeur />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/echanges" element={
+                    <VendorProtectedRoute>
+                      <HistoriqueEchanges />
+                    </VendorProtectedRoute>
+                  } />
+                  
+                  {/* Routes protégées */}
+                  <Route path="/commandes" element={
+                    <ProtectedRoute>
+                      <Orders />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/echanges" element={
+                    <ProtectedRoute>
+                      <MesEchanges />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/validation-echange/:echangeId" element={
+                    <ProtectedRoute>
+                      <ValidationEchange />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/panier" element={
+                    <ProtectedRoute>
+                      <Panier />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profil" element={
+                    <ProtectedRoute>
+                      <Profil />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/adresses" element={
+                    <ProtectedRoute>
+                      <Adresses />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/paiement" element={
+                    <ProtectedRoute>
+                      <Paiement />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/securite" element={
+                    <ProtectedRoute>
+                      <Securite />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/preferences" element={
+                    <ProtectedRoute>
+                      <Preferences />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/listes/envies" element={
+                    <ProtectedRoute>
+                      <ListesEnvies />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/listes/cadeaux" element={
+                    <ProtectedRoute>
+                      <ListesCadeaux />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/listes/categories" element={
+                    <ProtectedRoute>
+                      <ListesCategories />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/listes/sauvegardes" element={
+                    <ProtectedRoute>
+                      <ListesSauvegardes />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/cartes-cadeaux" element={
+                    <ProtectedRoute>
+                      <CartesCadeaux />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Nouvelles routes vendeur - PROTÉGÉES */}
+                  <Route path="/vendeur/dashboard" element={
+                    <VendorProtectedRoute>
+                      <DashboardVendeur />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/configuration" element={
+                    <VendorProtectedRoute>
+                      <ConfigurationCompte />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/formation" element={
+                    <VendorProtectedRoute>
+                      <CentreFormation />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/produits" element={
+                    <VendorProtectedRoute>
+                      <GestionProduits />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/commandes" element={
+                    <VendorProtectedRoute>
+                      <CentreCommandes />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/produits/ajouter" element={
+                    <VendorProtectedRoute>
+                      <GestionProduits />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/stocks" element={
+                    <VendorProtectedRoute>
+                      <GestionProduits />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/analytics" element={
+                    <VendorProtectedRoute>
+                      <DashboardVendeur />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/parametres" element={
+                    <VendorProtectedRoute>
+                      <ConfigurationCompte />
+                    </VendorProtectedRoute>
+                  } />
+                  
+                  {/* Route d'onboarding vendeur */}
+                  <Route path="/vendeur/onboarding" element={
+                    <VendorProtectedRoute>
+                      <OnboardingVendeur />
+                    </VendorProtectedRoute>
+                  } />
+                  
+                {/* Ajoutez d'autres routes ici si nécessaire */}
+                {/* Exemple : <Route path="/categorie/femme" element={<Femme />} /> */}
+                </Routes>
+              </Router>
+            </ProductsProvider>
+          </CommandesProvider>
+        </CartProvider>
+      </DailyDealsProvider>
+    </NotificationProvider>
+      </AuthProvider>
+    </LanguageProvider>
+  );
+}

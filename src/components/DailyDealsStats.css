@@ -1,0 +1,66 @@
+/* Styles pour les statistiques des offres du jour */
+.stats-card {
+  transition: transform 0.2s ease-in-out;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+}
+
+.stats-value {
+  font-size: 2rem !important;
+  font-weight: bold !important;
+  color: #333 !important;
+  text-shadow: none !important;
+  line-height: 1.2 !important;
+}
+
+.stats-icon {
+  font-size: 2.5rem !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Styles spécifiques pour l'icône de pourcentage */
+.bi-percent {
+  font-size: 2.5rem !important;
+  color: #dc3545 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Styles pour les pourcentages dans les témoignages */
+.testimonial-stats .fw-bold {
+  font-size: 2.5rem !important;
+  color: #0d6efd !important;
+  font-weight: bold !important;
+  text-shadow: none !important;
+  line-height: 1.2 !important;
+}
+
+/* Assurer que les chiffres sont toujours visibles */
+.stats-card h3,
+.testimonial-stats .fw-bold {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* Styles pour les badges de réduction */
+.badge {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Animation pour attirer l'attention sur les statistiques importantes */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.stats-card:hover .stats-value {
+  animation: pulse 0.6s ease-in-out;
+} 
