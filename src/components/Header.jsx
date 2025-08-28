@@ -564,7 +564,8 @@ export default function Header() {
                   <div style={{ flex: 1, overflow: 'auto', padding: '0', margin: 0 }}>
                     {FULL_MENU_CATEGORIES.map((category) => (
                       <div key={category.id} style={{ position: 'relative' }}>
-                        <button
+                        <Link
+                          to={`/${category.id}`}
                           className={`menu-category-item`}
                           style={{
                             width: '100%',
@@ -580,16 +581,21 @@ export default function Header() {
                             color: '#232f3e',
                             borderBottom: '1px solid #f0f0f0',
                             transition: 'background-color 0.2s',
-                            fontWeight: 500
+                            fontWeight: 500,
+                            textDecoration: 'none'
                           }}
-                          onClick={() => setShowSubMenu(category.id)}
+                          onClick={() => {
+                            setAllMenuOpen(false);
+                            setOpenSubMenu(null);
+                            setShowSubMenu(null);
+                          }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <i className={`bi ${category.icon}`} style={{ fontSize: 18, minWidth: 22 }}></i>
                             <span>{category.label}</span>
                           </div>
                           <i className="bi bi-chevron-right" style={{ fontSize: 14 }}></i>
-                        </button>
+                        </Link>
                       </div>
                     ))}
                   </div>

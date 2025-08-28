@@ -1,0 +1,101 @@
+/* Styles de navigation */
+.navbar {
+  background-color: #232f3e;
+  border-bottom: 1px solid #3a4553;
+}
+
+.navbar-brand {
+  color: #fff;
+  font-weight: bold;
+}
+
+.navbar-nav .nav-link {
+  color: #fff;
+  font-size: 0.9375rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.navbar-nav .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Styles pour le bouton de catégorie de recherche */
+.search-cat-btn {
+  border: 1px solid #d5d5d5 !important;
+  background: white !important;
+  color: black !important;
+  border-radius: 4px 0 0 4px !important;
+  height: 38px !important;
+  border-right: none !important;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  min-width: 70px;
+}
+
+.search-cat-dropdown {
+  position: absolute !important;
+  top: 40px !important;
+  left: 0 !important;
+  min-width: 140px !important;
+  z-index: 1000 !important;
+  background: white !important;
+  border: 1px solid #febd69 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+.search-cat-dropdown .dropdown-item {
+  background: white !important;
+  color: #111 !important;
+  border: none !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+  padding: 8px 12px !important;
+}
+
+.search-cat-dropdown .dropdown-item:hover {
+  background: #f8f9fa !important;
+  color: #111 !important;
+}
+
+/* Bouton Toutes */
+.btn-toutes-dropdown {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.btn-toutes-dropdown:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Styles responsifs */
+@media (max-width: 992px) {
+  .search-cat-btn {
+    font-size: 0.875rem;
+    padding: 0.4rem 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-toutes-dropdown {
+    font-size: 0.875rem;
+    padding: 0.4rem 0.6rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .search-cat-btn {
+    padding: 0.3rem 0.5rem;
+    min-width: 60px;
+  }
+} 

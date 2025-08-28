@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 export default function PolitiqueConfidentialite() {
@@ -245,7 +244,6 @@ export default function PolitiqueConfidentialite() {
 
   return (
     <>
-      <Header />
       <div className="container-fluid py-4" style={{ background: '#f8f9fa', minHeight: '100vh' }}>
         <div className="row justify-content-center">
           <div className="col-12 col-lg-10">

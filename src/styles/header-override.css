@@ -1,0 +1,192 @@
+/* Fichier de surcharge pour forcer une couleur unique sur le header */
+/* Priorité maximale avec !important */
+
+/* Forcer une couleur unique sur tout le header */
+.header,
+.header-top,
+.header-main,
+.main-nav,
+.navbar,
+.navbar-nav,
+.navbar-brand,
+.nav-link,
+.btn-link,
+.btn-toutes,
+.main-nav-list,
+.main-nav-list li,
+.main-nav-list a,
+.main-nav-list button {
+  background-color: #232f3e !important;
+  color: white !important;
+}
+
+/* Forcer la couleur sur tous les éléments du header */
+header,
+header *,
+.header *,
+.navbar *,
+.main-nav * {
+  background-color: #232f3e !important;
+}
+
+/* BARRE DE RECHERCHE - REPRODUCTION EXACTE DE L'IMAGE 1 */
+/* PRIORITÉ MAXIMALE - SURCHARGE TOUS LES AUTRES FICHIERS */
+
+/* Bouton Chaussures (gauche) - Gris clair - SURCHARGE MAXIMALE */
+.header-search .btn:first-child,
+.header-search button:first-child,
+button.search-cat-btn,
+.btn.dropdown-toggle.search-cat-btn,
+button[ref="searchCatBtnRef"],
+.search-cat-btn,
+.header-search button:first-of-type,
+.header-search .btn:first-of-type {
+  background-color: #f3f3f3 !important;
+  color: black !important;
+  border: 1px solid #d5d5d5 !important;
+  background: #f3f3f3 !important;
+}
+
+/* Champ de recherche central - Blanc - SURCHARGE MAXIMALE */
+.header-search .form-control,
+.header-search input[type="text"],
+.header-search input,
+.header-search input[type="text"],
+.header-search .form-control {
+  background-color: white !important;
+  color: black !important;
+  border: 1px solid #d5d5d5 !important;
+  background: white !important;
+}
+
+/* Bouton de recherche (droite) - Jaune avec icône noire - SURCHARGE MAXIMALE */
+.header-search .btn:last-child,
+.header-search button:last-child,
+.header-search button:last-of-type,
+.header-search .btn:last-of-type {
+  background-color: #febd69 !important;
+  color: black !important;
+  border: 1px solid #d5d5d5 !important;
+  background: #febd69 !important;
+}
+
+/* Forcer l'icône de recherche en noir et en gras - SURCHARGE MAXIMALE */
+.header-search .btn:last-child i,
+.header-search button:last-child i,
+.header-search .bi-search,
+.header-search button:last-child .bi,
+.header-search .btn:last-child .bi {
+  color: black !important;
+  font-weight: bold !important;
+}
+
+/* SURCHARGE GLOBALE POUR TOUS LES ÉLÉMENTS DE RECHERCHE */
+.header-search *,
+.header-search * button,
+.header-search * input,
+.header-search * .btn,
+.header-search * .form-control {
+  background-color: inherit !important;
+  color: inherit !important;
+}
+
+/* Badges de notification et panier - VISIBILITÉ AMÉLIORÉE */
+.badge,
+.position-relative .badge {
+  background-color: #ff8c00 !important; /* Orange plus foncé pour meilleur contraste */
+  color: white !important; /* Texte blanc au lieu de noir pour plus de visibilité */
+  font-weight: bold !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important; /* Ombre pour renforcer le contraste */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+}
+
+/* Menu Toutes - FOND BLANC FORCÉ */
+.menu-toutes-drawer,
+.menu-toutes-drawer * {
+  background-color: white !important;
+  color: #232f3e !important;
+}
+
+.menu-toutes-content,
+.menu-toutes-content * {
+  background-color: white !important;
+  color: #232f3e !important;
+}
+
+.menu-toutes-header {
+  background-color: #232f3e !important;
+  color: white !important;
+}
+
+.menu-category-item,
+.menu-category-item * {
+  background-color: white !important;
+  color: #232f3e !important;
+}
+
+.menu-category-item:hover,
+.menu-category-item:hover * {
+  background-color: #f7f8f9 !important;
+  color: #232f3e !important;
+}
+
+/* SURCHARGE GLOBALE POUR TOUT LE MENU TOUTES */
+.menu-toutes-drawer *,
+.menu-toutes-content *,
+.menu-category-item * {
+  background-color: white !important;
+  color: #232f3e !important;
+}
+
+/* Dropdown de sélection de langue */
+.language-dropdown,
+.language-dropdown *,
+.dropdown-menu,
+.dropdown-item,
+.dropdown,
+.dropdown .position-absolute,
+.dropdown .position-absolute *,
+.dropdown-item,
+.btn-link,
+.position-relative .dropdown .position-absolute,
+.position-relative .dropdown .position-absolute * {
+  background-color: transparent !important;
+  color: black !important;
+}
+
+/* Forcer la transparence sur tous les éléments du dropdown de langue */
+.dropdown .position-absolute,
+.dropdown .position-absolute *,
+.dropdown-item,
+.dropdown-item * {
+  background-color: white !important;
+  color: black !important;
+} 
+
+/* EXCEPTION: Ne pas appliquer le fond sombre au panneau Panier */
+header .amazon-cart-sidebar,
+header .amazon-cart-sidebar *,
+.amazon-cart-sidebar,
+.amazon-cart-sidebar * {
+  background-color: #ffffff !important;
+}
+
+/* S’assurer que les cartes et boutons à l’intérieur restent blancs */
+header .amazon-cart-sidebar .card,
+header .amazon-cart-sidebar .card *,
+header .amazon-cart-sidebar .btn,
+header .amazon-cart-sidebar .btn *,
+header .amazon-cart-sidebar .sidebar-header,
+header .amazon-cart-sidebar .sidebar-content,
+header .amazon-cart-sidebar .sidebar-footer,
+header .amazon-cart-sidebar .shipping-info {
+  background-color: #ffffff !important;
+} 

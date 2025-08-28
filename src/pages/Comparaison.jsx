@@ -1,13 +1,11 @@
 import React from "react";
-import Header from "../components/Header";
+
 import Footer from "../components/Footer";
 import ProductComparison from "../components/ProductComparison";
 
 export default function Comparaison() {
   return (
     <>
-      <Header />
-      
       <div style={{ 
         background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
         minHeight: '100vh'

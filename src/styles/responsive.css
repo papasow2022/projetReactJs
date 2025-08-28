@@ -1,0 +1,147 @@
+/* Breakpoints standards */
+@media (max-width: 1200px) {
+  .container {
+    max-width: 960px;
+  }
+}
+
+@media (max-width: 992px) {
+  .container {
+    max-width: 720px;
+  }
+  
+  /* Navigation */
+  .nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  /* Cards */
+  .card {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    max-width: 540px;
+  }
+  
+  /* Header */
+  .header-search {
+    width: 100%;
+    margin: 0.5rem 0;
+  }
+  
+  /* Navigation */
+  .navbar-nav {
+    flex-direction: column;
+  }
+  
+  /* Grilles */
+  .row {
+    margin-right: -0.5rem;
+    margin-left: -0.5rem;
+  }
+  
+  .col, [class*='col-'] {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+  }
+  
+  /* Images */
+  .img-fluid {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Marges et padding */
+  .container {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+  
+  /* Typographie */
+  h1 {
+    font-size: 1.75rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+  }
+  
+  /* Boutons */
+  .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Forms */
+  .form-control {
+    font-size: 1rem;
+  }
+  
+  /* Tables */
+  .table-responsive {
+    margin-bottom: 1rem;
+    border: 0;
+  }
+  
+  /* Cards */
+  .card-deck {
+    display: block;
+    margin-right: 0;
+    margin-left: 0;
+  }
+  
+  .card-deck .card {
+    margin-right: 0;
+    margin-left: 0;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Utilitaires responsifs */
+.d-sm-none {
+  display: none !important;
+}
+
+@media (min-width: 576px) {
+  .d-sm-block {
+    display: block !important;
+  }
+}
+
+/* Flexbox responsif */
+@media (max-width: 768px) {
+  .flex-column-mobile {
+    flex-direction: column !important;
+  }
+  
+  .flex-center-mobile {
+    justify-content: center !important;
+    align-items: center !important;
+  }
+}
+
+/* Espacement responsif */
+@media (max-width: 576px) {
+  .m-sm-0 {
+    margin: 0 !important;
+  }
+  
+  .p-sm-0 {
+    padding: 0 !important;
+  }
+  
+  .mx-sm-auto {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}

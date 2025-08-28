@@ -47,6 +47,7 @@ const AmazonCartSidebar = () => {
         style={{ 
           width: '400px', 
           zIndex: 1050,
+          backgroundColor: '#ffffff',
           transform: showCartSidebar ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.3s ease-in-out'
         }}

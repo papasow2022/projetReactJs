@@ -1,0 +1,208 @@
+/* Styles pour le header Amazon-like actuel */
+
+/* Header principal */
+.header {
+  background-color: #131921;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+/* Barre supérieure */
+.header-top {
+  background-color: #131921;
+  padding: 12px 0;
+  border-bottom: 1px solid #3a4553;
+}
+
+/* Logo */
+.header-logo {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+}
+
+.header-logo:hover {
+  color: #febd69;
+}
+
+/* Localisation de livraison */
+.delivery-location {
+  color: white;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.delivery-location .location-text {
+  font-size: 0.7rem;
+  opacity: 0.9;
+  display: block;
+}
+
+.delivery-location .location-value {
+  font-weight: bold;
+  font-size: 0.9rem;
+  display: block;
+  margin-top: 2px;
+}
+
+/* Barre de recherche */
+.header-search {
+  display: flex;
+  align-items: center;
+  max-width: 600px;
+  width: 100%;
+}
+
+/* Bouton catégorie (Chaussures) */
+.search-cat-btn {
+  background-color: white;
+  color: #333;
+  border: 1px solid #d5d5d5;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.search-cat-btn:hover {
+  background-color: #f8f9fa;
+}
+
+/* Champ de recherche */
+.search-input {
+  background-color: white;
+  color: #111;
+  border: 1px solid #d5d5d5;
+  border-left: none;
+  border-right: none;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #febd69;
+}
+
+/* Bouton de recherche */
+.btn-warning {
+  background-color: #febd69;
+  border-color: #febd69;
+  color: #111;
+  padding: 10px 16px;
+  border-radius: 0 4px 4px 0;
+  font-weight: 500;
+}
+
+.btn-warning:hover {
+  background-color: #f3a847;
+  border-color: #f3a847;
+}
+
+/* Actions utilisateur */
+.header-link {
+  color: white;
+  text-decoration: none;
+  text-align: center;
+  min-width: 80px;
+}
+
+.header-link:hover {
+  color: #febd69;
+  text-decoration: none;
+}
+
+/* Sélecteur de langue */
+.dropdown .btn-link {
+  color: white;
+  text-decoration: none;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.dropdown .btn-link:hover {
+  color: #febd69;
+}
+
+/* Compte utilisateur */
+.header-link .small {
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.header-link div:not(.small) {
+  font-size: 0.8rem;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+/* Icônes */
+.bi {
+  font-size: 1.2rem;
+}
+
+/* Badge du panier */
+.badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+}
+
+/* Barre de navigation */
+.navbar {
+  background-color: #232f3e !important;
+  padding: 8px 0;
+}
+
+.navbar-nav .nav-link {
+  color: white !important;
+  font-size: 0.9rem;
+  padding: 8px 16px;
+}
+
+.navbar-nav .nav-link:hover {
+  color: #febd69 !important;
+}
+
+/* Dropdown du menu "Toutes" */
+.dropdown-menu {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.dropdown-item {
+  color: #333;
+  padding: 8px 16px;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+  color: #111;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-search {
+    max-width: 100%;
+  }
+  
+  .search-input {
+    min-width: 150px;
+  }
+  
+  .search-cat-btn {
+    min-width: 100px;
+  }
+} 

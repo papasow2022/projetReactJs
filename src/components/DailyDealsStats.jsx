@@ -1,7 +1,6 @@
 import React from 'react';
 import { useDailyDeals } from '../contexts/DailyDealsContext';
 import { useLanguage } from "../contexts/LanguageContext";
-import { debugStats, validateStats } from '../utils/debugStats';
 import './DailyDealsStats.css';
 
 const DailyDealsStats = ({ onFilterChange }) => {
@@ -12,14 +11,7 @@ const DailyDealsStats = ({ onFilterChange }) => {
   const outOfStock = getOutOfStockDeals();
   const expiredDeals = getExpiredDeals();
 
-  // Vérification que les stats sont bien calculées
-  debugStats(stats, 'DailyDealsStats');
-  
-  // Validation des statistiques
-  const errors = validateStats(stats);
-  if (errors.length > 0) {
-    console.error('Erreurs dans les statistiques:', errors);
-  }
+
 
   const statCards = [
     {

@@ -5,6 +5,7 @@
   height: 100vh;
   max-height: 100vh;
   overflow: hidden;
+  background: #ffffff;
 }
 
 .amazon-cart-sidebar .sidebar-header {
@@ -222,4 +223,18 @@
     transform: translateY(0);
     opacity: 1;
   }
+} 
+
+/* Forcer le fond blanc du panneau panier même à l'intérieur du header */
+header .amazon-cart-sidebar {
+  background: #ffffff !important;
+}
+header .amazon-cart-sidebar .sidebar-header,
+header .amazon-cart-sidebar .sidebar-content,
+header .amazon-cart-sidebar .sidebar-footer,
+header .amazon-cart-sidebar .cart-item-card,
+header .amazon-cart-sidebar .card,
+header .amazon-cart-sidebar .card-body,
+header .amazon-cart-sidebar .shipping-info {
+  background: #ffffff !important;
 } 

@@ -22,7 +22,6 @@ import {
 import { useCommandes } from '../contexts/CommandesContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useAuth } from '../hooks/useAuth.jsx';
-import { clearAllData } from '../utils/clearData.js';
 
 // Statuts Amazon-style avec descriptions automatiques
 const STATUTS_AMAZON = {
@@ -1203,7 +1202,6 @@ const CentreCommandes = () => {
               }}
               onClick={() => {
                 if (confirm('⚠️ ATTENTION ! Vous êtes sur le point de supprimer TOUTES les données.\n\nCette action est irréversible !\n\nÊtes-vous sûr de vouloir continuer ?')) {
-                  clearAllData();
                   setCommandes([]);
                   addNotification('Toutes les données ont été supprimées', 'success');
                   window.location.reload();

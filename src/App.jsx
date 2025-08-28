@@ -11,6 +11,7 @@ import Catalogue from "./pages/Catalogue";
 import OffreDuJour from "./pages/OffreDuJour";
 import OffresUrgentes from "./pages/OffresUrgentes";
 import Nouveautes from "./pages/Nouveautes";
+import Chaussures from "./pages/Chaussures";
 
 import ServiceClient from "./pages/ServiceClient";
 import CartesCadeaux from "./pages/CartesCadeaux";
@@ -51,9 +52,12 @@ import RetoursVendeur from './pages/RetoursVendeur';
 import HistoriqueEchanges from './pages/HistoriqueEchanges';
 import MesEchanges from './pages/MesEchanges';
 import ValidationEchange from './pages/ValidationEchange';
+import GestionCommandesVendeur from './pages/GestionCommandesVendeur';
+import AnalyticsVendeur from './pages/AnalyticsVendeur';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { DailyDealsProvider } from './contexts/DailyDealsContext';
 import { CartProvider } from './contexts/CartContext';
+import { VendorProvider } from './contexts/VendorContext';
 
 
 export default function App() {
@@ -65,6 +69,7 @@ export default function App() {
             <CartProvider>
               <CommandesProvider>
                 <ProductsProvider>
+                  <VendorProvider>
               <Router>
                 <Header />
                 <Routes>
@@ -75,6 +80,7 @@ export default function App() {
                   <Route path="/offres-du-jour" element={<OffreDuJour />} />
                   <Route path="/offres-urgentes" element={<OffresUrgentes />} />
                   <Route path="/nouveautes" element={<Nouveautes />} />
+                  <Route path="/chaussures" element={<Chaussures />} />
 
                   <Route path="/service-client" element={<ServiceClient />} />
                   <Route path="/connexion" element={<Connexion />} />
@@ -197,7 +203,7 @@ export default function App() {
                   } />
                   <Route path="/vendeur/commandes" element={
                     <VendorProtectedRoute>
-                      <CentreCommandes />
+                      <GestionCommandesVendeur />
                     </VendorProtectedRoute>
                   } />
                   <Route path="/vendeur/produits/ajouter" element={
@@ -212,7 +218,7 @@ export default function App() {
                   } />
                   <Route path="/vendeur/analytics" element={
                     <VendorProtectedRoute>
-                      <DashboardVendeur />
+                      <AnalyticsVendeur />
                     </VendorProtectedRoute>
                   } />
                   <Route path="/vendeur/parametres" element={
@@ -232,6 +238,7 @@ export default function App() {
                 {/* Exemple : <Route path="/categorie/femme" element={<Femme />} /> */}
                 </Routes>
               </Router>
+                  </VendorProvider>
             </ProductsProvider>
           </CommandesProvider>
         </CartProvider>

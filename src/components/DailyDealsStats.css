@@ -1,66 +1,52 @@
-/* Styles pour les statistiques des offres du jour */
+/* Styles pour le composant DailyDealsStats */
+
 .stats-card {
-  transition: transform 0.2s ease-in-out;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .stats-card:hover {
   transform: translateY(-2px);
-}
-
-.stats-value {
-  font-size: 2rem !important;
-  font-weight: bold !important;
-  color: #333 !important;
-  text-shadow: none !important;
-  line-height: 1.2 !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
 }
 
 .stats-icon {
-  font-size: 2.5rem !important;
-  opacity: 1 !important;
-  visibility: visible !important;
+  transition: all 0.3s ease;
 }
 
-/* Styles spécifiques pour l'icône de pourcentage */
-.bi-percent {
-  font-size: 2.5rem !important;
-  color: #dc3545 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
+.stats-card:hover .stats-icon {
+  transform: scale(1.1);
 }
 
-/* Styles pour les pourcentages dans les témoignages */
-.testimonial-stats .fw-bold {
-  font-size: 2.5rem !important;
-  color: #0d6efd !important;
-  font-weight: bold !important;
-  text-shadow: none !important;
-  line-height: 1.2 !important;
+.stats-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #232f3e;
+  margin: 0;
 }
 
-/* Assurer que les chiffres sont toujours visibles */
-.stats-card h3,
-.testimonial-stats .fw-bold {
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: block !important;
+.stats-card .card-body {
+  padding: 1.5rem;
 }
 
-/* Styles pour les badges de réduction */
-.badge {
-  font-size: 0.875rem !important;
-  font-weight: 600 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
+/* Responsive design */
+@media (max-width: 768px) {
+  .stats-value {
+    font-size: 1.5rem;
+  }
+  
+  .stats-card .card-body {
+    padding: 1rem;
+  }
 }
 
-/* Animation pour attirer l'attention sur les statistiques importantes */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+@media (max-width: 576px) {
+  .stats-value {
+    font-size: 1.25rem;
+  }
+  
+  .stats-icon {
+    font-size: 2rem !important;
+  }
 }
-
-.stats-card:hover .stats-value {
-  animation: pulse 0.6s ease-in-out;
-} 

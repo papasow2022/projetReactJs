@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Header from '../components/Header';
+
 import Footer from '../components/Footer';
 import { useLanguage } from "../contexts/LanguageContext";
 import '../amazon-like.css';
@@ -43,7 +43,6 @@ export default function CartesCadeaux() {
 
   return (
     <>
-      <Header />
       <div className="container-fluid py-4">
         <h1 className="mb-3 text-warning fw-bold" style={{fontSize: '2.2rem'}}>Cartes cadeaux</h1>
         {/* Offres spéciales */}

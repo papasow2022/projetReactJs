@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 import '../amazon-like.css';
 
@@ -154,7 +153,6 @@ export default function ServiceClient() {
 
   return (
     <>
-      <Header />
       <div className="container-fluid py-4" style={{ background: '#f8f9fa', minHeight: '100vh' }}>
         <div className="row">
           <div className="col-12">

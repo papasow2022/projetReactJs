@@ -32,7 +32,7 @@ const blocs = [
   "stylish_pants_for_every_occasion",
   "elegant_jackets_for_all_seasons",
   "accessories_that_complete_your_style",
-  "current_offers_and_new",
+  "Electronique",
   "produitsMontre" // Ajouté ici
 ];
 
@@ -48,18 +48,18 @@ const imageNames = [
 const allProducts = [
   // Chaussures Homme
   {
-    id: 'nike-air-max-270',
+    id: 'nike-air-max-270-blanc',
     name: 'Nike Air Max 270',
-    image: '/assets/categorie/arriver (1).png',
+    image: '/assets/categorie/chaussures/nike-air-max.png',
     price: 1200000,
     category: 'chaussures',
     subcategory: 'homme',
     nom: 'Homme',
   },
   {
-    id: 'adidas-ultraboost-22-homme',
-    name: 'Adidas Ultraboost 22',
-    image: '/assets/categorie/arriver (2).png',
+    id: 'nike-air-jordan-1-blanc',
+    name: 'Nike Air Jordan 1',
+    image: '/assets/categorie/chaussures/chaussure1.png',
     price: 1250000,
     category: 'chaussures',
     subcategory: 'homme',
@@ -67,60 +67,60 @@ const allProducts = [
   },
   // Chaussures Femme
   {
-    id: 'adidas-ultraboost-22',
-    name: 'Adidas Ultraboost 22',
-    image: '/assets/categorie/arriver (2).png',
+    id: 'nike-dunk-low-blanc',
+    name: 'Nike Dunk Low',
+    image: '/assets/categorie/chaussures/puma-rs-x.png',
     price: 1350000,
     category: 'chaussures',
-    subcategory: 'femme',
-    nom: 'Femme',
+    subcategory: 'homme',
+    nom: 'Homme',
   },
   {
-    id: 'nike-air-max-270-femme',
-    name: 'Nike Air Max 270',
-    image: '/assets/categorie/arriver (1).png',
+    id: 'nike-zoom-fly-4-blanc',
+    name: 'Nike Zoom Fly 4',
+    image: '/assets/categorie/chaussures/new-balance.png',
     price: 1150000,
     category: 'chaussures',
-    subcategory: 'femme',
-    nom: 'Femme',
+    subcategory: 'homme',
+    nom: 'Homme',
   },
   // Chaussures Enfant
   {
-    id: 'puma-rs-x',
+    id: 'puma-rs-x-blanc',
     name: 'Puma RS-X',
-    image: '/assets/categorie/arriver (3).png',
+    image: '/assets/categorie/chaussures/puma-rs-x.png',
     price: 950000,
     category: 'chaussures',
-    subcategory: 'enfant',
-    nom: 'Enfant',
+    subcategory: 'homme',
+    nom: 'Homme',
   },
   {
-    id: 'adidas-superstar-enfant',
-    name: 'Adidas Superstar',
-    image: '/assets/categorie/arriver (2).png',
+    id: 'balenciaga-defender-blanc',
+    name: 'Balenciaga Defender',
+    image: '/assets/categorie/chaussures/chaussure1.png',
     price: 850000,
     category: 'chaussures',
-    subcategory: 'enfant',
-    nom: 'Enfant',
+    subcategory: 'homme',
+    nom: 'Homme',
   },
   // Chaussures Bébé
   {
-    id: 'new-balance-574',
-    name: 'New Balance 574',
-    image: '/assets/categorie/arriver (4).png',
+    id: 'balenciaga-speed-blanc',
+    name: 'Balenciaga Speed',
+    image: '/assets/categorie/chaussures/new-balance.png',
     price: 800000,
     category: 'chaussures',
-    subcategory: 'bebe',
-    nom: 'Bébé',
+    subcategory: 'homme',
+    nom: 'Homme',
   },
   {
-    id: 'nike-force-1-bebe',
-    name: 'Nike Force 1',
-    image: '/assets/categorie/arriver (1).png',
+    id: 'balenciaga-track-blanc',
+    name: 'Balenciaga Track',
+    image: '/assets/categorie/chaussures/nike-air-max.png',
     price: 650000,
     category: 'chaussures',
-    subcategory: 'bebe',
-    nom: 'Bébé',
+    subcategory: 'homme',
+    nom: 'Homme',
   },
   // Ajoute ici les autres produits (pantalons, montres, etc.)
 ];
@@ -135,7 +135,7 @@ const produitsPantalons = [
   // Pantalons Homme
   {
     id: "levis-501-jeans",
-    image: "/assets/categorie/arriver (2).png",
+    image: "/assets/categorie/chaussures/nike-air-max.png",
     nom: "levis_501_jeans",
     prix: "89.99 €",
     category: "pants",
@@ -143,7 +143,7 @@ const produitsPantalons = [
   },
   {
     id: "calvin-klein-chinos",
-    image: "/assets/categorie/arriver (3).png",
+    image: "/assets/categorie/chaussures/chaussure1.png",
     nom: "calvin_klein_chinos",
     prix: "69.99 €",
     category: "pants",
@@ -152,7 +152,7 @@ const produitsPantalons = [
   // Pantalons Femme
   {
     id: "tommy-hilfiger-cargo",
-    image: "/assets/categorie/arriver (4).png",
+    image: "/assets/categorie/chaussures/puma-rs-x.png",
     nom: "tommy_hilfiger_cargo",
     prix: "79.99 €",
     category: "pants",
@@ -160,7 +160,7 @@ const produitsPantalons = [
   },
   {
     id: "gap-slim-fit",
-    image: "/assets/categorie/arriver (1).png",
+    image: "/assets/categorie/chaussures/new-balance.png",
     nom: "gap_slim_fit",
     prix: "59.99 €",
     category: "pants",
@@ -176,7 +176,7 @@ const produitsVestes = [
   // Vestes Homme
   {
     id: "north-face-jacket",
-    image: "/assets/categorie/arriver (3).png",
+    image: "/assets/categorie/vestes/veste1.png",
     nom: "north_face_jacket",
     prix: "199.99 €",
     category: "jackets",
@@ -184,7 +184,7 @@ const produitsVestes = [
   },
   {
     id: "columbia-omni-heat",
-    image: "/assets/categorie/arriver (4).png",
+    image: "/assets/categorie/vestes/veste1 - Copie.png",
     nom: "columbia_omni_heat",
     prix: "159.99 €",
     category: "jackets",
@@ -193,7 +193,7 @@ const produitsVestes = [
   // Vestes Femme
   {
     id: "patagonia-down",
-    image: "/assets/categorie/arriver (1).png",
+    image: "/assets/categorie/vestes/veste1 - Copie (2).png",
     nom: "patagonia_down_jacket",
     prix: "229.99 €",
     category: "jackets",
@@ -201,7 +201,7 @@ const produitsVestes = [
   },
   {
     id: "canada-goose-parka",
-    image: "/assets/categorie/arriver (2).png",
+    image: "/assets/categorie/vestes/veste1 - Copie (3).png",
     nom: "canada_goose_parka",
     prix: "899.99 €",
     category: "jackets",
@@ -216,28 +216,28 @@ const produitsVestes = [
 const produitsAccessoires = [
   {
     id: "louis-vuitton-bag",
-    image: "/assets/categorie/arriver (4).png",
+    image: "/assets/categorie/accessoires/arriver (2).png",
     nom: "louis_vuitton_bag",
     prix: "1299.99 €",
     category: "accessories"
   },
   {
     id: "gucci-belt",
-    image: "/assets/categorie/arriver (1).png",
+    image: "/assets/categorie/accessoires/arriver (2) - Copie.png",
     nom: "gucci_belt",
     prix: "299.99 €",
     category: "accessories"
   },
   {
     id: "ray-ban-sunglasses",
-    image: "/assets/categorie/arriver (2).png",
+    image: "/assets/categorie/accessoires/arriver (3) - Copie.png",
     nom: "ray_ban_sunglasses",
     prix: "159.99 €",
     category: "accessories"
   },
   {
     id: "rolex-watch",
-    image: "/assets/categorie/arriver (3).png",
+    image: "/assets/categorie/accessoires/arriver (4) - Copie.png",
     nom: "rolex_watch",
     prix: "8999.99 €",
     category: "accessories"
@@ -249,39 +249,39 @@ const produitsAccessoires = [
 const produitsMontre = [
   {
     id: "louis-vuitton-bag",
-    image: "/assets/categorie/arriver (4).png",
+    image: "/assets/categorie/montres/montre1.png",
     nom: "louis_vuitton_bag",
     prix: "1299.99 GNF",
     category: "Montre"
   },
   {
     id: "gucci-belt",
-    image: "/assets/categorie/arriver (1).png",
+    image: "/assets/categorie/montres/montre1 - Copie.png",
     nom: "gucci_belt",
     prix: "299.99 GNF",
     category: "Montre"
   },
   {
     id: "ray-ban-sunglasses",
-    image: "/assets/categorie/arriver (2).png",
+    image: "/assets/categorie/montres/montre1 - Copie (2).png",
     nom: "ray_ban_sunglasses",
     prix: "159.99 GNF",
     category: "Montre"
   },
   {
     id: "rolex-watch",
-    image: "/assets/categorie/arriver (3).png",
+    image: "/assets/categorie/montres/montre1 - Copie (3).png",
     nom: "rolex_watch",
     prix: "8999.99 GNF",
     category: "Montre"
   },
 ];
 
-// Produits pour le bloc "Offres du moment et Nouveautés"
+// Produits pour le bloc "Electronique"
 const produitsOffres = [
   {
     id: "nike-air-jordan",
-    image: "/assets/categorie/arriver (2).png",
+    image: "/assets/categorie/electronique/samsung-s23.png",
     nom: "nike_air_jordan",
     prix: "189.99 €",
     category: "shoes",
@@ -289,7 +289,7 @@ const produitsOffres = [
   },
   {
     id: "adidas-yeezy",
-    image: "/assets/categorie/arriver (3).png",
+    image: "/assets/categorie/electronique/macbook-air-m2.png",
     nom: "adidas_yeezy",
     prix: "249.99 €",
     category: "shoes",
@@ -297,7 +297,7 @@ const produitsOffres = [
   },
   {
     id: "supreme-hoodie",
-    image: "/assets/categorie/arriver (4).png",
+    image: "/assets/categorie/electronique/sony-headphones.png",
     nom: "supreme_hoodie",
     prix: "129.99 €",
     category: "clothing",
@@ -305,7 +305,7 @@ const produitsOffres = [
   },
   {
     id: "off-white-sneakers",
-    image: "/assets/categorie/arriver (1).png",
+    image: "/assets/categorie/electronique/samsung-s23.png",
     nom: "off_white_sneakers",
     prix: "899.99 €",
     category: "shoes",
@@ -381,6 +381,13 @@ export default function MainContent() {
     slidesToShow: 1,
     slidesToScroll: 1,
     pauseOnHover: false,
+    // Ajout des options d'accessibilité pour corriger les erreurs
+    accessibility: true,
+    focusOnSelect: false,
+    focusOnChange: false,
+    swipeToSlide: true,
+    // Désactiver le focus automatique qui cause les conflits
+    adaptiveHeight: false,
     responsive: [
       {
         breakpoint: 768,
@@ -406,6 +413,8 @@ export default function MainContent() {
           borderTop: "none",
           background: "none",
         }}
+        role="region"
+        aria-label="Carrousel de bannières promotionnelles"
       >
         <AmazonArrow
           direction="left"
@@ -434,6 +443,9 @@ export default function MainContent() {
                   padding: 0,
                   border: "none",
                 }}
+                role="tabpanel"
+                aria-label={`Slide ${idx + 1}: ${t(banner.title)}`}
+                tabIndex={-1}
               >
                 <div
                   className="text-center animate__animated animate__fadeIn"
@@ -486,11 +498,11 @@ export default function MainContent() {
           } else {
             filteredProducts = titre === "accessories_that_complete_your_style"
               ? produitsAccessoires
-              : titre === "current_offers_and_new"
+              : titre === "Electronique"
                 ? produitsOffres
                 : titre === "produitsMontre"
                   ? produitsMontre
-                  : produits;
+                  : [];
           }
           
           return (
@@ -539,14 +551,7 @@ export default function MainContent() {
                           objectFit: "contain",
                         }}
                       />
-                      {prod.discount && (
-                        <div 
-                          className="position-absolute top-0 start-0 bg-danger text-white px-1 py-0"
-                          style={{ fontSize: "10px", fontWeight: "bold" }}
-                        >
-                          {prod.discount}
-                        </div>
-                      )}
+
                     </div>
                     <div className="text-center" style={{ fontSize: 15 }}>
                       <div>{t(prod.nom) || prod.nom}</div>

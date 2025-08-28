@@ -1,23 +1,24 @@
-import React, { useState, useContext } from "react";
-import { useParams } from "react-router-dom";
-import { ProductsContext } from '../contexts/ProductsContext';
+import React, { useState, useContext, useMemo, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ProductsContext, useProducts } from '../contexts/ProductsContext';
 import Footer from "../components/Footer";
 
 import { useCart } from '../contexts/CartContext';
 
 
 const formatGNF = (amount) =>
-  amount
+  amount && !isNaN(amount)
     ? new Intl.NumberFormat("fr-FR").format(Math.round(amount)) + " GNF"
     : "0 GNF";
 
 const renderStars = (rating) => {
   const stars = [];
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 !== 0;
+  const safeRating = rating || 0;
+  const fullStars = Math.floor(safeRating);
+  const hasHalfStar = safeRating % 1 !== 0;
   for (let i = 0; i < fullStars; i++) stars.push(<i key={i} className="bi bi-star-fill text-warning"></i>);
   if (hasHalfStar) stars.push(<i key="half" className="bi bi-star-half text-warning"></i>);
-  const emptyStars = 5 - Math.ceil(rating);
+  const emptyStars = 5 - Math.ceil(safeRating);
   for (let i = 0; i < emptyStars; i++) stars.push(<i key={`empty-${i}`} className="bi bi-star text-warning"></i>);
   return stars;
 };
@@ -25,33 +26,193 @@ const renderStars = (rating) => {
 export default function ProductDetail() {
   const { productId } = useParams();
   const { products } = useContext(ProductsContext);
-  const product = products.find((p) => p.id === productId);
+  const { allProducts } = useProducts();
+  const product = products.find((p) => p.id === productId || p.slug === productId);
+  const navigate = useNavigate();
+  // Créer des variantes et tailles fallback (style Amazon) si le produit n'a pas de variantes
+  const createFallbackVariants = useMemo(() => {
+    if (!product) return [];
+    const baseImage = product.image || '/assets/chaussure/blanc1.jpg';
+    const euSizes = ['39', '40', '41', '42', '43', '44', '45'];
+    
+    // Essayer de trouver des images spécifiques à chaque couleur
+    const brandName = product.brand?.toLowerCase();
+    
+    // Images par couleur basées sur les données du contexte
+    const colorImages = {
+      'Blanc': baseImage,
+      'Noir': baseImage,
+      'Vert olive': baseImage
+    };
+    
+    // Si on a des produits dans allProducts, essayer de trouver les vraies images
+    if (allProducts && brandName) {
+      allProducts.forEach(p => {
+        const productBrand = p.brand?.toLowerCase();
+        const productImage = p.image?.toLowerCase();
+        
+        if (productBrand === brandName) {
+          if (productImage.includes('blanc')) {
+            colorImages['Blanc'] = p.image;
+          } else if (productImage.includes('noir') || productImage.includes('noire') || productImage.includes('guccinoire')) {
+            colorImages['Noir'] = p.image;
+          } else if (productImage.includes('vertolive') || productImage.includes('guccirose')) {
+            colorImages['Vert olive'] = p.image;
+          }
+        }
+      });
+    }
+    
+    return [
+      { color: 'Blanc', price: product.price || 0, sizes: euSizes, images: [colorImages['Blanc']] },
+      { color: 'Noir', price: (product.price || 0) + 10000, sizes: euSizes, images: [colorImages['Noir']] },
+      { color: 'Vert olive', price: (product.price || 0) + 20000, sizes: euSizes, images: [colorImages['Vert olive']] }
+    ];
+  }, [product, allProducts]);
 
-  if (!product) {
-    return (
-      <div
-        style={{
-          textAlign: "center",
-          marginTop: 80,
-          fontSize: 22,
-          color: "#dc3545",
-        }}
-      >
-        Produit non trouvé
-      </div>
-    );
-  }
+  // S'assurer que le produit a des variantes (fallback multi-couleurs + tailles EU sinon)
+  const productWithVariants = useMemo(() => {
+    if (!product) return null;
+    return {
+      ...product,
+      variants: product.variants && product.variants.length > 0 ? product.variants : createFallbackVariants
+    };
+  }, [product, createFallbackVariants]);
+
+  // Variantes sœurs par couleur (logique Amazon: même modèle, couleurs différentes)
+  const colorSiblings = useMemo(() => {
+    if (!product || !productWithVariants) return [];
+    
+    const deriveBaseSlug = (slugOrId) => {
+      const value = slugOrId || '';
+      if (!value.includes('-')) return value;
+      return value.replace(/-[^-]+$/, '');
+    };
+    
+    const prettifyColor = (token) => {
+      const map = {
+        blanc: 'Blanc',
+        blanche: 'Blanc',
+        noir: 'Noir',
+        noire: 'Noir',
+        vertolive: 'Vert olive',
+        rouge: 'Rouge',
+        bleu: 'Bleu',
+        rose: 'Rose',
+        guccinoire: 'Noir',
+        guccirose: 'Rose'
+      };
+      return map[token?.toLowerCase()] || (token ? token.charAt(0).toUpperCase() + token.slice(1) : '');
+    };
+    
+    const baseSlug = deriveBaseSlug(product.slug || product.id);
+    
+    // Trouver tous les produits similaires (même catégorie, même marque, même modèle de base)
+    const colorSiblingsRaw = products.filter(p => {
+      // Même catégorie et marque
+      if (p.category !== product.category || p.brand !== product.brand) return false;
+      
+      // Même modèle de base (slug commence par la même base)
+      if ((p.slug || p.id || '').startsWith(baseSlug + '-')) return true;
+      
+      // Ou produit identique (même ID)
+      if (p.id === product.id) return true;
+      
+      return false;
+    });
+    
+    return colorSiblingsRaw
+      .map(p => {
+        const slugVal = p.slug || p.id || '';
+        const colorToken = slugVal.includes('-') ? slugVal.split('-').pop() : '';
+        
+        // Récupérer toutes les images disponibles pour ce produit
+        let productImages = [];
+        if (p.image) productImages.push(p.image);
+        if (p.images && Array.isArray(p.images)) productImages.push(...p.images);
+        if (p.variants && Array.isArray(p.variants)) {
+          p.variants.forEach(v => {
+            if (v.images && Array.isArray(v.images)) {
+              productImages.push(...v.images);
+            }
+          });
+        }
+        
+        return {
+          id: p.id,
+          slug: slugVal,
+          colorToken,
+          colorLabel: prettifyColor(colorToken),
+          image: productImages[0] || p.image, // Image principale
+          allImages: productImages // Toutes les images disponibles
+        };
+      })
+      // Éviter doublons de couleur
+      .reduce((acc, item) => {
+        if (!acc.some(x => x.colorToken === item.colorToken)) acc.push(item);
+        return acc;
+      }, []);
+  }, [product, products, productWithVariants]);
+
+  // Regrouper toutes les images disponibles pour cette couleur (toutes variantes du produit courant)
+  const galleryImages = useMemo(() => {
+    if (!productWithVariants) return [];
+    
+    // Récupérer toutes les images disponibles pour la couleur sélectionnée
+    let allImages = [];
+    
+    // 1. Images du produit principal (si c'est la bonne couleur)
+    if (product?.image) {
+      allImages.push(product.image);
+    }
+    
+    // 2. Images de la variante sélectionnée (couleur actuelle) - utiliser une valeur par défaut
+    const currentVariant = productWithVariants?.variants?.[0];
+    if (currentVariant?.images && Array.isArray(currentVariant.images)) {
+      allImages.push(...currentVariant.images);
+    }
+    
+    // 3. Images supplémentaires du produit (si elles existent et correspondent à la couleur)
+    if (product?.images && Array.isArray(product.images)) {
+      // Filtrer les images par couleur si possible
+      allImages.push(...product.images);
+    }
+    
+    // 4. Images des variantes sœurs de la MÊME couleur (pas toutes les couleurs)
+    if (colorSiblings.length > 0) {
+      colorSiblings.forEach(sibling => {
+        // Vérifier si c'est la même couleur que celle sélectionnée
+        if (sibling.colorLabel === currentVariant?.color) {
+          if (sibling.allImages && Array.isArray(sibling.allImages)) {
+            allImages.push(...sibling.allImages);
+          } else if (sibling.image) {
+            allImages.push(sibling.image);
+          }
+        }
+      });
+    }
+    
+    // Supprimer les doublons et filtrer les images valides
+    return Array.from(new Set(allImages)).filter(Boolean);
+  }, [productWithVariants, product, colorSiblings]);
 
   // Gestion des variantes
-  const [selectedVariant, setSelectedVariant] = useState(product.variants[0]);
+  const [selectedVariant, setSelectedVariant] = useState(() => {
+    return productWithVariants?.variants?.[0] || null;
+  });
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(selectedVariant.sizes[0]);
+  const [selectedSize, setSelectedSize] = useState(() => {
+    return selectedVariant?.sizes?.[0] || 'M';
+  });
+  
+  // Produit sélectionné dans la galerie (pour changer les infos quand on clique sur une miniature)
+  const [selectedGalleryProduct, setSelectedGalleryProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   // Questions/Réponses mock
   const [questions, setQuestions] = useState([
     { user: 'Fatou B.', question: 'Est-ce que la chaussure taille grand ?', date: '2024-01-21', answer: 'Elle taille normalement, prenez votre pointure habituelle.' },
-    { user: 'Moussa K.', question: 'Est-elle imperméable ?', date: '2024-01-19', answer: 'Elle résiste à la pluie légère mais n’est pas 100% imperméable.' }
+    { user: 'Moussa K.', question: 'Est-elle imperméable ?', date: '2024-01-19', answer: 'Elle résiste à la pluie légère mais n\'est pas 100% imperméable.' }
   ]);
   const [newQuestion, setNewQuestion] = useState('');
 
@@ -81,34 +242,285 @@ export default function ProductDetail() {
 
   // Quand on change de variante, on remet l'image principale à la première
   const handleVariantClick = (variant) => {
+    console.log('Changement de variante vers:', variant.color);
     setSelectedVariant(variant);
     setSelectedImageIdx(0);
-    setSelectedSize(variant.sizes[0]);
+    setSelectedSize(variant?.sizes?.[0] || 'M');
+    setSelectedGalleryProduct(null); // Réinitialiser la sélection de la galerie
   };
 
   // Produits similaires (exemple simplifié)
-  const similarProducts = products.filter(p => p.id !== product.id && p.category === product.category);
+  const similarProducts = useMemo(() => {
+    if (!product) return [];
+    return products.filter(p => p.id !== product.id && p.category === product.category);
+  }, [product, products]);
+  
   // Bloc fréquemment achetés ensemble (exemple simplifié)
-  const frequentlyBoughtTogether = [product, ...similarProducts.slice(0, 2)];
+  const frequentlyBoughtTogether = useMemo(() => {
+    if (!product || !similarProducts) return [];
+    return [product, ...similarProducts.slice(0, 2)];
+  }, [product, similarProducts]);
+  
   // Sélection des produits à acheter ensemble
-  const [selectedTogether, setSelectedTogether] = useState(frequentlyBoughtTogether.map(p => p.id));
-  const handleToggleTogether = (id) => {
-    setSelectedTogether(sel => sel.includes(id) ? sel.filter(i => i !== id) : [...sel, id]);
+  const [selectedTogether, setSelectedTogether] = useState([]);
+  
+  // Utilitaire: dériver l'étiquette de couleur depuis le slug/id du produit
+  const deriveProductColorLabel = (p) => {
+    const value = (p?.slug || p?.id || '').toLowerCase();
+    const token = value.includes('-') ? value.split('-').pop() : value;
+    const map = {
+      blanc: 'Blanc',
+      blanche: 'Blanc',
+      noir: 'Noir',
+      noire: 'Noir',
+      vertolive: 'Vert olive',
+      guccinoire: 'Noir',
+      guccirose: 'Rose',
+    };
+    return map[token] || (token ? token.charAt(0).toUpperCase() + token.slice(1) : '');
   };
-  const togetherTotal = frequentlyBoughtTogether
+
+  // Mettre à jour les états quand les données changent
+  useEffect(() => {
+    if (productWithVariants?.variants?.length > 0) {
+      const productColor = deriveProductColorLabel(product);
+      const matchingVariant = productWithVariants.variants.find(v => v.color?.toLowerCase() === productColor.toLowerCase());
+      const nextVariant = matchingVariant || productWithVariants.variants[0];
+      setSelectedVariant(nextVariant);
+      setSelectedSize(nextVariant?.sizes?.[0] || 'M');
+      // Réinitialiser la sélection de la galerie quand on change de variante
+      setSelectedImageIdx(0);
+      setSelectedGalleryProduct(null);
+    }
+  }, [productWithVariants, product]);
+  
+  useEffect(() => {
+    if (frequentlyBoughtTogether.length > 0) {
+      setSelectedTogether(frequentlyBoughtTogether.map(p => p.id));
+    }
+  }, [frequentlyBoughtTogether]);
+  
+  // Réinitialiser la sélection quand on change de couleur
+  useEffect(() => {
+    setSelectedImageIdx(0);
+    setSelectedGalleryProduct(null);
+  }, [selectedVariant?.color]);
+  
+  // Fonction pour obtenir le nom du dossier de couleur selon la marque
+  const getColorFolderName = (brand, color) => {
+    const brandLower = brand?.toLowerCase();
+    const colorLower = color?.toLowerCase();
+    
+    // Mapping spécifique par marque
+    if (brandLower === 'nike') {
+      if (colorLower === 'blanc') return 'blanc';
+      if (colorLower === 'noir') return 'noire';
+      if (colorLower === 'vert olive') return 'vertolive';
+    } else if (brandLower === 'balenciaga') {
+      if (colorLower === 'blanc') return 'Blanc';
+      if (colorLower === 'noir') return 'Noire';
+      if (colorLower === 'vert olive') return 'Vertolive';
+    } else if (brandLower === 'puma') {
+      if (colorLower === 'blanc') return 'Blanc';
+      if (colorLower === 'noir') return 'Noir';
+      if (colorLower === 'vert olive') return 'Vertolive';
+    } else if (brandLower === 'gucci') {
+      if (colorLower === 'blanc') return 'Blanc';
+      if (colorLower === 'noir') return 'Guccinoire';
+      if (colorLower === 'vert olive') return 'Guccirose';
+    }
+    
+    // Fallback générique
+    return colorLower;
+  };
+
+  // Créer une galerie dynamique basée sur la variante sélectionnée
+  const dynamicGalleryImages = useMemo(() => {
+    if (!selectedVariant || !product) return [];
+    
+    let variantImages = [];
+    
+    // D'abord, utiliser les images de la variante sélectionnée si elles existent
+    if (selectedVariant.images && Array.isArray(selectedVariant.images)) {
+      variantImages.push(...selectedVariant.images);
+    }
+    
+    // Récupérer tous les produits de la même marque et couleur
+    const brandName = product.brand?.toLowerCase();
+    const colorName = selectedVariant.color?.toLowerCase();
+    const colorFolderName = getColorFolderName(product.brand, selectedVariant.color);
+    
+    console.log('Recherche d\'images pour:', { brandName, colorName, colorFolderName, productName: product.name });
+    
+    if (brandName && colorName && allProducts) {
+      // Trouver tous les produits de la même marque et couleur EXACTE
+      const sameColorProducts = allProducts.filter(p => {
+        const productBrand = p.brand?.toLowerCase();
+        const productImage = p.image?.toLowerCase();
+        
+        // Vérifier que c'est la même marque
+        if (productBrand !== brandName) return false;
+        
+        // Vérifier que l'image contient la couleur exacte selon les fichiers
+        if (colorName === 'blanc' && productImage.includes('blanc')) return true;
+        if (colorName === 'noir' && (productImage.includes('noir') || productImage.includes('noire') || productImage.includes('guccinoire'))) return true;
+        if (colorName === 'vert olive' && (productImage.includes('vertolive') || productImage.includes('guccirose'))) return true;
+        
+        return false;
+      });
+      
+      console.log('Produits trouvés pour cette couleur:', sameColorProducts.map(p => ({ name: p.name, image: p.image })));
+      
+      // Récupérer toutes les images de ces produits
+      sameColorProducts.forEach(p => {
+        if (p.image && !variantImages.includes(p.image)) {
+          variantImages.push(p.image);
+        }
+        // Ajouter aussi les images supplémentaires si elles existent
+        if (p.images && Array.isArray(p.images)) {
+          p.images.forEach(img => {
+            if (!variantImages.includes(img)) {
+              variantImages.push(img);
+            }
+          });
+        }
+      });
+      
+      // Ajouter l'image principale du produit actuel si elle correspond à la couleur
+      if (product.image && !variantImages.includes(product.image)) {
+        const productImage = product.image.toLowerCase();
+        const shouldInclude = 
+          (colorName === 'blanc' && productImage.includes('blanc')) ||
+          (colorName === 'noir' && (productImage.includes('noir') || productImage.includes('noire') || productImage.includes('guccinoire'))) ||
+          (colorName === 'vert olive' && (productImage.includes('vertolive') || productImage.includes('guccirose')));
+        
+        if (shouldInclude) {
+          variantImages.unshift(product.image);
+        }
+      }
+      
+      // Ajouter les images supplémentaires du produit actuel si elles correspondent à la couleur
+      if (product.images && Array.isArray(product.images)) {
+        product.images.forEach(img => {
+          if (!variantImages.includes(img)) {
+            const productImage = img.toLowerCase();
+            const shouldInclude = 
+              (colorName === 'blanc' && productImage.includes('blanc')) ||
+              (colorName === 'noir' && (productImage.includes('noir') || productImage.includes('noire') || productImage.includes('guccinoire'))) ||
+              (colorName === 'vert olive' && (productImage.includes('vertolive') || productImage.includes('guccirose')));
+            
+            if (shouldInclude) {
+              variantImages.push(img);
+            }
+          }
+        });
+      }
+    }
+    
+    console.log('Images trouvées pour la couleur', colorName, ':', variantImages);
+    
+    // Si aucune image trouvée, essayer de trouver des produits avec des noms de couleurs similaires
+    if (variantImages.length === 0 && brandName && colorName && allProducts) {
+      console.log('Aucune image trouvée pour la couleur:', colorName, 'marque:', brandName);
+      
+      // Debug: afficher tous les produits de cette marque
+      const allBrandProducts = allProducts.filter(p => p.brand?.toLowerCase() === brandName);
+      console.log('Produits de la marque:', allBrandProducts.map(p => ({ name: p.name, image: p.image })));
+    }
+    
+    return Array.from(new Set(variantImages)).filter(Boolean);
+  }, [selectedVariant, product, allProducts]);
+  
+  // Créer un mapping des images vers les produits
+  const imageToProductMapping = useMemo(() => {
+    if (!selectedVariant || !product) return {};
+    
+    const mapping = {};
+    const brandName = product.brand?.toLowerCase();
+    const colorName = selectedVariant.color?.toLowerCase();
+    
+    if (brandName && colorName && allProducts) {
+      // Trouver tous les produits de la même marque et couleur EXACTE
+      const sameColorProducts = allProducts.filter(p => {
+        const productBrand = p.brand?.toLowerCase();
+        const productImage = p.image?.toLowerCase();
+        
+        // Vérifier que c'est la même marque
+        if (productBrand !== brandName) return false;
+        
+        // Vérifier que l'image contient la couleur exacte selon les fichiers
+        if (colorName === 'blanc' && productImage.includes('blanc')) return true;
+        if (colorName === 'noir' && (productImage.includes('noir') || productImage.includes('noire'))) return true; // Fichiers "noir" et "noire"
+        if (colorName === 'vert olive' && productImage.includes('vertolive')) return true; // Fichiers "vertolive"
+        if (colorName === 'guccinoire' && productImage.includes('guccinoire')) return true;
+        if (colorName === 'guccirose' && productImage.includes('guccirose')) return true;
+        
+        return false;
+      });
+      
+      // Créer le mapping image -> produit
+      sameColorProducts.forEach(p => {
+        if (p.image) {
+          mapping[p.image] = p;
+        }
+      });
+      
+      // Ajouter le produit principal pour son image principale si elle correspond à la couleur
+      if (product.image) {
+        const productImage = product.image.toLowerCase();
+        const shouldInclude = 
+          (colorName === 'blanc' && productImage.includes('blanc')) ||
+          (colorName === 'noir' && (productImage.includes('noir') || productImage.includes('noire'))) || // Fichiers "noir" et "noire"
+          (colorName === 'vert olive' && productImage.includes('vertolive')) || // Fichiers "vertolive"
+          (colorName === 'guccinoire' && productImage.includes('guccinoire')) ||
+          (colorName === 'guccirose' && productImage.includes('guccirose'));
+        
+        if (shouldInclude) {
+          mapping[product.image] = product;
+        }
+      }
+    }
+    
+    return mapping;
+  }, [selectedVariant, product, allProducts]);
+  
+  // Mettre à jour la sélection du produit quand la galerie change
+  useEffect(() => {
+    // Si on a des images pour cette couleur, sélectionner le premier produit
+    if (dynamicGalleryImages.length > 0 && imageToProductMapping[dynamicGalleryImages[0]]) {
+      setSelectedGalleryProduct(imageToProductMapping[dynamicGalleryImages[0]]);
+    }
+  }, [dynamicGalleryImages, imageToProductMapping]);
+  
+  // Fonction pour gérer le clic sur une miniature
+  const handleThumbnailClick = (index) => {
+    setSelectedImageIdx(index);
+    
+    // Récupérer le produit correspondant à cette image
+    const selectedImage = dynamicGalleryImages[index];
+    if (selectedImage && imageToProductMapping[selectedImage]) {
+      setSelectedGalleryProduct(imageToProductMapping[selectedImage]);
+    }
+  };
+
+  // Calculer le total des produits achetés ensemble
+  const togetherTotal = useMemo(() => {
+    if (!frequentlyBoughtTogether || !selectedTogether) return 0;
+    return frequentlyBoughtTogether
     .filter(p => selectedTogether.includes(p.id))
-    .reduce((sum, p) => sum + (p.variants[0].price || 0), 0);
+    .reduce((sum, p) => sum + (p.variants ? p.variants[0].price : p.price || 0), 0);
+  }, [frequentlyBoughtTogether, selectedTogether]);
 
   // Ajouter au panier (produit principal ou groupé)
   const handleAddToCart = async (qty = 1) => {
     const newItem = {
-      id: product.id,
-      name: product.name,
-      price: selectedVariant.price,
+      id: product?.id,
+      name: product?.name,
+      price: selectedVariant?.price || 0,
       size: selectedSize,
-      color: selectedVariant.color,
+      color: selectedVariant?.color || 'Standard',
       qty,
-      image: selectedVariant.images[selectedImageIdx], // image de la variante sélectionnée
+      image: selectedVariant?.images?.[selectedImageIdx] || product?.image, // image de la variante sélectionnée
       gift: giftReceipt
     };
     
@@ -117,6 +529,7 @@ export default function ProductDetail() {
       setShowCartSidebar(true);
     }
   };
+  
   // Ajouter tous les produits sélectionnés ensemble
   const handleAddTogether = async () => {
     const items = frequentlyBoughtTogether.filter(p => selectedTogether.includes(p.id));
@@ -126,8 +539,8 @@ export default function ProductDetail() {
         id: item.id,
         name: item.name,
         price: item.variants ? item.variants[0].price : item.price,
-        size: item.variants ? item.variants[0].sizes[0] : undefined,
-        color: item.variants ? item.variants[0].color : undefined,
+        size: item.variants ? item.variants[0].sizes[0] : 'M',
+        color: item.variants ? item.variants[0].color : 'Standard',
         qty: 1,
         image: item.variants ? item.variants[0].images[0] : item.image,
         gift: false
@@ -138,49 +551,70 @@ export default function ProductDetail() {
     
     setShowCartSidebar(true);
   };
-  // Acheter maintenant (redirige vers la vraie page de paiement)
-  const handleBuyNow = () => {
+
+  // Acheter maintenant (redirection vers le panier)
+  const handleBuyNow = async () => {
+    const result = await handleAddToCart(quantity);
+    if (result) {
+      navigate('/cart');
+    }
+  };
+
     // Créer un objet représentant le produit à acheter immédiatement
     const buyNowItem = {
-      id: product.id,
-      name: product.name,
-      price: selectedVariant.price,
+    id: product?.id,
+    name: product?.name,
+    price: selectedVariant?.price || 0,
       size: selectedSize,
-      color: selectedVariant.color,
+    color: selectedVariant?.color || 'Standard',
       qty: quantity,
-      image: selectedVariant.images[selectedImageIdx],
+    image: selectedVariant?.images?.[selectedImageIdx] || product?.image,
       gift: giftReceipt
-    };
-    // Stocker dans le localStorage sous une clé spéciale
-    localStorage.setItem('buyNow', JSON.stringify([buyNowItem]));
-    // Rediriger vers la page de paiement
-    window.location.href = '/paiement';
   };
 
   // Avis clients mock
   const avisClients = [
     {
-      user: 'Sophie L.',
+      user: 'Mariama D.',
       rating: 5,
       date: '2024-01-20',
       text: 'Superbes chaussures, très confortables et stylées !',
-      photos: [selectedVariant.images[0]]
+      photos: [selectedVariant?.images?.[0] || product?.image]
     },
     {
-      user: 'Amadou D.',
+      user: 'Ibrahim K.',
       rating: 4,
       date: '2024-01-18',
       text: 'Bonne qualité, taille un peu grand. Livraison rapide.',
-      photos: [selectedVariant.images[1] || selectedVariant.images[0]]
+      photos: [selectedVariant?.images?.[1] || selectedVariant?.images?.[0] || product?.image]
     }
   ];
-  // Pagination avis clients
+
+  // Pagination des avis
   const [avisPage, setAvisPage] = useState(1);
-  const avisParPage = 2;
-  const avisTotalPages = Math.ceil(avisClients.length / avisParPage);
+  const avisParPage = 5;
   const avisAffiches = avisClients.slice((avisPage - 1) * avisParPage, avisPage * avisParPage);
+  const avisTotalPages = Math.ceil(avisClients.length / avisParPage);
 
 
+  // Vérification du produit après tous les hooks
+  if (!product || !productWithVariants) {
+    return (
+      <div
+        style={{
+          textAlign: "center",
+          marginTop: 80,
+          fontSize: 22,
+          color: "#dc3545",
+        }}
+      >
+        Produit non trouvé
+      </div>
+    );
+  }
+
+  // Produit à afficher (soit le produit sélectionné dans la galerie, soit le produit principal)
+  const displayProduct = selectedGalleryProduct || product;
 
   return (
     <>
@@ -191,14 +625,14 @@ export default function ProductDetail() {
             <div className="d-flex flex-row flex-md-column gap-2 align-items-start">
               {/* Galerie verticale : images de la couleur sélectionnée */}
               <div className="d-flex flex-md-column flex-row gap-2 align-items-center">
-                {selectedVariant.images.map((img, idx) => (
+                {dynamicGalleryImages.map((img, idx) => (
                   <img
                     key={img}
                     src={img}
-                    alt={selectedVariant.color + ' ' + (idx + 1)}
+                    alt={(selectedVariant?.color || product?.name) + ' ' + (idx + 1)}
                     className={`rounded border ${selectedImageIdx === idx ? 'border-primary' : 'border-light'}`}
                     style={{ width: 56, height: 56, objectFit: 'cover', cursor: 'pointer', background: '#fff' }}
-                    onClick={() => setSelectedImageIdx(idx)}
+                    onClick={() => handleThumbnailClick(idx)}
                     onError={(e) => {
                       e.target.src = '/assets/chaussure/blanc1.jpg'; // Image de fallback
                     }}
@@ -208,8 +642,8 @@ export default function ProductDetail() {
               {/* Image principale */}
               <div style={{ flex: 1, textAlign: 'center', position: 'relative', minWidth: 0 }}>
                 <img
-                  src={selectedVariant.images[selectedImageIdx]}
-                  alt={product.name}
+                  src={dynamicGalleryImages[selectedImageIdx] || dynamicGalleryImages[0] || product?.image}
+                  alt={displayProduct?.name || product?.name}
                   className="img-fluid mb-2"
                   style={{ maxHeight: 340, objectFit: 'contain', borderRadius: 8, background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
                   onError={(e) => {
@@ -221,61 +655,94 @@ export default function ProductDetail() {
           </div>
           {/* Infos produit au centre */}
           <div className="col-md-5">
-            <h2 className="fw-bold mb-2" style={{ color: '#2563eb' }}>{product.name}</h2>
+            <h2 className="fw-bold mb-2" style={{ color: '#2563eb' }}>{displayProduct?.name}</h2>
             <div className="mb-2 d-flex align-items-center" style={{ fontSize: 15 }}>
-              {renderStars(product.rating)}
-              <span className="ms-2 text-primary fw-bold">{product.rating}</span>
-              <span className="ms-2 text-muted">({product.reviewCount} avis)</span>
+              {renderStars(displayProduct?.rating || 0)}
+              <span className="ms-2 text-primary fw-bold">{displayProduct?.rating || 0}</span>
+              <span className="ms-2 text-muted">({displayProduct?.reviewCount || 0} avis)</span>
             </div>
             <div className="mb-3">
-              <span className="fw-bold text-danger" style={{ fontSize: 28 }}>{formatGNF(selectedVariant.price)}</span>
-              {product.originalPrice && (
-                <span className="text-muted text-decoration-line-through ms-2" style={{ fontSize: 18 }}>{formatGNF(product.originalPrice)}</span>
+              <span className="fw-bold text-danger" style={{ fontSize: 28 }}>{formatGNF(displayProduct?.price || selectedVariant?.price || 0)}</span>
+              {displayProduct?.originalPrice && (
+                <span className="text-muted text-decoration-line-through ms-2" style={{ fontSize: 18 }}>{formatGNF(displayProduct.originalPrice)}</span>
               )}
-              {product.discount > 0 && (
-                <span className="badge bg-success ms-2">-{product.discount}%</span>
+              {displayProduct?.discount && displayProduct.discount > 0 && (
+                <span className="badge bg-success ms-2">-{displayProduct.discount}%</span>
               )}
             </div>
             <div className="mb-3">
               <span className="badge bg-info me-2">Homme</span>
-              <span className="badge bg-success">{product.category}</span>
+              <span className="badge bg-success">{displayProduct?.category || 'Général'}</span>
             </div>
             <div className="mb-3">
-              <span className="text-success fw-bold">En stock</span>
-              <span className="ms-3 text-info">Livraison gratuite demain</span>
+              <span className="text-success fw-bold">{displayProduct?.availability || 'En stock'}</span>
+              <span className="ms-3 text-info">{displayProduct?.deliveryDate || 'Livraison gratuite demain'}</span>
             </div>
             {/* Sélecteurs couleur/taille/quantité */}
-            <div className="mb-2">
-              <label className="form-label fw-bold mb-1">Couleur :</label>
+            {/* Pastilles de couleur (variantes) */}
+            <div className="mb-3">
+              <label className="form-label fw-bold mb-2">Couleur :</label>
               <div className="d-flex gap-2 flex-wrap">
-                {product.variants.map((variant, idx) => (
+                {colorSiblings.length > 0 ? (
+                  colorSiblings.map((s) => (
+                    <div
+                      key={s.slug}
+                      className={`border rounded p-1 ${ (product?.id === s.id) ? 'border-primary border-3' : 'border-light'}`}
+                      style={{ cursor: 'pointer', minWidth: 32 }}
+                      title={s.colorLabel}
+                      onClick={() => { if (product?.id !== s.id) navigate(`/product/${s.id}`); }}
+                    >
+                      <img
+                        src={s.image}
+                        alt={s.colorLabel}
+                        className="rounded"
+                        style={{ width: 32, height: 32, objectFit: 'cover' }}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  productWithVariants?.variants?.map((variant) => (
                   <div
                     key={variant.color}
-                    className={`border rounded p-1 ${selectedVariant.color === variant.color ? 'border-primary' : 'border-light'}`}
+                      className={`border rounded p-1 ${selectedVariant?.color === variant.color ? 'border-primary border-3' : 'border-light'}`}
                     style={{ cursor: 'pointer', minWidth: 32 }}
                     onClick={() => handleVariantClick(variant)}
-                  >
-                    <img 
-                      src={variant.images[0]} 
-                      alt={variant.color} 
-                      style={{ width: 28, height: 28, objectFit: 'cover', borderRadius: 4 }}
-                      onError={(e) => {
-                        e.target.src = '/assets/chaussure/blanc1.jpg'; // Image de fallback
-                      }}
-                    />
+                      title={variant.color}
+                    >
+                      <div 
+                        className="rounded d-flex align-items-center justify-content-center"
+                        style={{ 
+                          width: 32, 
+                          height: 32, 
+                          backgroundColor: variant.color === 'Blanc' ? '#ffffff' : 
+                                         variant.color === 'Noir' ? '#000000' : 
+                                         variant.color === 'Vert olive' ? '#6b8e23' : '#cccccc',
+                          border: variant.color === 'Blanc' ? '1px solid #ddd' : 'none'
+                        }}
+                      >
+                        <span style={{ 
+                          fontSize: '10px', 
+                          color: variant.color === 'Blanc' ? '#000' : '#fff',
+                          fontWeight: 'bold'
+                        }}>
+                          {variant.color.charAt(0)}
+                        </span>
+                      </div>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
             <div className="mb-2">
               <label className="form-label fw-bold mb-1">Taille :</label>
               <div className="d-flex gap-2 flex-wrap">
-                {selectedVariant.sizes.map((size) => (
+                {selectedVariant?.sizes.map((size) => (
                   <button
                     key={size}
                     className={`btn btn-sm ${selectedSize === size ? 'btn-primary' : 'btn-outline-secondary'}`}
                     onClick={() => setSelectedSize(size)}
-                    style={{ minWidth: 40, fontSize: 13, fontWeight: 500 }}
+                    style={{ minWidth: 46, fontSize: 13, fontWeight: 600 }}
+                    title={`Taille ${size}`}
                   >
                     {size}
                   </button>
@@ -292,7 +759,7 @@ export default function ProductDetail() {
             </div>
             <div className="mt-4">
               <h5>Description du produit</h5>
-              <p>{product.description}</p>
+              <p>{displayProduct?.description || 'Aucune description disponible pour ce produit.'}</p>
             </div>
           </div>
           {/* Colonne droite Amazon-like */}
@@ -307,24 +774,24 @@ export default function ProductDetail() {
             </div>
             <div className="card p-3 shadow-sm" style={{ borderRadius: 10, maxWidth: 340 }}>
               <div className="mb-2">
-                <span className="fw-bold text-danger" style={{ fontSize: 26 }}>{formatGNF(selectedVariant.price)}</span>
-                {product.originalPrice && (
-                  <span className="text-muted text-decoration-line-through ms-2" style={{ fontSize: 16 }}>{formatGNF(product.originalPrice)}</span>
+                <span className="fw-bold text-danger" style={{ fontSize: 26 }}>{formatGNF(displayProduct?.price || selectedVariant?.price || 0)}</span>
+                {displayProduct?.originalPrice && (
+                  <span className="text-muted text-decoration-line-through ms-2" style={{ fontSize: 16 }}>{formatGNF(displayProduct.originalPrice)}</span>
                 )}
-                {product.discount > 0 && (
-                  <span className="badge bg-success ms-2">-{product.discount}%</span>
+                {displayProduct?.discount && displayProduct.discount > 0 && (
+                  <span className="badge bg-success ms-2">-{displayProduct.discount}%</span>
                 )}
               </div>
               <div className="mb-2" style={{ fontSize: 15 }}>
-                <span className="text-success fw-bold">En stock</span>
+                <span className="text-success fw-bold">{displayProduct?.availability || 'En stock'}</span>
               </div>
               <div className="mb-2" style={{ fontSize: 15 }}>
-                <span>Livraison : <b>Gratuite demain</b></span>
+                <span>Livraison : <b>{displayProduct?.deliveryDate || 'Gratuite demain'}</b></span>
               </div>
-              <div className="mb-2" style={{ fontSize: 15 }}>
-                <span>Vendu par <b>Boutique</b></span>
-                <span className="badge bg-primary ms-2">Vendeur vérifié</span>
-              </div>
+                          <div className="mb-2" style={{ fontSize: 15 }}>
+              <span>Vendu par <b>{displayProduct?.brand || 'Boutique'}</b></span>
+              <span className="badge bg-primary ms-2">Vendeur vérifié</span>
+            </div>
               <div className="mb-2">
                 <label className="form-label fw-bold mb-1">Quantité :</label>
                 <select className="form-select d-inline-block ms-2" style={{ width: 80, display: 'inline-block' }} value={quantity} onChange={e => setQuantity(Number(e.target.value))}>
@@ -348,7 +815,7 @@ export default function ProductDetail() {
                   </div>
                 )}
               </div>
-              <button className="btn btn-outline-secondary w-100 mt-2" onClick={() => addToWishlist(product)}>Ajouter à la liste</button>
+              <button className="btn btn-outline-secondary w-100 mt-2" onClick={() => addToWishlist(displayProduct)}>Ajouter à la liste</button>
             </div>
           </div>
         </div>
@@ -372,7 +839,7 @@ export default function ProductDetail() {
             {activeTab === 'description' && (
               <div>
                 <h4>Description détaillée</h4>
-                <p>{product.description}</p>
+                <p>{displayProduct?.description || 'Aucune description disponible pour ce produit.'}</p>
                 <ul>
                   <li>Technologie Air Max pour un amorti optimal</li>
                   <li>Semelle extérieure en caoutchouc durable</li>
@@ -386,9 +853,9 @@ export default function ProductDetail() {
               <div>
                 <h4>Caractéristiques techniques</h4>
                 <ul>
-                  <li>Catégorie : {product.category}</li>
-                  <li>Prix : {formatGNF(selectedVariant.price)}</li>
-                  <li>Note : {product.rating} / 5</li>
+                  <li>Catégorie : {displayProduct?.category || 'Non spécifiée'}</li>
+                  <li>Prix : {formatGNF(displayProduct?.price || selectedVariant?.price || 0)}</li>
+                  <li>Note : {displayProduct?.rating || 0} / 5</li>
                 </ul>
               </div>
             )}
@@ -456,6 +923,9 @@ export default function ProductDetail() {
             )}
           </div>
         </div>
+
+        {/* Conseil de pointure affiché ci-dessus, pas de modale nécessaire */}
+
         {/* Carrousel produits similaires */}
         {similarProducts.length > 0 && (
           <div className="mt-5">
@@ -463,10 +933,10 @@ export default function ProductDetail() {
             <div className="d-flex overflow-auto gap-3 pb-2">
               {similarProducts.map((prod, idx) => (
                 <div key={prod.id} className="card border-0 shadow-sm" style={{ minWidth: 180, maxWidth: 200 }}>
-                  <img src={prod.variants[0].images[0]} alt={prod.name} style={{ height: 90, objectFit: 'contain', marginTop: 10 }} />
+                  <img src={prod.variants ? prod.variants[0].images[0] : prod.image} alt={prod.name} style={{ height: 90, objectFit: 'contain', marginTop: 10 }} />
                   <div className="card-body p-2">
                     <div className="fw-bold" style={{ fontSize: 15 }}>{prod.name}</div>
-                    <div className="text-danger fw-bold mb-2">{formatGNF(prod.variants[0].price)}</div>
+                    <div className="text-danger fw-bold mb-2">{formatGNF(prod.variants ? prod.variants[0].price : prod.price)}</div>
                   </div>
                 </div>
               ))}
@@ -476,13 +946,13 @@ export default function ProductDetail() {
         {/* Bloc fréquemment achetés ensemble amélioré */}
         <div className="bg-white rounded shadow-sm p-3 my-4">
           <h5 className="fw-bold mb-3" style={{ color: '#2563eb' }}><i className="bi bi-plus-circle me-2 text-primary"></i>Fréquemment achetés ensemble</h5>
-          <div className="d-flex align-items-center gap-3 flex-wrap">
+                      <div className="d-flex align-items-center gap-3 flex-wrap">
             {frequentlyBoughtTogether.map((prod, idx) => (
               <div key={prod.id} className="card border-0 shadow-sm text-center p-2" style={{ minWidth: 140, maxWidth: 160, borderColor: '#2563eb' }}>
                 <input type="checkbox" checked={selectedTogether.includes(prod.id)} onChange={() => handleToggleTogether(prod.id)} />
-                <img src={prod.variants[0].images[0]} alt={prod.name} style={{ height: 70, objectFit: 'contain', marginBottom: 8 }} />
+                <img src={prod.variants ? prod.variants[0].images[0] : prod.image} alt={prod.name} style={{ height: 70, objectFit: 'contain', marginBottom: 8 }} />
                 <div className="fw-bold mb-1" style={{ fontSize: 14 }}>{prod.name}</div>
-                <div className="text-danger fw-bold mb-1">{formatGNF(prod.variants[0].price)}</div>
+                <div className="text-danger fw-bold mb-1">{formatGNF(prod.variants ? prod.variants[0].price : prod.price)}</div>
               </div>
             ))}
             <div className="fw-bold ms-3" style={{ fontSize: 18, color: '#2563eb' }}>Total : {formatGNF(togetherTotal)}</div>
@@ -546,6 +1016,6 @@ export default function ProductDetail() {
       </div>
 
       <Footer />
-    </>
+    </>   
   );
 } 

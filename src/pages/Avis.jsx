@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from "../contexts/LanguageContext";
-import Header from '../components/Header';
+
 import Footer from '../components/Footer';
 import '../amazon-like.css';
 import { useCommandes } from "../contexts/CommandesContext";
@@ -71,7 +71,6 @@ export default function Avis() {
 
   return (
     <>
-      <Header />
       <div className="container-fluid py-4">
         <h1 className="mb-4 text-warning fw-bold" style={{fontSize: '2.2rem'}}>
           <i className="bi bi-star-fill me-3"></i>
