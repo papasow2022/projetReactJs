@@ -75,6 +75,81 @@ const Chaussures = () => {
   
   const allProducts = contextProducts.filter(p => p.category === 'Chaussures');
 
+  // Liste exhaustive des images disponibles pour FEMME sous public/chaussures/femme
+  const femmeImagePaths = [
+    // CritianlouboutinNoire
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg`,
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Noir 2.jpeg`,
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Noir 3.jpeg`,
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Noir 4.jpeg`,
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Noir 5.jpeg`,
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Noir.jpeg`,
+    // Gucci
+    `/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® International.jpeg`,
+    `/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® US.jpeg`,
+    `/chaussures/femme/Gucci/Gucci Leather Sandals - Noir.jpeg`,
+    `/chaussures/femme/Gucci/Gucci Sandals - Noir 3.jpeg`,
+    `/chaussures/femme/Gucci/Women's Designer Luxury High Heels Pumps _ GUCCI® US.jpeg`,
+    // Jonak
+    `/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg`,
+    `/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg`,
+    `/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg`,
+    `/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg`,
+    // Mango
+    `/chaussures/femme/Mango/MANGO Ankle Strap Sandal in Nude at Nordstrom, Size 6_5Us.jpeg`,
+    `/chaussures/femme/Mango/Mango Strappy Sandals - Nude 2.jpeg`,
+    `/chaussures/femme/Mango/Mango Strappy Sandals - Nude 3.jpeg`,
+    `/chaussures/femme/Mango/Mango Strappy Sandals - Nude.jpeg`,
+    // Minelli
+    `/chaussures/femme/Minelli/Minelli Escarpins - Noir 2.jpeg`,
+    `/chaussures/femme/Minelli/Minelli Escarpins - Noir 3.jpeg`,
+    `/chaussures/femme/Minelli/Minelli Escarpins - Noir.jpeg`,
+    `/chaussures/femme/Minelli/Minelli Tulin Bottines Talon - Noir.jpeg`,
+    // Prada Beige
+    `/chaussures/femme/PradaBeige/Prada Ankle Strap Platform Sandals - Beige.jpeg`,
+    `/chaussures/femme/PradaBeige/Prada Gold Platform Sandals - Beige.jpeg`,
+    `/chaussures/femme/PradaBeige/Prada Leather Platform Sandals - Beige.jpeg`,
+    `/chaussures/femme/PradaBeige/Prada Metallic Platform Sandals - Beige.jpeg`,
+    `/chaussures/femme/PradaBeige/Prada Paige Platform Sandals - Beige.jpeg`,
+    `/chaussures/femme/PradaBeige/Prada Sandales - Beige.jpeg`,
+    `/chaussures/femme/PradaBeige/Prada Suede Sandals - Beige.jpeg`,
+    // Zara noire
+    `/chaussures/femme/Zaranoire/Zara Ankle Strap Heels - Noir.jpeg`,
+    `/chaussures/femme/Zaranoire/Zara Classic Heels - Noir.jpeg`,
+    `/chaussures/femme/Zaranoire/Zara High Heel Platform Slingback Shoes - Noir.jpeg`,
+    `/chaussures/femme/Zaranoire/Zara Pointed Toe Heels - Noir.jpeg`,
+    `/chaussures/femme/Zaranoire/Zara Rhinestone Suede Heels - Noir.jpeg`,
+    `/chaussures/femme/Zaranoire/Zara Strappy Heels - Noir.jpeg`,
+  ];
+
+  // Helpers pour extraire marque/dossier et nom de fichier depuis le chemin
+  const normalizeBrandFromFolder = (folderName) => {
+    const map = {
+      'Zaranoire': 'Zara',
+      'CritianlouboutinNoire': 'Christian Louboutin',
+      'PradaBeige': 'Prada',
+      'Minelli': 'Minelli',
+      'Mango': 'Mango',
+      'Jonak': 'Jonak',
+      'Gucci': 'Gucci'
+    };
+    return map[folderName] || folderName;
+  };
+
+  const buildFemmeImagesMeta = (paths) => {
+    return paths.map((p) => {
+      // p = /chaussures/femme/<folder>/<file>
+      const parts = p.split('/').filter(Boolean);
+      const folder = parts[3] || '';
+      const fileWithExt = parts[4] || '';
+      const fileName = fileWithExt.replace(/\.[^/.]+$/, '');
+      const brand = normalizeBrandFromFolder(folder);
+      return { src: p, folder, brand, fileName };
+    });
+  };
+
+  const femmeImages = buildFemmeImagesMeta(femmeImagePaths);
+
   const handleSubcategoryClick = (subcategoryId) => {
     setSelectedSubcategory(subcategoryId);
     // Ici vous pourriez naviguer vers une page de sous-catégorie
@@ -394,97 +469,142 @@ const Chaussures = () => {
                          : `Chaussures ${activeFilters.marques[0]}`
                      }
                    </h2>
-                   <p style={{ fontSize: '1rem', color: '#666', marginBottom: '20px' }}>
-                     {filteredProducts.length} produits trouvés
-                   </p>
-                 </div>
-
-                 {/* Grille de produits filtrés */}
-                 <div className="filtered-products-grid">
-                   {filteredProducts.length === 0 ? (
-                     <div className="text-center py-5" style={{ color: '#666' }}>
-                       <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: 8 }}>Aucun produit trouvé</div>
-                       <div style={{ fontSize: '0.95rem' }}>Aucun produit ne correspond à cette sélection.</div>
-                     </div>
-                   ) : (
-                    <div className="row g-4">
-                      {filteredProducts.map(product => (
-                        <div key={product.id} className="col-md-6 col-lg-4">
-                          <div className="product-card" 
-                            onClick={() => handleProductClick(product)}
-                            style={{
-                            backgroundColor: 'white',
-                            border: '1px solid #e9ecef',
-                            borderRadius: '8px',
-                            padding: '20px',
-                            height: '100%',
-                              transition: 'all 0.2s ease',
-                              cursor: 'pointer'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.transform = 'translateY(-2px)';
-                            e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = 'none';
-                          }}>
-                            <div className="text-center mb-3">
-                              <img 
-                                src={product.image} 
-                                alt={product.name}
-                                style={{
-                                  width: '100%',
-                                  height: '250px',
-                                  objectFit: 'contain',
-                                  borderRadius: '8px',
-                                  backgroundColor: '#f8f9fa',
-                                  border: '1px solid #e9ecef'
-                                }}
-                                onError={(e) => {
-                                  // Fallback si l'image n'existe pas
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling.style.display = 'flex';
-                                }}
-                              />
-                              <div style={{
-                                width: '100%',
-                                height: '250px',
-                                backgroundColor: '#f8f9fa',
-                                borderRadius: '8px',
-                                display: 'none',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: '#666',
-                                fontSize: '1.2rem',
-                                fontWeight: '600',
-                                border: '1px solid #e9ecef'
-                              }}>
-                                {product.brand}
-                              </div>
-                            </div>
-                            <h5 style={{ fontSize: '1.1rem', color: '#232f3e', marginBottom: '10px', textAlign: 'center' }}>
-                              {product.name}
-                            </h5>
-                            <div className="text-center mb-3">
-                              <span style={{ fontSize: '0.9rem', color: '#666' }}>
-                                {subcategories.find(s => s.id === product.subcategory)?.label}
-                              </span>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center">
-                              <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
-                                {product.price.toLocaleString()} GNF
-                              </span>
-                              <span style={{ fontSize: '0.9rem', color: '#666' }}>
-                                ★ {product.rating} ({product.reviews})
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                   {/* Compteur affiché uniquement pour la liste produits; la galerie Femme n'utilise pas le compteur */}
+                   {!(activeFilters.genre[0] === 'femme' && activeFilters.marques.length === 0) && (
+                     <p style={{ fontSize: '1rem', color: '#666', marginBottom: '20px' }}>
+                       {filteredProducts.length} produits trouvés
+                     </p>
                    )}
                  </div>
+
+                 {/* Si FEMME sans marque sélectionnée: afficher la galerie d'images */}
+                 {activeFilters.genre[0] === 'femme' && activeFilters.marques.length === 0 ? (
+                   <div className="row g-3">
+                     {femmeImages.map((img, idx) => (
+                       <div key={`${img.src}-${idx}`} className="col-6 col-md-4 col-lg-3">
+                         <div style={{
+                           backgroundColor: 'white',
+                           border: '1px solid #e9ecef',
+                           borderRadius: '8px',
+                           padding: '10px',
+                           height: '100%'
+                         }}
+                         onClick={() => handleBrandFilter(img.brand)}
+                         role="button"
+                         title={`Filtrer par ${img.brand}`}>
+                           <div className="text-center">
+                             <img
+                               src={img.src}
+                               alt={`Femme ${idx + 1}`}
+                               style={{
+                                 width: '100%',
+                                 height: '220px',
+                                 objectFit: 'cover',
+                                 borderRadius: '6px',
+                                 backgroundColor: '#f8f9fa',
+                                 border: '1px solid #e9ecef'
+                               }}
+                               onError={(e) => {
+                                 e.target.style.display = 'none';
+                               }}
+                             />
+                           </div>
+                           <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#333' }}>
+                             <div style={{ fontWeight: 600 }}>{img.brand}</div>
+                             <div style={{ color: '#666', wordBreak: 'break-word' }}>{img.fileName}</div>
+                           </div>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 ) : (
+                   // Sinon, afficher la grille de produits filtrés classique
+                   <div className="filtered-products-grid">
+                     {filteredProducts.length === 0 ? (
+                       <div className="text-center py-5" style={{ color: '#666' }}>
+                         <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: 8 }}>Aucun produit trouvé</div>
+                         <div style={{ fontSize: '0.95rem' }}>Aucun produit ne correspond à cette sélection.</div>
+                       </div>
+                     ) : (
+                      <div className="row g-4">
+                        {filteredProducts.map(product => (
+                          <div key={product.id} className="col-md-6 col-lg-4">
+                            <div className="product-card" 
+                              onClick={() => handleProductClick(product)}
+                              style={{
+                              backgroundColor: 'white',
+                              border: '1px solid #e9ecef',
+                              borderRadius: '8px',
+                              padding: '20px',
+                              height: '100%',
+                                transition: 'all 0.2s ease',
+                                cursor: 'pointer'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.transform = 'translateY(-2px)';
+                              e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.transform = 'translateY(0)';
+                              e.target.style.boxShadow = 'none';
+                            }}>
+                              <div className="text-center mb-3">
+                                <img 
+                                  src={product.image} 
+                                  alt={product.name}
+                                  style={{
+                                    width: '100%',
+                                    height: '250px',
+                                    objectFit: 'contain',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#f8f9fa',
+                                    border: '1px solid #e9ecef'
+                                  }}
+                                  onError={(e) => {
+                                    // Fallback si l'image n'existe pas
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                  }}
+                                />
+                                <div style={{
+                                  width: '100%',
+                                  height: '250px',
+                                  backgroundColor: '#f8f9fa',
+                                  borderRadius: '8px',
+                                  display: 'none',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#666',
+                                  fontSize: '1.2rem',
+                                  fontWeight: '600',
+                                  border: '1px solid #e9ecef'
+                                }}>
+                                  {product.brand}
+                                </div>
+                              </div>
+                              <h5 style={{ fontSize: '1.1rem', color: '#232f3e', marginBottom: '10px', textAlign: 'center' }}>
+                                {product.name}
+                              </h5>
+                              <div className="text-center mb-3">
+                                <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                  {subcategories.find(s => s.id === product.subcategory)?.label}
+                                </span>
+                              </div>
+                              <div className="d-flex justify-content-between align-items-center">
+                                <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
+                                  {product.price.toLocaleString()} GNF
+                                </span>
+                                <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                  ★ {product.rating} ({product.reviews})
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                     )}
+                   </div>
+                 )}
                </div>
              ) : (
                // Page normale - sous-catégories avec aperçu des produits
