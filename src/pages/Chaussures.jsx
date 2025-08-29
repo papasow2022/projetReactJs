@@ -67,9 +67,18 @@ const Chaussures = () => {
     }
   ];
 
-  const popularBrands = [
-    'Nike', 'Puma', 'Balenciaga', 'Gucci'
-  ];
+  // Marques populaires par genre
+  const popularBrandsByGenre = {
+    homme: ['Nike', 'Puma', 'Balenciaga', 'Gucci'],
+    femme: ['Zara', 'Minelli', 'Mango', 'Jonak', 'Prada', 'Christian Louboutin', 'Gucci'],
+    enfant: ['Nike', 'Puma', 'Adidas', 'Converse'],
+    bebe: ['Nike', 'Puma', 'Adidas', 'Converse']
+  };
+
+  // Marques populaires actuelles selon le genre sélectionné
+  const currentPopularBrands = activeFilters.genre.length > 0 
+    ? popularBrandsByGenre[activeFilters.genre[0]] || popularBrandsByGenre.homme
+    : popularBrandsByGenre.homme;
 
   const { products: contextProducts } = useProducts();
   
@@ -290,7 +299,7 @@ const Chaussures = () => {
               <h6 style={{ fontSize: '1rem', marginBottom: '15px', color: '#232f3e' }}>
                 Marques populaires
               </h6>
-                             {popularBrands.slice(0, 6).map(brand => (
+                             {currentPopularBrands.slice(0, 6).map(brand => (
                  <div key={brand} className="form-check mb-2">
                    <input
                      className="form-check-input"
@@ -736,7 +745,7 @@ const Chaussures = () => {
                 Marques populaires
               </h3>
               <div className="row g-3">
-                {popularBrands.map(brand => (
+                {currentPopularBrands.map(brand => (
                   <div key={brand} className="col-md-2 col-4">
                     <div className="brand-card text-center" style={{
                       backgroundColor: 'white',
