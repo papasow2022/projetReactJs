@@ -145,10 +145,24 @@ const Chaussures = () => {
     return map[folderName] || folderName;
   };
 
+  // Fonction inverse pour mapper la marque vers le dossier
+  const getFolderFromBrand = (brandName) => {
+    const reverseMap = {
+      'Zara': 'Zaranoire',
+      'Christian Louboutin': 'CritianlouboutinNoire',
+      'Prada': 'PradaBeige',
+      'Minelli': 'Minelli',
+      'Mango': 'Mango',
+      'Jonak': 'Jonak',
+      'Gucci': 'Gucci'
+    };
+    return reverseMap[brandName] || brandName;
+  };
+
   const buildFemmeImagesMeta = (paths) => {
     return paths.map((p) => {
       // p = /chaussures/femme/<folder>/<file>
-      const parts = p.split('/').filter(Boolean);
+      const parts = p.split('/');
       const folder = parts[3] || '';
       const fileWithExt = parts[4] || '';
       const fileName = fileWithExt.replace(/\.[^/.]+$/, '');
@@ -180,9 +194,8 @@ const Chaussures = () => {
   const handleBrandFilter = (brand) => {
     setActiveFilters(prev => ({
       ...prev,
-      marques: prev.marques.includes(brand) 
-        ? prev.marques.filter(b => b !== brand)
-        : [...prev.marques, brand]
+      // Sélection unique: toujours remplacer par l'option choisie
+      marques: prev.marques.includes(brand) ? [] : [brand]
     }));
   };
 
@@ -479,17 +492,27 @@ const Chaussures = () => {
                      }
                    </h2>
                    {/* Compteur affiché uniquement pour la liste produits; la galerie Femme n'utilise pas le compteur */}
-                   {!(activeFilters.genre[0] === 'femme' && activeFilters.marques.length === 0) && (
+                   {!(activeFilters.genre[0] === 'femme') && (
                      <p style={{ fontSize: '1rem', color: '#666', marginBottom: '20px' }}>
                        {filteredProducts.length} produits trouvés
                      </p>
                    )}
                  </div>
 
-                 {/* Si FEMME sans marque sélectionnée: afficher la galerie d'images */}
-                 {activeFilters.genre[0] === 'femme' && activeFilters.marques.length === 0 ? (
-                   <div className="row g-3">
-                     {femmeImages.map((img, idx) => (
+                 {/* Si FEMME (avec ou sans marque): afficher la galerie d'images */}
+                 {activeFilters.genre[0] === 'femme' ? (
+                   <div>
+
+                     <div className="row g-3">
+                                            {femmeImages
+                       .filter(img => {
+                         if (activeFilters.marques.length === 0) return true;
+                         return activeFilters.marques.some(selectedBrand => {
+                           const folderForBrand = getFolderFromBrand(selectedBrand);
+                           return img.folder === folderForBrand;
+                         });
+                       })
+                       .map((img, idx) => (
                        <div key={`${img.src}-${idx}`} className="col-6 col-md-4 col-lg-3">
                          <div style={{
                            backgroundColor: 'white',
@@ -507,8 +530,8 @@ const Chaussures = () => {
                                alt={`Femme ${idx + 1}`}
                                style={{
                                  width: '100%',
-                                 height: '220px',
-                                 objectFit: 'cover',
+                                 height: '280px',
+                                 objectFit: 'contain',
                                  borderRadius: '6px',
                                  backgroundColor: '#f8f9fa',
                                  border: '1px solid #e9ecef'
@@ -518,14 +541,15 @@ const Chaussures = () => {
                                }}
                              />
                            </div>
-                           <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#333' }}>
+                           <div style={{ marginTop: '12px', fontSize: '0.85rem', color: '#333' }}>
                              <div style={{ fontWeight: 600 }}>{img.brand}</div>
-                             <div style={{ color: '#666', wordBreak: 'break-word' }}>{img.fileName}</div>
+                             <div style={{ color: '#666', wordBreak: 'break-word', fontSize: '0.75rem', lineHeight: '1.2' }}>{img.fileName}</div>
                            </div>
                          </div>
                        </div>
                      ))}
                    </div>
+                 </div>
                  ) : (
                    // Sinon, afficher la grille de produits filtrés classique
                    <div className="filtered-products-grid">
@@ -737,40 +761,7 @@ const Chaussures = () => {
                </div>
              )}
 
-            
 
-            {/* Marques populaires */}
-            <div className="popular-brands">
-              <h3 style={{ fontSize: '1.5rem', color: '#232f3e', marginBottom: '20px' }}>
-                Marques populaires
-              </h3>
-              <div className="row g-3">
-                {currentPopularBrands.map(brand => (
-                  <div key={brand} className="col-md-2 col-4">
-                    <div className="brand-card text-center" style={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e9ecef',
-                      borderRadius: '6px',
-                      padding: '15px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = '#f8f9fa';
-                      e.target.style.borderColor = '#febd69';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'white';
-                      e.target.style.borderColor = '#e9ecef';
-                    }}>
-                      <span style={{ fontSize: '0.9rem', fontWeight: '500', color: '#232f3e' }}>
-                        {brand}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>
