@@ -864,7 +864,7 @@ export default function ProductDetail() {
               )}
             </div>
             <div className="mb-3">
-              <span className="badge bg-info me-2">Homme</span>
+              <span className="badge bg-info me-2">{displayProduct?.subcategory === 'femme' ? 'Femme' : displayProduct?.subcategory === 'homme' ? 'Homme' : displayProduct?.subcategory || 'Général'}</span>
               <span className="badge bg-success">{displayProduct?.category || 'Général'}</span>
             </div>
             <div className="mb-3">
