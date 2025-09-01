@@ -98,6 +98,199 @@ export default function ProductDetail() {
   
   // Si pas de produit trouvé par image, utiliser le productId
   let product = productFromImage;
+  
+  // État pour gérer la marque sélectionnée
+  const [selectedBrand, setSelectedBrand] = useState(null);
+  
+  // Fonction pour obtenir toutes les marques disponibles pour la section Femme
+  const getAvailableBrands = () => {
+    if (product?.subcategory !== 'femme') return [];
+    
+    const brands = [
+      { id: 'CritianlouboutinNoire', name: 'Christian Louboutin', folder: 'CritianlouboutinNoire' },
+      { id: 'Gucci', name: 'Gucci', folder: 'Gucci' },
+      { id: 'PradaBeige', name: 'Prada', folder: 'PradaBeige' },
+      { id: 'Zaranoire', name: 'Zara', folder: 'Zaranoire' },
+      { id: 'Minelli', name: 'Minelli', folder: 'Minelli' },
+      { id: 'Mango', name: 'Mango', folder: 'Mango' },
+      { id: 'Jonak', name: 'Jonak', folder: 'Jonak' }
+    ];
+    
+    return brands;
+  };
+  
+  // Fonction pour obtenir les images d'une marque spécifique
+  const getBrandImages = (brandFolder) => {
+    if (brandFolder === 'CritianlouboutinNoire') {
+      return [
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg'
+      ];
+    } else if (brandFolder === 'Gucci') {
+      return [
+        '/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® International.jpeg',
+        '/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® US.jpeg',
+        '/chaussures/femme/Gucci/Gucci Leather Sandals - Noir.jpeg',
+        '/chaussures/femme/Gucci/Gucci Sandals - Noir 3.jpeg',
+        '/chaussures/femme/Gucci/Women\'s Designer Luxury High Heels Pumps _ GUCCI® US.jpeg'
+      ];
+    } else if (brandFolder === 'PradaBeige') {
+      return [
+        '/chaussures/femme/PradaBeige/Prada Ankle Strap Platform Sandals - Beige.jpeg',
+        '/chaussures/femme/PradaBeige/Prada Gold Platform Sandals - Beige.jpeg',
+        '/chaussures/femme/PradaBeige/Prada Leather Platform Sandals - Beige.jpeg',
+        '/chaussures/femme/PradaBeige/Prada Metallic Platform Sandals - Beige.jpeg',
+        '/chaussures/femme/PradaBeige/Prada Paige Platform Sandals - Beige.jpeg',
+        '/chaussures/femme/PradaBeige/Prada Sandales - Beige.jpeg',
+        '/chaussures/femme/PradaBeige/Prada Suede Sandals - Beige.jpeg'
+      ];
+    } else if (brandFolder === 'Zaranoire') {
+      return [
+        '/chaussures/femme/Zaranoire/Zara Ankle Strap Heels - Noir.jpeg',
+        '/chaussures/femme/Zaranoire/Zara Classic Heels - Noir.jpeg',
+        '/chaussures/femme/Zaranoire/Zara High Heel Platform Slingback Shoes - Noir.jpeg',
+        '/chaussures/femme/Zaranoire/Zara Pointed Toe Heels - Noir.jpeg',
+        '/chaussures/femme/Zaranoire/Zara Rhinestone Suede Heels - Noir.jpeg',
+        '/chaussures/femme/Zaranoire/Zara Strappy Heels - Noir.jpeg'
+      ];
+    } else if (brandFolder === 'Minelli') {
+      return [
+        '/chaussures/femme/Minelli/Minelli Escarpins - Noir.jpeg',
+        '/chaussures/femme/Minelli/Minelli Escarpins - Noir 2.jpeg',
+        '/chaussures/femme/Minelli/Minelli Escarpins - Noir 3.jpeg',
+        '/chaussures/femme/Minelli/Minelli Tulin Bottines Talon - Noir.jpeg'
+      ];
+    } else if (brandFolder === 'Mango') {
+      return [
+        '/chaussures/femme/Mango/MANGO Ankle Strap Sandal in Nude at Nordstrom, Size 6_5Us.jpeg',
+        '/chaussures/femme/Mango/Mango Strappy Sandals - Nude.jpeg',
+        '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 2.jpeg',
+        '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 3.jpeg'
+      ];
+    } else if (brandFolder === 'Jonak') {
+      return [
+        '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg',
+        '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg',
+        '/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg',
+        '/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg'
+      ];
+    }
+    return [];
+  };
+  
+  // Fonction pour changer de marque
+  const handleBrandChange = (brand) => {
+    console.log('🔄 Changement de marque vers:', brand.name);
+    setSelectedBrand(brand);
+    setSelectedImageIdx(0); // Remettre l'image principale à la première position
+    
+    // Mettre à jour le produit affiché avec les informations de la nouvelle marque
+    if (brand.folder === 'CritianlouboutinNoire') {
+      // Créer un produit Christian Louboutin avec les nouvelles images
+      const newProduct = {
+        ...product,
+        brand: 'Christian Louboutin',
+        name: 'Christian Louboutin Collection',
+        price: 2500000, // Prix Christian Louboutin
+        rating: 4.8,
+        reviewCount: 156
+      };
+      setSelectedGalleryProduct(newProduct);
+    } else if (brand.folder === 'Gucci') {
+      const newProduct = {
+        ...product,
+        brand: 'Gucci',
+        name: 'Gucci Collection',
+        price: 1800000, // Prix Gucci
+        rating: 4.6,
+        reviewCount: 89
+      };
+      setSelectedGalleryProduct(newProduct);
+    } else if (brand.folder === 'PradaBeige') {
+      const newProduct = {
+        ...product,
+        brand: 'Prada',
+        name: 'Prada Collection',
+        price: 2200000, // Prix Prada
+        rating: 4.7,
+        reviewCount: 134
+      };
+      setSelectedGalleryProduct(newProduct);
+    } else if (brand.folder === 'Zaranoire') {
+      const newProduct = {
+        ...product,
+        brand: 'Zara',
+        name: 'Zara Collection',
+        price: 450000, // Prix Zara
+        rating: 4.3,
+        reviewCount: 67
+      };
+      setSelectedGalleryProduct(newProduct);
+    } else if (brand.folder === 'Minelli') {
+      const newProduct = {
+        ...product,
+        brand: 'Minelli',
+        name: 'Minelli Collection',
+        price: 380000, // Prix Minelli
+        rating: 4.4,
+        reviewCount: 45
+      };
+      setSelectedGalleryProduct(newProduct);
+    } else if (brand.folder === 'Mango') {
+      const newProduct = {
+        ...product,
+        brand: 'Mango',
+        name: 'Mango Collection',
+        price: 320000, // Prix Mango
+        rating: 4.2,
+        reviewCount: 38
+      };
+      setSelectedGalleryProduct(newProduct);
+    } else if (brand.folder === 'Jonak') {
+      const newProduct = {
+        ...product,
+        brand: 'Jonak',
+        name: 'Jonak Collection',
+        price: 280000, // Prix Jonak
+        rating: 4.1,
+        reviewCount: 29
+      };
+      setSelectedGalleryProduct(newProduct);
+    }
+  };
+  
+  // Initialiser la marque sélectionnée pour les produits Femme
+  useEffect(() => {
+    if (product?.subcategory === 'femme') {
+      // Déterminer la marque basée sur le produit
+      let brandToSet = null;
+      
+      if (product?.brand === 'Christian Louboutin' || product?.image?.includes('CritianlouboutinNoire')) {
+        brandToSet = { id: 'CritianlouboutinNoire', name: 'Christian Louboutin', folder: 'CritianlouboutinNoire' };
+      } else if (product?.brand === 'Gucci' || product?.image?.includes('Gucci')) {
+        brandToSet = { id: 'Gucci', name: 'Gucci', folder: 'Gucci' };
+      } else if (product?.brand === 'Prada' || product?.image?.includes('PradaBeige')) {
+        brandToSet = { id: 'PradaBeige', name: 'Prada', folder: 'PradaBeige' };
+      } else if (product?.brand === 'Zara' || product?.image?.includes('Zaranoire')) {
+        brandToSet = { id: 'Zaranoire', name: 'Zara', folder: 'Zaranoire' };
+      } else if (product?.brand === 'Minelli' || product?.image?.includes('Minelli')) {
+        brandToSet = { id: 'Minelli', name: 'Minelli', folder: 'Minelli' };
+      } else if (product?.brand === 'Mango' || product?.image?.includes('Mango')) {
+        brandToSet = { id: 'Mango', name: 'Mango', folder: 'Mango' };
+      } else if (product?.brand === 'Jonak' || product?.image?.includes('Jonak')) {
+        brandToSet = { id: 'Jonak', name: 'Jonak', folder: 'Jonak' };
+      }
+      
+      if (brandToSet) {
+        setSelectedBrand(brandToSet);
+        console.log('🎯 Marque initialisée:', brandToSet.name);
+      }
+    }
+  }, [product]);
   if (!product) {
     product = products.find((p) => p.id === productId || p.slug === productId);
     console.log('🔍 Produit trouvé par ID:', product?.name || 'Aucun produit trouvé');
@@ -237,7 +430,27 @@ export default function ProductDetail() {
   const galleryImages = useMemo(() => {
     if (!productWithVariants) return [];
     
-    // Récupérer toutes les images disponibles pour la couleur sélectionnée
+    // Pour les produits Femme avec une marque sélectionnée, afficher UNIQUEMENT les images de cette marque
+    if (product?.subcategory === 'femme' && selectedBrand) {
+      console.log('🔍 Affichage des images de la marque sélectionnée:', selectedBrand.name);
+      
+      // Récupérer UNIQUEMENT les images de la marque sélectionnée
+      const brandImages = getBrandImages(selectedBrand.folder);
+      console.log('📁 Images de la marque:', brandImages);
+      
+      // Si une image spécifique a été cliquée, la mettre en première position
+      let finalImages = [...brandImages];
+      if (clickedImage && finalImages.includes(clickedImage)) {
+        console.log('🖼️ Image cliquée trouvée, mise en première position:', clickedImage);
+        finalImages = finalImages.filter(img => img !== clickedImage);
+        finalImages.unshift(clickedImage);
+      }
+      
+      console.log('📸 Images finales de la galerie (marque uniquement):', finalImages);
+      return finalImages;
+    }
+    
+    // Pour les autres produits, logique normale
     let allImages = [];
     
     // 1. Images du produit principal (si c'est la bonne couleur)
@@ -271,29 +484,6 @@ export default function ProductDetail() {
       });
     }
     
-    // 5. NOUVEAU : Pour Christian Louboutin, ajouter TOUTES les images du dossier
-    if (product?.brand === 'Christian Louboutin') {
-      console.log('🔍 Ajout des images Christian Louboutin supplémentaires...');
-      
-      // Ajouter toutes les images Christian Louboutin disponibles
-      const christianLouboutinImages = [
-        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg',
-        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg',
-        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg',
-        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg',
-        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg',
-        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg'
-      ];
-      
-      christianLouboutinImages.forEach(img => {
-        if (!allImages.includes(img)) {
-          allImages.push(img);
-        }
-      });
-      
-      console.log('📁 Images Christian Louboutin ajoutées:', christianLouboutinImages);
-    }
-    
     // Supprimer les doublons et filtrer les images valides
     let finalImages = Array.from(new Set(allImages)).filter(Boolean);
     
@@ -310,7 +500,7 @@ export default function ProductDetail() {
     console.log('📸 Images finales de la galerie:', finalImages);
     
     return finalImages;
-  }, [productWithVariants, product, colorSiblings, clickedImage]);
+  }, [productWithVariants, product, colorSiblings, clickedImage, selectedBrand]);
 
   // Gestion des variantes
   const [selectedVariant, setSelectedVariant] = useState(() => {
@@ -652,11 +842,11 @@ export default function ProductDetail() {
   // Mettre à jour la sélection du produit quand la galerie change
   useEffect(() => {
     // Si on a des images pour cette couleur, sélectionner le premier produit
-    const currentImages = product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages;
+    const currentImages = product?.subcategory === 'femme' && selectedBrand ? galleryImages : dynamicGalleryImages;
     if (currentImages.length > 0 && imageToProductMapping[currentImages[0]]) {
       setSelectedGalleryProduct(imageToProductMapping[currentImages[0]]);
     }
-  }, [dynamicGalleryImages, galleryImages, imageToProductMapping, product?.brand, selectedVariant]);
+  }, [dynamicGalleryImages, galleryImages, imageToProductMapping, product?.subcategory, selectedVariant, selectedBrand]);
   
   // Fonction pour gérer le clic sur une miniature
   const handleThumbnailClick = (index) => {
@@ -664,7 +854,7 @@ export default function ProductDetail() {
     setSelectedImageIdx(index);
     
     // Récupérer le produit correspondant à cette image
-    const currentImages = product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages;
+    const currentImages = product?.subcategory === 'femme' && selectedBrand ? galleryImages : dynamicGalleryImages;
     const selectedImage = currentImages[index];
     console.log('📸 Image sélectionnée:', selectedImage);
     console.log('📸 Nom du fichier:', selectedImage?.split('/').pop());
@@ -815,8 +1005,8 @@ export default function ProductDetail() {
               {/* Galerie verticale : images de la couleur sélectionnée */}
               <div className="d-flex flex-md-column flex-row gap-2 align-items-center">
                 {(() => {
-                  const imagesToShow = product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages;
-                  console.log('🔍 Images à afficher:', imagesToShow.length, 'pour la marque:', product?.brand);
+                  const imagesToShow = product?.subcategory === 'femme' && selectedBrand ? galleryImages : dynamicGalleryImages;
+                  console.log('🔍 Images à afficher:', imagesToShow.length, 'pour la marque:', selectedBrand?.name || product?.brand);
                   return imagesToShow.map((img, idx) => (
                     <img
                       key={img}
@@ -835,7 +1025,7 @@ export default function ProductDetail() {
               {/* Image principale */}
               <div style={{ flex: 1, textAlign: 'center', position: 'relative', minWidth: 0 }}>
                 <img
-                  src={(product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages)[selectedImageIdx] || (product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages)[0] || product?.image}
+                  src={(product?.subcategory === 'femme' && selectedBrand ? galleryImages : dynamicGalleryImages)[selectedImageIdx] || (product?.subcategory === 'femme' && selectedBrand ? galleryImages : dynamicGalleryImages)[0] || product?.image}
                   alt={displayProduct?.name || product?.name}
                   className="img-fluid mb-2"
                   style={{ maxHeight: 340, objectFit: 'contain', borderRadius: 8, background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
@@ -871,61 +1061,95 @@ export default function ProductDetail() {
               <span className="text-success fw-bold">{displayProduct?.availability || 'En stock'}</span>
               <span className="ms-3 text-info">{displayProduct?.deliveryDate || 'Livraison gratuite demain'}</span>
             </div>
-            {/* Sélecteurs couleur/taille/quantité */}
-            {/* Pastilles de couleur (variantes) */}
-            <div className="mb-3">
-              <label className="form-label fw-bold mb-2">Couleur :</label>
-              <div className="d-flex gap-2 flex-wrap">
-                {colorSiblings.length > 0 ? (
-                  colorSiblings.map((s) => (
+            {/* Sélecteurs marque/taille/quantité */}
+            {/* Sélecteur de marques (pour produits Femme) */}
+            {product?.subcategory === 'femme' && (
+              <div className="mb-3">
+                <label className="form-label fw-bold mb-2">Marques disponibles :</label>
+                <div className="d-flex gap-2 flex-wrap">
+                  {getAvailableBrands().map((brand) => (
                     <div
-                      key={s.slug}
-                      className={`border rounded p-1 ${ (product?.id === s.id) ? 'border-primary border-3' : 'border-light'}`}
-                      style={{ cursor: 'pointer', minWidth: 32 }}
-                      title={s.colorLabel}
-                      onClick={() => { if (product?.id !== s.id) navigate(`/product/${s.id}`); }}
+                      key={brand.id}
+                      className={`border rounded p-2 ${selectedBrand?.id === brand.id ? 'border-primary border-3' : 'border-light'}`}
+                      style={{ 
+                        cursor: 'pointer', 
+                        minWidth: 80,
+                        backgroundColor: selectedBrand?.id === brand.id ? '#f8f9fa' : 'white'
+                      }}
+                      title={brand.name}
+                      onClick={() => handleBrandChange(brand)}
                     >
-                      <img
-                        src={s.image}
-                        alt={s.colorLabel}
-                        className="rounded"
-                        style={{ width: 32, height: 32, objectFit: 'cover' }}
-                      />
-                    </div>
-                  ))
-                ) : (
-                  productWithVariants?.variants?.map((variant) => (
-                  <div
-                    key={variant.color}
-                      className={`border rounded p-1 ${selectedVariant?.color === variant.color ? 'border-primary border-3' : 'border-light'}`}
-                    style={{ cursor: 'pointer', minWidth: 32 }}
-                    onClick={() => handleVariantClick(variant)}
-                      title={variant.color}
-                    >
-                      <div 
-                        className="rounded d-flex align-items-center justify-content-center"
-                        style={{ 
-                          width: 32, 
-                          height: 32, 
-                          backgroundColor: variant.color === 'Blanc' ? '#ffffff' : 
-                                         variant.color === 'Noir' ? '#000000' : 
-                                         variant.color === 'Vert olive' ? '#6b8e23' : '#cccccc',
-                          border: variant.color === 'Blanc' ? '1px solid #ddd' : 'none'
-                        }}
-                      >
-                        <span style={{ 
-                          fontSize: '10px', 
-                          color: variant.color === 'Blanc' ? '#000' : '#fff',
-                          fontWeight: 'bold'
+                      <div className="text-center">
+                        <div style={{ 
+                          fontSize: '12px', 
+                          fontWeight: '600',
+                          color: selectedBrand?.id === brand.id ? '#0d6efd' : '#333'
                         }}>
-                          {variant.color.charAt(0)}
-                        </span>
+                          {brand.name}
+                        </div>
                       </div>
-                  </div>
-                  ))
-                )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+            
+            {/* Sélecteur de couleur (pour produits avec variantes) */}
+            {product?.subcategory !== 'femme' && (
+              <div className="mb-3">
+                <label className="form-label fw-bold mb-2">Couleur :</label>
+                <div className="d-flex gap-2 flex-wrap">
+                  {colorSiblings.length > 0 ? (
+                    colorSiblings.map((s) => (
+                      <div
+                        key={s.slug}
+                        className={`border rounded p-1 ${ (product?.id === s.id) ? 'border-primary border-3' : 'border-light'}`}
+                        style={{ cursor: 'pointer', minWidth: 32 }}
+                        title={s.colorLabel}
+                        onClick={() => { if (product?.id !== s.id) navigate(`/product/${s.id}`); }}
+                      >
+                        <img
+                          src={s.image}
+                          alt={s.colorLabel}
+                          className="rounded"
+                          style={{ width: 32, height: 32, objectFit: 'cover' }}
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    productWithVariants?.variants?.map((variant) => (
+                    <div
+                      key={variant.color}
+                        className={`border rounded p-1 ${selectedVariant?.color === variant.color ? 'border-primary border-3' : 'border-light'}`}
+                      style={{ cursor: 'pointer', minWidth: 32 }}
+                      onClick={() => handleVariantClick(variant)}
+                        title={variant.color}
+                      >
+                        <div 
+                          className="rounded d-flex align-items-center justify-content-center"
+                          style={{ 
+                            width: 32, 
+                            height: 32, 
+                            backgroundColor: variant.color === 'Blanc' ? '#ffffff' : 
+                                           variant.color === 'Noir' ? '#000000' : 
+                                           variant.color === 'Vert olive' ? '#6b8e23' : '#cccccc',
+                            border: variant.color === 'Blanc' ? '1px solid #ddd' : 'none'
+                          }}
+                        >
+                          <span style={{ 
+                            fontSize: '10px', 
+                            color: variant.color === 'Blanc' ? '#fff' : '#000',
+                            fontWeight: 'bold'
+                          }}>
+                            {variant.color.charAt(0)}
+                          </span>
+                        </div>
+                    </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
             <div className="mb-2">
               <label className="form-label fw-bold mb-1">Taille :</label>
               <div className="d-flex gap-2 flex-wrap">

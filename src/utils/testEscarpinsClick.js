@@ -59,7 +59,7 @@ console.log('🔍 Correspondance des noms:', productImageName === expectedImageN
 if (isConsistent && productImageName === expectedImageName) {
   console.log('🎉 Tous les tests sont passés avec succès!');
   console.log('✅ L\'image Christian Louboutin Escarpins est correctement mappée');
-} else {
+        } else {
   console.error('💥 Certains tests ont échoué!');
   console.error('❌ Vérifiez le mapping de l\'image Christian Louboutin Escarpins');
 }
@@ -77,9 +77,9 @@ const foundProductId = mockMapping[testImagePath];
 
 if (foundProductId === 'cl-escarpins-noir-001') {
   console.log('✅ Mapping image -> produit: CORRECT');
-} else {
+  } else {
   console.error('❌ Mapping image -> produit: INCORRECT');
   console.error(`Attendu: cl-escarpins-noir-001, Trouvé: ${foundProductId}`);
-}
+  }
 
 console.log('🏁 Test terminé'); 
