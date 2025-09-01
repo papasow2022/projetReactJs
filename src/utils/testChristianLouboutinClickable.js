@@ -9,7 +9,7 @@ export const testChristianLouboutinClickable = () => {
       name: 'Christian Louboutin Escarpins',
       price: 1250000,
       description: 'Escarpins Christian Louboutin, design exclusif et élégant.',
-      image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg'
+              image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg'
     },
     'cl-heels-classic-002': {
       id: 'cl-heels-classic-002',
@@ -50,7 +50,7 @@ export const testChristianLouboutinClickable = () => {
   
   // Mapping des images vers les produits
   const imageToProductMapping = {
-    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg': christianLouboutinProducts['cl-escarpins-noir-001'],
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg': christianLouboutinProducts['cl-escarpins-noir-001'],
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg': christianLouboutinProducts['cl-heels-classic-002'],
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg': christianLouboutinProducts['cl-heels-collection-speciale-003'],
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg': christianLouboutinProducts['cl-heels-edition-limitee-004'],
@@ -60,7 +60,7 @@ export const testChristianLouboutinClickable = () => {
   
   // Images de la galerie
   const galleryImages = [
-    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg',
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg',

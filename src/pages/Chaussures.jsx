@@ -99,7 +99,7 @@ const Chaussures = () => {
   // Liste exhaustive des images disponibles pour FEMME sous public/chaussures/femme
   const femmeImagePaths = [
     // CritianlouboutinNoire
-    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg`,
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg`,
     `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg`,
     `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg`,
     `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg`,
@@ -187,7 +187,7 @@ const Chaussures = () => {
 
   // Mapping des images Christian Louboutin vers leurs produits spécifiques
   const christianLouboutinImageMapping = {
-    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg': 'cl-escarpins-noir-001',
+            '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg': 'cl-escarpins-noir-001',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg': 'cl-heels-collection-speciale-003',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg': 'cl-heels-edition-limitee-004',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg': 'cl-heels-design-exclusif-005',
@@ -561,85 +561,113 @@ const Chaussures = () => {
                    )}
                  </div>
 
-                 {/* Si FEMME (avec ou sans marque): afficher la galerie d'images */}
+                 {/* Si FEMME (avec ou sans marque): afficher les cartes produits comme Homme */}
                  {activeFilters.genre[0] === 'femme' ? (
                    <div>
-                     {/* Message informatif */}
-
-
-                     <div className="row g-3">
-                                            {femmeImages
-                       .filter(img => {
-                         if (activeFilters.marques.length === 0) return true;
-                         return activeFilters.marques.some(selectedBrand => {
-                           const folderForBrand = getFolderFromBrand(selectedBrand);
-                           return img.folder === folderForBrand;
-                         });
-                       })
-                       .map((img, idx) => {
-                         // Vérifier si c'est une image Christian Louboutin
-                         const isChristianLouboutin = img.folder === 'CritianlouboutinNoire';
-                         const product = isChristianLouboutin ? findProductByImage(img.src) : null;
-                         
-                         return (
-                           <div key={`${img.src}-${idx}`} className="col-6 col-md-4 col-lg-3">
-                             <div 
-                               onClick={isChristianLouboutin ? () => handleChristianLouboutinClick(img.src) : undefined}
-                               style={{
-                                 backgroundColor: 'white',
-                                 border: '1px solid #e9ecef',
-                                 borderRadius: '8px',
-                                 padding: '10px',
-                                 height: '100%',
-                                 transition: 'all 0.2s ease',
-                                 cursor: isChristianLouboutin ? 'pointer' : 'default'
-                               }}
-                               onMouseEnter={isChristianLouboutin ? (e) => {
-                                 e.target.style.transform = 'translateY(-2px)';
-                                 e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                               } : undefined}
-                               onMouseLeave={isChristianLouboutin ? (e) => {
-                                 e.target.style.transform = 'translateY(0)';
-                                 e.target.style.boxShadow = 'none';
-                               } : undefined}
-                             >
-                               <div className="text-center">
-                                 <img
-                                   src={img.src}
-                                   alt={`Femme ${idx + 1}`}
-                                   style={{
+                     <div className="row g-4">
+                       {femmeImages
+                         .filter(img => {
+                           if (activeFilters.marques.length === 0) return true;
+                           return activeFilters.marques.some(selectedBrand => {
+                             const folderForBrand = getFolderFromBrand(selectedBrand);
+                             return img.folder === folderForBrand;
+                           });
+                         })
+                         .map((img, idx) => {
+                           // Vérifier si c'est une image Christian Louboutin
+                           const isChristianLouboutin = img.folder === 'CritianlouboutinNoire';
+                           const product = isChristianLouboutin ? findProductByImage(img.src) : null;
+                           
+                           return (
+                             <div key={`${img.src}-${idx}`} className="col-md-6 col-lg-4">
+                               <div className="product-card" 
+                                 onClick={isChristianLouboutin ? () => handleChristianLouboutinClick(img.src) : undefined}
+                                 style={{
+                                   backgroundColor: 'white',
+                                   border: '1px solid #e9ecef',
+                                   borderRadius: '8px',
+                                   padding: '20px',
+                                   height: '100%',
+                                   transition: 'all 0.2s ease',
+                                   cursor: isChristianLouboutin ? 'pointer' : 'default'
+                                 }}
+                                 onMouseEnter={isChristianLouboutin ? (e) => {
+                                   e.target.style.transform = 'translateY(-2px)';
+                                   e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                                 } : undefined}
+                                 onMouseLeave={isChristianLouboutin ? (e) => {
+                                   e.target.style.transform = 'translateY(0)';
+                                   e.target.style.boxShadow = 'none';
+                                 } : undefined}
+                               >
+                                 <div className="text-center mb-3">
+                                   <img
+                                     src={img.src}
+                                     alt={`${img.brand} ${img.fileName}`}
+                                     style={{
+                                       width: '100%',
+                                       height: '250px',
+                                       objectFit: 'contain',
+                                       borderRadius: '8px',
+                                       backgroundColor: '#f8f9fa',
+                                       border: '1px solid #e9ecef'
+                                     }}
+                                     onError={(e) => {
+                                       e.target.style.display = 'none';
+                                       e.target.nextSibling.style.display = 'flex';
+                                     }}
+                                   />
+                                   <div style={{
                                      width: '100%',
-                                     height: '280px',
-                                     objectFit: 'contain',
-                                     borderRadius: '6px',
+                                     height: '250px',
                                      backgroundColor: '#f8f9fa',
-                                     border: '1px solid #e9ecef'
-                                   }}
-                                   onError={(e) => {
-                                     e.target.style.display = 'none';
-                                   }}
-                                                                   />
-                               </div>
-                               <div style={{ marginTop: '12px', fontSize: '0.85rem', color: '#333' }}>
-                                 <div style={{ fontWeight: 600 }}>{img.brand}</div>
-                                 <div style={{ color: '#666', wordBreak: 'break-word', fontSize: '0.75rem', lineHeight: '1.2' }}>{img.fileName}</div>
-                                 {isChristianLouboutin && product && (
-                                   <div style={{ 
-                                     color: '#febd69', 
-                                     fontSize: '0.7rem', 
+                                     borderRadius: '8px',
+                                     display: 'none',
+                                     alignItems: 'center',
+                                     justifyContent: 'center',
+                                     color: '#666',
+                                     fontSize: '1.2rem',
                                      fontWeight: '600',
-                                     marginTop: '4px'
+                                     border: '1px solid #e9ecef'
                                    }}>
-                                     {product.price.toLocaleString()} GNF
+                                     {img.brand}
                                    </div>
-                                 )}
+                                 </div>
+                                 <h5 style={{ fontSize: '1.1rem', color: '#232f3e', marginBottom: '10px', textAlign: 'center' }}>
+                                   {img.fileName}
+                                 </h5>
+                                 <div className="text-center mb-3">
+                                   <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                     {img.brand}
+                                   </span>
+                                 </div>
+                                 <div className="d-flex justify-content-between align-items-center">
+                                   {isChristianLouboutin && product ? (
+                                     <>
+                                       <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
+                                         {product.price.toLocaleString()} GNF
+                                       </span>
+                                       <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                         ★ {product.rating} ({product.reviewCount})
+                                       </span>
+                                     </>
+                                   ) : (
+                                     <>
+                                       <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
+                                         Prix sur demande
+                                       </span>
+                                       <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                         ★ 4.5+ (N/A)
+                                       </span>
+                                     </>
+                                   )}
+                                 </div>
                                </div>
                              </div>
-                           </div>
-                         );
-                       })}
+                           );
+                         })}
+                     </div>
                    </div>
-                 </div>
                  ) : (
                    // Sinon, afficher la grille de produits filtrés classique
                    <div className="filtered-products-grid">

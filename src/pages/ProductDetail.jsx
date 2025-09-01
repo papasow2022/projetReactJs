@@ -45,7 +45,7 @@ export default function ProductDetail() {
       
       // Mapping des images Christian Louboutin vers leurs produits spécifiques
       const christianLouboutinImageMapping = {
-        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg': 'cl-escarpins-noir-001',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg': 'cl-escarpins-noir-001',
         '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg': 'cl-heels-collection-speciale-003',
         '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg': 'cl-heels-edition-limitee-004',
         '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg': 'cl-heels-design-exclusif-005',
@@ -277,7 +277,7 @@ export default function ProductDetail() {
       
       // Ajouter toutes les images Christian Louboutin disponibles
       const christianLouboutinImages = [
-        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg',
         '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg',
         '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg',
         '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg',
@@ -571,7 +571,7 @@ export default function ProductDetail() {
     // Mapping spécial pour Christian Louboutin
     if (product.brand === 'Christian Louboutin') {
       const christianLouboutinMapping = {
-        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg': 'cl-escarpins-noir-001',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg': 'cl-escarpins-noir-001',
         '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg': 'cl-heels-classic-002',
         '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg': 'cl-heels-collection-speciale-003',
         '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg': 'cl-heels-edition-limitee-004',

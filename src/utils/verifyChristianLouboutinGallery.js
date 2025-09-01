@@ -4,7 +4,7 @@ export const verifyChristianLouboutinGallery = () => {
   
   // 1. Vérifier que toutes les images existent dans le dossier
   const expectedImages = [
-    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg',
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg',
@@ -16,7 +16,7 @@ export const verifyChristianLouboutinGallery = () => {
   
   // 2. Vérifier le mapping image → produit
   const imageToProductMapping = {
-    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg': 'cl-escarpins-noir-001',
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg': 'cl-escarpins-noir-001',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg': 'cl-heels-classic-002',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg': 'cl-heels-collection-speciale-003',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg': 'cl-heels-edition-limitee-004',
@@ -77,7 +77,7 @@ export const simulateThumbnailClick = (clickedImageIndex) => {
   console.log(`🖱️ Simulation du clic sur miniature ${clickedImageIndex + 1}...`);
   
   const galleryImages = [
-    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg',
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg',
@@ -86,7 +86,7 @@ export const simulateThumbnailClick = (clickedImageIndex) => {
   ];
   
   const imageToProductMapping = {
-    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg': 'cl-escarpins-noir-001',
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg': 'cl-escarpins-noir-001',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg': 'cl-heels-classic-002',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg': 'cl-heels-collection-speciale-003',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg': 'cl-heels-edition-limitee-004',
@@ -98,21 +98,16 @@ export const simulateThumbnailClick = (clickedImageIndex) => {
     const selectedImage = galleryImages[clickedImageIndex];
     const selectedProductId = imageToProductMapping[selectedImage];
     
-    console.log(`   Image sélectionnée: ${selectedImage.split('/').pop()}`);
-    console.log(`   Produit correspondant: ${selectedProductId}`);
-    console.log(`   Index de l'image: ${clickedImageIndex}`);
+    console.log(`📸 Image sélectionnée: ${selectedImage.split('/').pop()}`);
+    console.log(`🆔 Produit correspondant: ${selectedProductId}`);
     
     return {
-      success: true,
-      selectedImage,
-      selectedProductId,
-      imageIndex: clickedImageIndex
+      image: selectedImage,
+      productId: selectedProductId,
+      index: clickedImageIndex
     };
   } else {
-    console.error(`❌ Index invalide: ${clickedImageIndex}`);
-    return {
-      success: false,
-      message: 'Index invalide'
-    };
+    console.error('❌ Index invalide:', clickedImageIndex);
+    return null;
   }
 }; 

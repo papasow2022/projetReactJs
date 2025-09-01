@@ -20,7 +20,7 @@ export function testClickDebug() {
   
   // Liste des images Christian Louboutin attendues
   const expectedImages = [
-    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg',
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg',
     '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg',
