@@ -582,8 +582,12 @@ export default function ProductDetail() {
       // Trouver les produits correspondants dans allProducts
       Object.entries(christianLouboutinMapping).forEach(([imagePath, productId]) => {
         const foundProduct = allProducts?.find(p => p.id === productId);
+        console.log(`🔍 Recherche du produit ${productId} pour l'image ${imagePath.split('/').pop()}: ${foundProduct ? '✅ Trouvé' : '❌ Non trouvé'}`);
         if (foundProduct) {
           mapping[imagePath] = foundProduct;
+          console.log(`✅ Mapping créé: ${imagePath.split('/').pop()} -> ${foundProduct.name}`);
+        } else {
+          console.log(`❌ Produit non trouvé: ${productId}`);
         }
       });
       
@@ -663,7 +667,9 @@ export default function ProductDetail() {
     const currentImages = product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages;
     const selectedImage = currentImages[index];
     console.log('📸 Image sélectionnée:', selectedImage);
+    console.log('📸 Nom du fichier:', selectedImage?.split('/').pop());
     console.log('🗺️ Mapping disponible:', imageToProductMapping[selectedImage]);
+    console.log('🗺️ Toutes les clés du mapping:', Object.keys(imageToProductMapping));
     
     if (selectedImage && imageToProductMapping[selectedImage]) {
       const selectedProduct = imageToProductMapping[selectedImage];
@@ -671,6 +677,18 @@ export default function ProductDetail() {
       setSelectedGalleryProduct(selectedProduct);
     } else {
       console.error('❌ Aucun produit trouvé pour l\'image:', selectedImage);
+      console.error('❌ Image non trouvée dans le mapping');
+      
+      // Vérifier si l'image existe dans le mapping avec une correspondance partielle
+      const matchingKey = Object.keys(imageToProductMapping).find(key => 
+        key.includes(selectedImage?.split('/').pop())
+      );
+      if (matchingKey) {
+        console.log('🔍 Correspondance partielle trouvée:', matchingKey);
+        const selectedProduct = imageToProductMapping[matchingKey];
+        console.log('✅ Produit trouvé par correspondance partielle:', selectedProduct.name);
+        setSelectedGalleryProduct(selectedProduct);
+      }
     }
   };
 
@@ -796,19 +814,23 @@ export default function ProductDetail() {
             <div className="d-flex flex-row flex-md-column gap-2 align-items-start">
               {/* Galerie verticale : images de la couleur sélectionnée */}
               <div className="d-flex flex-md-column flex-row gap-2 align-items-center">
-                {(product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages).map((img, idx) => (
-                  <img
-                    key={img}
-                    src={img}
-                    alt={(selectedVariant?.color || product?.name) + ' ' + (idx + 1)}
-                    className={`rounded border ${selectedImageIdx === idx ? 'border-primary' : 'border-light'}`}
-                    style={{ width: 56, height: 56, objectFit: 'cover', cursor: 'pointer', background: '#fff' }}
-                    onClick={() => handleThumbnailClick(idx)}
-                    onError={(e) => {
-                      e.target.src = '/assets/chaussure/blanc1.jpg'; // Image de fallback
-                    }}
-                  />
-                ))}
+                {(() => {
+                  const imagesToShow = product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages;
+                  console.log('🔍 Images à afficher:', imagesToShow.length, 'pour la marque:', product?.brand);
+                  return imagesToShow.map((img, idx) => (
+                    <img
+                      key={img}
+                      src={img}
+                      alt={(selectedVariant?.color || product?.name) + ' ' + (idx + 1)}
+                      className={`rounded border ${selectedImageIdx === idx ? 'border-primary' : 'border-light'}`}
+                      style={{ width: 56, height: 56, objectFit: 'cover', cursor: 'pointer', background: '#fff' }}
+                      onClick={() => handleThumbnailClick(idx)}
+                      onError={(e) => {
+                        e.target.src = '/assets/chaussure/blanc1.jpg'; // Image de fallback
+                      }}
+                    />
+                  ));
+                })()}
               </div>
               {/* Image principale */}
               <div style={{ flex: 1, textAlign: 'center', position: 'relative', minWidth: 0 }}>
