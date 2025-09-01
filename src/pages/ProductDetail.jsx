@@ -1,7 +1,9 @@
-import React, { useState, useContext, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ProductsContext, useProducts } from '../contexts/ProductsContext';
+import { useProducts } from '../contexts/ProductsContext';
 import Footer from "../components/Footer";
+import FemmeSpecificSection from "../components/FemmeSpecificSection";
+import HommeSpecificSection from "../components/HommeSpecificSection";
 
 import { useCart } from '../contexts/CartContext';
 
@@ -25,10 +27,87 @@ const renderStars = (rating) => {
 
 export default function ProductDetail() {
   const { productId } = useParams();
-  const { products } = useContext(ProductsContext);
-  const { allProducts } = useProducts();
-  const product = products.find((p) => p.id === productId || p.slug === productId);
+  const { products, allProducts } = useProducts();
   const navigate = useNavigate();
+  
+  // Récupérer l'image cliquée depuis l'URL si elle existe
+  const urlParams = new URLSearchParams(window.location.search);
+  const clickedImage = urlParams.get('image');
+  
+  // État pour stocker le produit trouvé par image cliquée
+  const [productFromImage, setProductFromImage] = useState(null);
+  
+  // Traitement des paramètres d'URL dans un useEffect pour éviter les re-renders infinis
+  useEffect(() => {
+    if (clickedImage && products.length > 0) {
+      console.log('🖼️ Image cliquée reçue:', clickedImage);
+      console.log('📦 Produits disponibles:', products.length);
+      
+      // Mapping des images Christian Louboutin vers leurs produits spécifiques
+      const christianLouboutinImageMapping = {
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg': 'cl-escarpins-noir-001',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg': 'cl-heels-collection-speciale-003',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg': 'cl-heels-edition-limitee-004',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg': 'cl-heels-design-exclusif-005',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg': 'cl-heels-collection-premium-006',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg': 'cl-heels-classic-002'
+      };
+      
+      let foundProduct = null;
+      
+      // Chercher le produit par imageId si c'est une image Christian Louboutin
+      const productId = christianLouboutinImageMapping[clickedImage];
+      if (productId) {
+        foundProduct = products.find((p) => p.id === productId);
+        console.log('🎯 Produit trouvé par imageId:', foundProduct?.name || 'Aucun produit trouvé');
+        console.log('🆔 ID recherché:', productId);
+      }
+      
+      // Si pas trouvé par imageId, essayer la correspondance directe
+      if (!foundProduct) {
+        foundProduct = products.find((p) => p.image === clickedImage);
+        console.log('🔍 Produit trouvé par correspondance directe:', foundProduct?.name || 'Aucun produit trouvé');
+      }
+      
+      // Si toujours pas trouvé, essayer une correspondance partielle
+      if (!foundProduct) {
+        console.log('❌ Aucune correspondance exacte trouvée');
+        console.log('🔍 Recherche par correspondance partielle...');
+        
+        foundProduct = products.find((p) => p.image && p.image.includes(clickedImage.split('/').pop()));
+        console.log('🔍 Produit trouvé par correspondance partielle:', foundProduct?.name || 'Aucun produit trouvé');
+      }
+      
+      // IMPORTANT: Si on a trouvé un produit et qu'une image a été cliquée, 
+      // modifier l'image principale du produit pour qu'elle corresponde à l'image cliquée
+      if (foundProduct && clickedImage) {
+        console.log('🔄 Modification de l\'image principale du produit');
+        console.log('📸 Ancienne image principale:', foundProduct.image);
+        console.log('📸 Nouvelle image principale:', clickedImage);
+        
+        // Créer une copie du produit avec la nouvelle image principale
+        foundProduct = {
+          ...foundProduct,
+          image: clickedImage
+        };
+      }
+      
+      setProductFromImage(foundProduct);
+    }
+  }, [clickedImage, products]);
+  
+  // Si pas de produit trouvé par image, utiliser le productId
+  let product = productFromImage;
+  if (!product) {
+    product = products.find((p) => p.id === productId || p.slug === productId);
+    console.log('🔍 Produit trouvé par ID:', product?.name || 'Aucun produit trouvé');
+  }
+  
+  // Détecter automatiquement le genre du produit
+  const isFemme = product?.subcategory === 'femme';
+  const isHomme = product?.subcategory === 'homme';
+  const isEnfant = product?.subcategory === 'enfant';
+  const isBebe = product?.subcategory === 'bebe';
   // Créer des variantes et tailles fallback (style Amazon) si le produit n'a pas de variantes
   const createFallbackVariants = useMemo(() => {
     if (!product) return [];
@@ -107,10 +186,10 @@ export default function ProductDetail() {
     
     const baseSlug = deriveBaseSlug(product.slug || product.id);
     
-    // Trouver tous les produits similaires (même catégorie, même marque, même modèle de base)
+    // Trouver tous les produits similaires (même catégorie, même marque, même genre, même modèle de base)
     const colorSiblingsRaw = products.filter(p => {
-      // Même catégorie et marque
-      if (p.category !== product.category || p.brand !== product.brand) return false;
+      // Même catégorie, marque ET genre (subcategory)
+      if (p.category !== product.category || p.brand !== product.brand || p.subcategory !== product.subcategory) return false;
       
       // Même modèle de base (slug commence par la même base)
       if ((p.slug || p.id || '').startsWith(baseSlug + '-')) return true;
@@ -192,15 +271,58 @@ export default function ProductDetail() {
       });
     }
     
+    // 5. NOUVEAU : Pour Christian Louboutin, ajouter TOUTES les images du dossier
+    if (product?.brand === 'Christian Louboutin') {
+      console.log('🔍 Ajout des images Christian Louboutin supplémentaires...');
+      
+      // Ajouter toutes les images Christian Louboutin disponibles
+      const christianLouboutinImages = [
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg'
+      ];
+      
+      christianLouboutinImages.forEach(img => {
+        if (!allImages.includes(img)) {
+          allImages.push(img);
+        }
+      });
+      
+      console.log('📁 Images Christian Louboutin ajoutées:', christianLouboutinImages);
+    }
+    
     // Supprimer les doublons et filtrer les images valides
-    return Array.from(new Set(allImages)).filter(Boolean);
-  }, [productWithVariants, product, colorSiblings]);
+    let finalImages = Array.from(new Set(allImages)).filter(Boolean);
+    
+    // Si une image spécifique a été cliquée, la mettre en première position
+    if (clickedImage && finalImages.includes(clickedImage)) {
+      console.log('🖼️ Image cliquée trouvée, mise en première position:', clickedImage);
+      finalImages = finalImages.filter(img => img !== clickedImage);
+      finalImages.unshift(clickedImage);
+    } else if (clickedImage) {
+      console.log('⚠️ Image cliquée non trouvée dans la liste:', clickedImage);
+      console.log('Images disponibles:', finalImages);
+    }
+    
+    console.log('📸 Images finales de la galerie:', finalImages);
+    
+    return finalImages;
+  }, [productWithVariants, product, colorSiblings, clickedImage]);
 
   // Gestion des variantes
   const [selectedVariant, setSelectedVariant] = useState(() => {
     return productWithVariants?.variants?.[0] || null;
   });
-  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
+  
+  // Si une image spécifique a été cliquée, commencer par cette image
+  const [selectedImageIdx, setSelectedImageIdx] = useState(() => {
+    // Si une image cliquée existe, elle sera en première position (index 0)
+    // Sinon, commencer par la première image (index 0)
+    return 0;
+  });
   const [selectedSize, setSelectedSize] = useState(() => {
     return selectedVariant?.sizes?.[0] || 'M';
   });
@@ -252,7 +374,11 @@ export default function ProductDetail() {
   // Produits similaires (exemple simplifié)
   const similarProducts = useMemo(() => {
     if (!product) return [];
-    return products.filter(p => p.id !== product.id && p.category === product.category);
+    return products.filter(p => 
+      p.id !== product.id && 
+      p.category === product.category && 
+      p.subcategory === product.subcategory // Même genre (homme/femme/enfant/bebe)
+    );
   }, [product, products]);
   
   // Bloc fréquemment achetés ensemble (exemple simplifié)
@@ -337,6 +463,11 @@ export default function ProductDetail() {
   // Créer une galerie dynamique basée sur la variante sélectionnée
   const dynamicGalleryImages = useMemo(() => {
     if (!selectedVariant || !product) return [];
+    
+    // Pour Christian Louboutin, ne pas utiliser cette logique de recherche par couleur
+    if (product.brand === 'Christian Louboutin') {
+      return [];
+    }
     
     let variantImages = [];
     
@@ -433,11 +564,35 @@ export default function ProductDetail() {
   
   // Créer un mapping des images vers les produits
   const imageToProductMapping = useMemo(() => {
-    if (!selectedVariant || !product) return {};
+    if (!product) return {};
     
     const mapping = {};
+    
+    // Mapping spécial pour Christian Louboutin
+    if (product.brand === 'Christian Louboutin') {
+      const christianLouboutinMapping = {
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg': 'cl-escarpins-noir-001',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg': 'cl-heels-classic-002',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg': 'cl-heels-collection-speciale-003',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg': 'cl-heels-edition-limitee-004',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg': 'cl-heels-design-exclusif-005',
+        '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg': 'cl-heels-collection-premium-006'
+      };
+      
+      // Trouver les produits correspondants dans allProducts
+      Object.entries(christianLouboutinMapping).forEach(([imagePath, productId]) => {
+        const foundProduct = allProducts?.find(p => p.id === productId);
+        if (foundProduct) {
+          mapping[imagePath] = foundProduct;
+        }
+      });
+      
+      return mapping;
+    }
+    
+    // Mapping pour les autres marques (logique existante)
     const brandName = product.brand?.toLowerCase();
-    const colorName = selectedVariant.color?.toLowerCase();
+    const colorName = selectedVariant?.color?.toLowerCase();
     
     if (brandName && colorName && allProducts) {
       // Trouver tous les produits de la même marque et couleur EXACTE
@@ -472,7 +627,7 @@ export default function ProductDetail() {
           (colorName === 'blanc' && productImage.includes('blanc')) ||
           (colorName === 'noir' && (productImage.includes('noir') || productImage.includes('noire'))) || // Fichiers "noir" et "noire"
           (colorName === 'vert olive' && productImage.includes('vertolive')) || // Fichiers "vertolive"
-          (colorName === 'guccinoire' && productImage.includes('guccinoire')) ||
+          (colorName === 'guccinoire' && productImage.includes('guccirose')) ||
           (colorName === 'guccirose' && productImage.includes('guccirose'));
         
         if (shouldInclude) {
@@ -482,24 +637,40 @@ export default function ProductDetail() {
     }
     
     return mapping;
-  }, [selectedVariant, product, allProducts]);
+  }, [product, allProducts, selectedVariant]);
+  
+  // Log pour déboguer le mapping Christian Louboutin
+  if (product?.brand === 'Christian Louboutin') {
+    console.log('🔍 Mapping Christian Louboutin:', imageToProductMapping);
+    console.log('📸 Images de la galerie:', galleryImages);
+  }
   
   // Mettre à jour la sélection du produit quand la galerie change
   useEffect(() => {
     // Si on a des images pour cette couleur, sélectionner le premier produit
-    if (dynamicGalleryImages.length > 0 && imageToProductMapping[dynamicGalleryImages[0]]) {
-      setSelectedGalleryProduct(imageToProductMapping[dynamicGalleryImages[0]]);
+    const currentImages = product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages;
+    if (currentImages.length > 0 && imageToProductMapping[currentImages[0]]) {
+      setSelectedGalleryProduct(imageToProductMapping[currentImages[0]]);
     }
-  }, [dynamicGalleryImages, imageToProductMapping]);
+  }, [dynamicGalleryImages, galleryImages, imageToProductMapping, product?.brand, selectedVariant]);
   
   // Fonction pour gérer le clic sur une miniature
   const handleThumbnailClick = (index) => {
+    console.log('🖱️ Clic sur miniature:', index);
     setSelectedImageIdx(index);
     
     // Récupérer le produit correspondant à cette image
-    const selectedImage = dynamicGalleryImages[index];
+    const currentImages = product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages;
+    const selectedImage = currentImages[index];
+    console.log('📸 Image sélectionnée:', selectedImage);
+    console.log('🗺️ Mapping disponible:', imageToProductMapping[selectedImage]);
+    
     if (selectedImage && imageToProductMapping[selectedImage]) {
-      setSelectedGalleryProduct(imageToProductMapping[selectedImage]);
+      const selectedProduct = imageToProductMapping[selectedImage];
+      console.log('✅ Produit trouvé:', selectedProduct.name, 'Prix:', selectedProduct.price);
+      setSelectedGalleryProduct(selectedProduct);
+    } else {
+      console.error('❌ Aucun produit trouvé pour l\'image:', selectedImage);
     }
   };
 
@@ -625,7 +796,7 @@ export default function ProductDetail() {
             <div className="d-flex flex-row flex-md-column gap-2 align-items-start">
               {/* Galerie verticale : images de la couleur sélectionnée */}
               <div className="d-flex flex-md-column flex-row gap-2 align-items-center">
-                {dynamicGalleryImages.map((img, idx) => (
+                {(product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages).map((img, idx) => (
                   <img
                     key={img}
                     src={img}
@@ -642,7 +813,7 @@ export default function ProductDetail() {
               {/* Image principale */}
               <div style={{ flex: 1, textAlign: 'center', position: 'relative', minWidth: 0 }}>
                 <img
-                  src={dynamicGalleryImages[selectedImageIdx] || dynamicGalleryImages[0] || product?.image}
+                  src={(product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages)[selectedImageIdx] || (product?.brand === 'Christian Louboutin' ? galleryImages : dynamicGalleryImages)[0] || product?.image}
                   alt={displayProduct?.name || product?.name}
                   className="img-fluid mb-2"
                   style={{ maxHeight: 340, objectFit: 'contain', borderRadius: 8, background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
@@ -761,6 +932,10 @@ export default function ProductDetail() {
               <h5>Description du produit</h5>
               <p>{displayProduct?.description || 'Aucune description disponible pour ce produit.'}</p>
             </div>
+            
+            {/* Section spécifique au genre */}
+            {isFemme && <FemmeSpecificSection product={product} />}
+            {isHomme && <HommeSpecificSection product={product} />}
           </div>
           {/* Colonne droite Amazon-like */}
           <div className="col-md-3">

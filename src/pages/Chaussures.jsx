@@ -1,6 +1,9 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ProductsContext, useProducts } from '../contexts/ProductsContext';
+import { testFemmeProductsCorrespondence } from '../utils/testFemmeProducts';
+import { debugFemmeBehavior } from '../utils/debugFemmeBehavior';
+import { testChristianLouboutinMapping } from '../utils/testChristianLouboutinMapping';
 import '../amazon-like.css';
 
 const Chaussures = () => {
@@ -26,11 +29,24 @@ const Chaussures = () => {
     };
   });
 
+  const { products: contextProducts, loading } = useProducts();
+  
+  const allProducts = contextProducts.filter(p => p.category === 'Chaussures');
+
   useEffect(() => {
     try {
       localStorage.setItem('chaussuresActiveFilters', JSON.stringify(activeFilters));
     } catch (e) {}
   }, [activeFilters]);
+
+  // Test de correspondance des produits femme au chargement
+  useEffect(() => {
+    if (allProducts.length > 0) {
+      testFemmeProductsCorrespondence(allProducts);
+      debugFemmeBehavior(allProducts);
+      testChristianLouboutinMapping(); // Test du mapping Christian Louboutin
+    }
+  }, [allProducts]);
 
   const subcategories = [
     {
@@ -80,19 +96,15 @@ const Chaussures = () => {
     ? popularBrandsByGenre[activeFilters.genre[0]] || popularBrandsByGenre.homme
     : popularBrandsByGenre.homme;
 
-  const { products: contextProducts } = useProducts();
-  
-  const allProducts = contextProducts.filter(p => p.category === 'Chaussures');
-
   // Liste exhaustive des images disponibles pour FEMME sous public/chaussures/femme
   const femmeImagePaths = [
     // CritianlouboutinNoire
     `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg`,
-    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Noir 2.jpeg`,
-    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Noir 3.jpeg`,
-    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Noir 4.jpeg`,
-    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Noir 5.jpeg`,
-    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Noir.jpeg`,
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg`,
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg`,
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg`,
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg`,
+    `/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg`,
     // Gucci
     `/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® International.jpeg`,
     `/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® US.jpeg`,
@@ -173,6 +185,41 @@ const Chaussures = () => {
 
   const femmeImages = buildFemmeImagesMeta(femmeImagePaths);
 
+  // Mapping des images Christian Louboutin vers leurs produits spécifiques
+  const christianLouboutinImageMapping = {
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins - Noir.jpeg': 'cl-escapins-noir-001',
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg': 'cl-heels-collection-speciale-003',
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg': 'cl-heels-edition-limitee-004',
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg': 'cl-heels-design-exclusif-005',
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg': 'cl-heels-collection-premium-006',
+    '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg': 'cl-heels-classic-002'
+  };
+
+  // Fonction pour trouver le produit exact correspondant à une image
+  const findProductByImage = (imagePath) => {
+    const productId = christianLouboutinImageMapping[imagePath];
+    if (productId) {
+      return contextProducts.find(p => p.id === productId);
+    }
+    return null;
+  };
+
+  // Fonction pour gérer le clic sur une image Christian Louboutin
+  const handleChristianLouboutinClick = (imagePath) => {
+    const product = findProductByImage(imagePath);
+    if (product) {
+      console.log('🎯 Produit trouvé pour image:', imagePath);
+      console.log('📦 Produit:', product.name);
+      console.log('🆔 ID du produit:', product.id);
+      navigate(`/product/${product.id}?image=${encodeURIComponent(imagePath)}`);
+    } else {
+      console.error('❌ Aucun produit trouvé pour l\'image:', imagePath);
+    }
+  };
+
+  // Chemins des images pour chaque section
+
+
   const handleSubcategoryClick = (subcategoryId) => {
     setSelectedSubcategory(subcategoryId);
     // Ici vous pourriez naviguer vers une page de sous-catégorie
@@ -180,6 +227,7 @@ const Chaussures = () => {
   };
 
   const handleProductClick = (product) => {
+    // Naviguer vers la page de détail du produit
     navigate(`/product/${product.id}`);
   };
 
@@ -248,6 +296,20 @@ const Chaussures = () => {
       '/chaussures/bebe/category-bebe.jpg'
     ];
   };
+
+  // Afficher un indicateur de chargement si les produits ne sont pas encore chargés
+  if (loading) {
+    return (
+      <div className="container mt-4">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Chargement...</span>
+          </div>
+          <p className="mt-2">Chargement des produits...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="chaussures-page">
@@ -502,6 +564,8 @@ const Chaussures = () => {
                  {/* Si FEMME (avec ou sans marque): afficher la galerie d'images */}
                  {activeFilters.genre[0] === 'femme' ? (
                    <div>
+                     {/* Message informatif */}
+
 
                      <div className="row g-3">
                                             {femmeImages
@@ -512,42 +576,68 @@ const Chaussures = () => {
                            return img.folder === folderForBrand;
                          });
                        })
-                       .map((img, idx) => (
-                       <div key={`${img.src}-${idx}`} className="col-6 col-md-4 col-lg-3">
-                         <div style={{
-                           backgroundColor: 'white',
-                           border: '1px solid #e9ecef',
-                           borderRadius: '8px',
-                           padding: '10px',
-                           height: '100%'
-                         }}
-                         onClick={() => handleBrandFilter(img.brand)}
-                         role="button"
-                         title={`Filtrer par ${img.brand}`}>
-                           <div className="text-center">
-                             <img
-                               src={img.src}
-                               alt={`Femme ${idx + 1}`}
+                       .map((img, idx) => {
+                         // Vérifier si c'est une image Christian Louboutin
+                         const isChristianLouboutin = img.folder === 'CritianlouboutinNoire';
+                         const product = isChristianLouboutin ? findProductByImage(img.src) : null;
+                         
+                         return (
+                           <div key={`${img.src}-${idx}`} className="col-6 col-md-4 col-lg-3">
+                             <div 
+                               onClick={isChristianLouboutin ? () => handleChristianLouboutinClick(img.src) : undefined}
                                style={{
-                                 width: '100%',
-                                 height: '280px',
-                                 objectFit: 'contain',
-                                 borderRadius: '6px',
-                                 backgroundColor: '#f8f9fa',
-                                 border: '1px solid #e9ecef'
+                                 backgroundColor: 'white',
+                                 border: '1px solid #e9ecef',
+                                 borderRadius: '8px',
+                                 padding: '10px',
+                                 height: '100%',
+                                 transition: 'all 0.2s ease',
+                                 cursor: isChristianLouboutin ? 'pointer' : 'default'
                                }}
-                               onError={(e) => {
-                                 e.target.style.display = 'none';
-                               }}
-                             />
+                               onMouseEnter={isChristianLouboutin ? (e) => {
+                                 e.target.style.transform = 'translateY(-2px)';
+                                 e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                               } : undefined}
+                               onMouseLeave={isChristianLouboutin ? (e) => {
+                                 e.target.style.transform = 'translateY(0)';
+                                 e.target.style.boxShadow = 'none';
+                               } : undefined}
+                             >
+                               <div className="text-center">
+                                 <img
+                                   src={img.src}
+                                   alt={`Femme ${idx + 1}`}
+                                   style={{
+                                     width: '100%',
+                                     height: '280px',
+                                     objectFit: 'contain',
+                                     borderRadius: '6px',
+                                     backgroundColor: '#f8f9fa',
+                                     border: '1px solid #e9ecef'
+                                   }}
+                                   onError={(e) => {
+                                     e.target.style.display = 'none';
+                                   }}
+                                                                   />
+                               </div>
+                               <div style={{ marginTop: '12px', fontSize: '0.85rem', color: '#333' }}>
+                                 <div style={{ fontWeight: 600 }}>{img.brand}</div>
+                                 <div style={{ color: '#666', wordBreak: 'break-word', fontSize: '0.75rem', lineHeight: '1.2' }}>{img.fileName}</div>
+                                 {isChristianLouboutin && product && (
+                                   <div style={{ 
+                                     color: '#febd69', 
+                                     fontSize: '0.7rem', 
+                                     fontWeight: '600',
+                                     marginTop: '4px'
+                                   }}>
+                                     {product.price.toLocaleString()} GNF
+                                   </div>
+                                 )}
+                               </div>
+                             </div>
                            </div>
-                           <div style={{ marginTop: '12px', fontSize: '0.85rem', color: '#333' }}>
-                             <div style={{ fontWeight: 600 }}>{img.brand}</div>
-                             <div style={{ color: '#666', wordBreak: 'break-word', fontSize: '0.75rem', lineHeight: '1.2' }}>{img.fileName}</div>
-                           </div>
-                         </div>
-                       </div>
-                     ))}
+                         );
+                       })}
                    </div>
                  </div>
                  ) : (
