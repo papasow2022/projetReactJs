@@ -93,6 +93,12 @@ export default function ProductDetail() {
       }
       
       setProductFromImage(foundProduct);
+
+      // Si l'image cliquée provient de Gucci, forcer la sélection de la marque Gucci
+      if (clickedImage.includes('/Gucci/')) {
+        const gucciBrand = { id: 'Gucci', name: 'Gucci', folder: 'Gucci' };
+        setSelectedBrand(gucciBrand);
+      }
     }
   }, [clickedImage, products]);
   
@@ -287,7 +293,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg',
           name: 'Christian Louboutin Escarpins',
           price: 2500000,
-          description: 'Escarpins Christian Louboutin, design exclusif et élégant.',
+          description: "Escarpins signature à la cambrure sensuelle, cuir lisse et ligne affûtée. Une pièce iconique qui élance la silhouette et signe un style haute couture.",
           rating: 4.8,
           tips: [
             'Élégant avec une robe cocktail ou un pantalon tailleur',
@@ -302,7 +308,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg',
           name: 'Christian Louboutin Heels Classic',
           price: 2450000,
-          description: 'Talons aiguilles Classic, finition premium.',
+          description: "Talons aiguilles iconiques à la finition glacée, silhouette intemporelle et allure élancée. Un essentiel du vestiaire habillé et des soirées.",
           rating: 4.7,
           tips: [
             'Classique avec tailleur pantalon ou jupe crayon',
@@ -317,7 +323,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg',
           name: 'Christian Louboutin Collection Spéciale',
           price: 2600000,
-          description: 'Édition Collection Spéciale, détails raffinés.',
+          description: "Édition spéciale aux finitions joaillières, détails sophistiqués et éclat discret. Idéal pour rehausser une tenue de cérémonie.",
           rating: 4.9,
           tips: [
             'Mettre en valeur les détails avec robe midi satinée',
@@ -332,7 +338,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg',
           name: 'Christian Louboutin Édition Limitée',
           price: 2700000,
-          description: "Série limitée, matériaux d'exception.",
+          description: "Série limitée confectionnée dans des matières d’exception. Présence raffinée, stabilité assumée et signature résolument couture.",
           rating: 5.0,
           tips: [
             'Idéal pour tenues formelles et soirées',
@@ -347,7 +353,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg',
           name: 'Christian Louboutin Design Exclusif',
           price: 2550000,
-          description: 'Design exclusif, silhouette iconique.',
+          description: "Design exclusif aux lignes sculpturales. Jeu d’angles et de courbes qui subliment la jambe avec une élégance assumée.",
           rating: 4.8,
           tips: [
             'Silhouette sculpturale avec robe colonne',
@@ -362,7 +368,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg',
           name: 'Christian Louboutin Collection Premium',
           price: 2650000,
-          description: 'Collection Premium, confort et style.',
+          description: "Version Premium alliant confort haute densité et équilibre parfait. Un porté souple qui n’altère jamais l’allure.",
           rating: 4.9,
           tips: [
             'Business chic avec blazer et pantalon droit',
@@ -381,7 +387,7 @@ export default function ProductDetail() {
           image: "/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® International.jpeg",
           name: 'Gucci Sandals International',
           price: 1800000,
-          description: 'Sandales à talons Gucci, style international.',
+          description: "Sandales à talon au minimalisme graphique, signature Gucci. Brides épurées et allure cosmopolite à la démarche fluide.",
           rating: 4.6,
           tips: [
             'Sublime avec une robe fluide ou un tailleur léger',
@@ -398,7 +404,7 @@ export default function ProductDetail() {
           image: "/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® US.jpeg",
           name: 'Gucci Sandals US',
           price: 1820000,
-          description: 'Sandales Gucci, édition US.',
+          description: "Variation US au design élancé et aux proportions équilibrées. Un essentiel chic pour les silhouettes estivales.",
           rating: 4.6,
           tips: [
             'Sublime avec une robe fluide ou un tailleur léger',
@@ -415,7 +421,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Gucci/Gucci Leather Sandals - Noir.jpeg',
           name: 'Gucci Leather Sandals',
           price: 1850000,
-          description: 'Sandales en cuir Gucci, coloris noir.',
+          description: "Sandales en cuir lisse noir, lignes nettes et profil raffiné. Un classique contemporain pour les dress codes du soir.",
           rating: 4.7,
           tips: [
             'Sublime avec une robe fluide ou un tailleur léger',
@@ -432,7 +438,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Gucci/Gucci Sandals - Noir 3.jpeg',
           name: 'Gucci Sandals Noir',
           price: 1780000,
-          description: 'Sandales Gucci noires, élégantes.',
+          description: "Sandales noires à l’élégance immédiate, équilibre entre finesse et maintien. Parfaites du déjeuner au dîner.",
           rating: 4.5,
           tips: [
             'Sublime avec une robe fluide ou un tailleur léger',
@@ -449,7 +455,7 @@ export default function ProductDetail() {
           image: "\/chaussures\/femme\/Gucci\/Women's Designer Luxury High Heels Pumps _ GUCCI® US.jpeg",
           name: 'Gucci Luxury Heels',
           price: 1900000,
-          description: 'Escarpins de luxe Gucci.',
+          description: "Escarpins de luxe à la courbe précise, port stable et silhouette allongée. Un investissement mode à la longévité certaine.",
           rating: 4.7,
           tips: [
             'Élégant avec une robe cocktail ou un pantalon tailleur',
@@ -468,7 +474,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/PradaBeige/Prada Ankle Strap Platform Sandals - Beige.jpeg',
           name: 'Prada Platform Sandals',
           price: 2200000,
-          description: 'Sandales plateformes Prada, beige.',
+          description: "Sandales plateformes au volume architectural, teinte beige apaisée. Un contraste moderne qui structure la silhouette.",
           rating: 4.7,
           tips: [
             'Équilibre silhouette avec pantalon droit ou jupe midi',
@@ -483,7 +489,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/PradaBeige/Prada Gold Platform Sandals - Beige.jpeg',
           name: 'Prada Gold Platform',
           price: 2250000,
-          description: 'Plateformes Prada, finitions dorées.',
+          description: "Plateformes aux finitions dorées subtiles, éclat maîtrisé et esprit couture. Idéal pour capter la lumière avec retenue.",
           rating: 4.7,
           tips: [
             'Équilibre silhouette avec pantalon droit ou jupe midi',
@@ -498,7 +504,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/PradaBeige/Prada Leather Platform Sandals - Beige.jpeg',
           name: 'Prada Leather Platform',
           price: 2180000,
-          description: 'Plateformes en cuir Prada.',
+          description: "Plateformes en cuir souple, maintien ergonomique et lignes franches. Confort et hauteur pour un porté assuré.",
           rating: 4.6,
           tips: [
             'Équilibre silhouette avec pantalon droit ou jupe midi',
@@ -513,7 +519,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/PradaBeige/Prada Metallic Platform Sandals - Beige.jpeg',
           name: 'Prada Metallic Platform',
           price: 2230000,
-          description: 'Plateformes métalliques Prada.',
+          description: "Plateformes aux reflets métallisés, modernité affirmée et allure sculpturale. Une pièce statement sans excès.",
           rating: 4.7,
           tips: [
             'Équilibre silhouette avec pantalon droit ou jupe midi',
@@ -528,7 +534,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/PradaBeige/Prada Paige Platform Sandals - Beige.jpeg',
           name: 'Prada Paige Platform',
           price: 2210000,
-          description: 'Modèle Paige par Prada.',
+          description: "Modèle Paige à la plateforme équilibrée, courbes harmonieuses et démarche stable. Une alternative sophistiquée au stiletto.",
           rating: 4.6,
           tips: [
             'Équilibre silhouette avec pantalon droit ou jupe midi',
@@ -543,7 +549,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/PradaBeige/Prada Sandales - Beige.jpeg',
           name: 'Prada Sandales Beige',
           price: 2100000,
-          description: 'Sandales Prada, teinte beige.',
+          description: "Sandales beige essentielles, lignes épurées et douceur chromatique. Un basique chic aux multiples combinaisons.",
           rating: 4.5,
           tips: [
             'Sublime avec une robe fluide ou un tailleur léger',
@@ -560,7 +566,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/PradaBeige/Prada Suede Sandals - Beige.jpeg',
           name: 'Prada Suede Sandals',
           price: 2150000,
-          description: 'Sandales Prada en daim.',
+          description: "Sandales en daim à la texture veloutée, toucher luxe et élégance feutrée. Idéales pour des tenues monochromes.",
           rating: 4.6,
           tips: [
             'Sublime avec une robe fluide ou un tailleur léger',
@@ -581,7 +587,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Zaranoire/Zara Ankle Strap Heels - Noir.jpeg',
           name: 'Zara Ankle Strap Heels',
           price: 450000,
-          description: 'Talons Zara à bride cheville.',
+          description: "Talons à bride cheville au style épuré, silhouette affinée et maintien précis. Un indispensable urbain.",
           rating: 4.3,
           tips: [
             'Mettre en valeur la cheville avec une jupe midi',
@@ -596,7 +602,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Zaranoire/Zara Classic Heels - Noir.jpeg',
           name: 'Zara Classic Heels',
           price: 440000,
-          description: 'Escarpins classiques Zara.',
+          description: "Escarpins classiques aux lignes nettes, polyvalents et féminins. Un intemporel pour le bureau comme pour le soir.",
           rating: 4.2,
           tips: [
             'Élégant avec une robe cocktail ou un pantalon tailleur',
@@ -611,7 +617,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Zaranoire/Zara High Heel Platform Slingback Shoes - Noir.jpeg',
           name: 'Zara Platform Slingback',
           price: 470000,
-          description: 'Plateformes slingback Zara.',
+          description: "Plateformes slingback, équilibre de hauteur et de confort. Esprit graphique pour des looks assumés.",
           rating: 4.3,
           tips: [
             'Équilibre silhouette avec pantalon droit ou jupe midi',
@@ -626,7 +632,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Zaranoire/Zara Pointed Toe Heels - Noir.jpeg',
           name: 'Zara Pointed Toe Heels',
           price: 455000,
-          description: 'Escarpins à bout pointu Zara.',
+          description: "Escarpins à bout pointu, profil allongeant et dessin affûté. Une signature de féminité contemporaine.",
           rating: 4.3,
           tips: [
             'Affiner la silhouette avec pantalon cigarette',
@@ -641,7 +647,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Zaranoire/Zara Rhinestone Suede Heels - Noir.jpeg',
           name: 'Zara Rhinestone Suede',
           price: 465000,
-          description: 'Escarpins en suède strass Zara.',
+          description: "Escarpins en suède ornés de strass, éclat maîtrisé et toucher velours. Une pièce festive au chic assuré.",
           rating: 4.4,
           tips: [
             'Parfait pour soirée avec robe noire sobre',
@@ -656,7 +662,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Zaranoire/Zara Strappy Heels - Noir.jpeg',
           name: 'Zara Strappy Heels',
           price: 448000,
-          description: 'Talons à brides Zara.',
+          description: "Talons à brides minimalistes, jeu de lignes fines et tenue précise. Idéal pour souligner la cheville.",
           rating: 4.2,
           tips: [
             'Idéal avec robe fluide et accessoires métalliques',
@@ -675,7 +681,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir.jpeg',
           name: 'Minelli Escarpins',
           price: 380000,
-          description: 'Escarpins Minelli, élégants et confortables.',
+          description: "Escarpins Minelli au confort étudié, lignes élégantes et talon mesuré. Une valeur sûre du quotidien chic.",
           rating: 4.4,
           tips: [
             'Élégant avec une robe cocktail ou un pantalon tailleur',
@@ -690,7 +696,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 2.jpeg',
           name: 'Minelli Escarpins 2',
           price: 385000,
-          description: 'Variante Minelli noir 2.',
+          description: "Variante noire à la finition soignée, silhouette sobre et facile à porter. Un allié du vestiaire business.",
           rating: 4.4,
           tips: [
             'Associer à une veste tailleur structurée',
@@ -705,7 +711,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 3.jpeg',
           name: 'Minelli Escarpins 3',
           price: 390000,
-          description: 'Variante Minelli noir 3.',
+          description: "Variante noire rehaussée d’une cambrure subtile, allure élancée et attitude sûre.",
           rating: 4.4,
           tips: [
             'Look soirée avec robe midi ou combinaison chic',
@@ -720,7 +726,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Minelli/Minelli Tulin Bottines Talon - Noir.jpeg',
           name: 'Minelli Bottines Tulin',
           price: 420000,
-          description: 'Bottines Minelli Tulin, talon.',
+          description: "Bottines Tulin à talon, tige élancée et ligne nette. Un basique citadin pour rythmer l’entre‑saison.",
           rating: 4.5,
           tips: [
             'Parfait avec un jean skinny ou un trench',
@@ -741,7 +747,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Mango/MANGO Ankle Strap Sandal in Nude at Nordstrom, Size 6_5Us.jpeg',
           name: 'Mango Ankle Strap Sandal',
           price: 320000,
-          description: 'Sandales Mango, nude.',
+          description: "Sandales nude à brides fines, teinte seconde peau et élégance discrète. Un essentiel lumineux.",
           rating: 4.2,
           tips: [
             'Élancer la jambe avec jupe fendue',
@@ -758,7 +764,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude.jpeg',
           name: 'Mango Strappy Sandals',
           price: 318000,
-          description: 'Sandales à brides Mango.',
+          description: "Sandales à brides au tracé délicat, féminines et polyvalentes. Un choix facile pour l’été.",
           rating: 4.2,
           tips: [
             'Mettre en valeur les brides avec robe midi',
@@ -775,7 +781,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 2.jpeg',
           name: 'Mango Strappy Sandals 2',
           price: 319000,
-          description: 'Variante Mango 2.',
+          description: "Variante au dessin épuré, lignes allégées et équilibre naturel. Un complément de garde‑robe tout‑terrain.",
           rating: 4.2,
           tips: [
             'Look minimal avec tailleur short',
@@ -792,7 +798,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 3.jpeg',
           name: 'Mango Strappy Sandals 3',
           price: 321000,
-          description: 'Variante Mango 3.',
+          description: "Variante élancée à l’esthétique minimaliste, jeu de transparences et allure aérienne.",
           rating: 4.2,
           tips: [
             'Jouer la transparence avec matières légères',
@@ -813,7 +819,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg',
           name: 'Jonak Tendance',
           price: 280000,
-          description: 'Chaussures Jonak tendance.',
+          description: "Modèle Jonak à l’allure tendance, lignes souples et féminité immédiate. Parfait pour rehausser le quotidien.",
           rating: 4.1,
           tips: [
             'Casual chic avec jean droit et chemise fluide',
@@ -830,7 +836,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg',
           name: 'Jonak Tendance 2',
           price: 282000,
-          description: 'Variante Jonak tendance 2.',
+          description: "Variante à l’équilibre casual‑chic, sobriété des lignes et confort durable.",
           rating: 4.1,
           tips: [
             'Élégant au quotidien avec robe chemise',
@@ -847,7 +853,7 @@ export default function ProductDetail() {
           image: '/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg',
           name: 'Jonak Santiags Basama',
           price: 300000,
-          description: 'Bottines santiags Jonak.',
+          description: "Bottines santiags au caractère affirmé, pointe effilée et talon biseauté. Un accent western maîtrisé.",
           rating: 4.2,
           tips: [
             'Esprit western avec jean slim et veste en cuir',
@@ -975,9 +981,40 @@ export default function ProductDetail() {
   // Initialiser la marque sélectionnée pour les produits Femme
   useEffect(() => {
     if (product?.subcategory === 'femme') {
-      // Déterminer la marque basée sur le produit
+      // Priorité à l'image cliquée (ex: Gucci) pour déterminer la marque
+      if (clickedImage) {
+        if (clickedImage.includes('/CritianlouboutinNoire/')) {
+          setSelectedBrand({ id: 'CritianlouboutinNoire', name: 'Christian Louboutin', folder: 'CritianlouboutinNoire' });
+          return;
+        }
+        if (clickedImage.includes('/Gucci/')) {
+          setSelectedBrand({ id: 'Gucci', name: 'Gucci', folder: 'Gucci' });
+          return;
+        }
+        if (clickedImage.includes('/PradaBeige/')) {
+          setSelectedBrand({ id: 'PradaBeige', name: 'Prada', folder: 'PradaBeige' });
+          return;
+        }
+        if (clickedImage.includes('/Zaranoire/')) {
+          setSelectedBrand({ id: 'Zaranoire', name: 'Zara', folder: 'Zaranoire' });
+          return;
+        }
+        if (clickedImage.includes('/Minelli/')) {
+          setSelectedBrand({ id: 'Minelli', name: 'Minelli', folder: 'Minelli' });
+          return;
+        }
+        if (clickedImage.includes('/Mango/')) {
+          setSelectedBrand({ id: 'Mango', name: 'Mango', folder: 'Mango' });
+          return;
+        }
+        if (clickedImage.includes('/Jonak/')) {
+          setSelectedBrand({ id: 'Jonak', name: 'Jonak', folder: 'Jonak' });
+          return;
+        }
+      }
+
+      // Sinon, déterminer la marque basée sur le produit
       let brandToSet = null;
-      
       if (product?.brand === 'Christian Louboutin' || product?.image?.includes('CritianlouboutinNoire')) {
         brandToSet = { id: 'CritianlouboutinNoire', name: 'Christian Louboutin', folder: 'CritianlouboutinNoire' };
       } else if (product?.brand === 'Gucci' || product?.image?.includes('Gucci')) {
@@ -993,17 +1030,16 @@ export default function ProductDetail() {
       } else if (product?.brand === 'Jonak' || product?.image?.includes('Jonak')) {
         brandToSet = { id: 'Jonak', name: 'Jonak', folder: 'Jonak' };
       }
-      
+
       if (brandToSet) {
         setSelectedBrand(brandToSet);
         console.log('🎯 Marque initialisée:', brandToSet.name);
         if (import.meta.env?.DEV) {
-          // Lancer une vérification dev-only après init de la marque
           setTimeout(() => verifyAllFemmeCatalogConsistency(), 0);
         }
       }
     }
-  }, [product]);
+  }, [product, clickedImage]);
   if (!product) {
     product = products.find((p) => p.id === productId || p.slug === productId);
     console.log('🔍 Produit trouvé par ID:', product?.name || 'Aucun produit trouvé');
@@ -2018,13 +2054,38 @@ export default function ProductDetail() {
               <div>
                 <h4>Description détaillée</h4>
                 <p>{displayProduct?.description || 'Aucune description disponible pour ce produit.'}</p>
-                <ul>
-                  <li>Technologie Air Max pour un amorti optimal</li>
-                  <li>Semelle extérieure en caoutchouc durable</li>
-                  <li>Tige en mesh respirant</li>
-                  <li>Doublure confortable</li>
-                  <li>Poids léger : 320g</li>
-                </ul>
+                {product?.subcategory === 'femme' ? null : (
+                  <>
+                    {Array.isArray(displayProduct?.tips) && displayProduct.tips.length > 0 ? (
+                      <>
+                        <h6 className="mt-3">Conseils de style</h6>
+                        <ul>
+                          {displayProduct.tips.map((t, i) => (
+                            <li key={`tip-${i}`}>{t}</li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : null}
+                    {Array.isArray(displayProduct?.care) && displayProduct.care.length > 0 ? (
+                      <>
+                        <h6 className="mt-2">Entretien</h6>
+                        <ul>
+                          {displayProduct.care.map((c, i) => (
+                            <li key={`care-${i}`}>{c}</li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : (
+                      <ul>
+                        <li>Technologie Air Max pour un amorti optimal</li>
+                        <li>Semelle extérieure en caoutchouc durable</li>
+                        <li>Tige en mesh respirant</li>
+                        <li>Doublure confortable</li>
+                        <li>Poids léger : 320g</li>
+                      </ul>
+                    )}
+                  </>
+                )}
               </div>
             )}
             {activeTab === 'specs' && (

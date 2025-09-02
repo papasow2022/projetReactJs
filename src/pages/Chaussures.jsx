@@ -217,6 +217,18 @@ const Chaussures = () => {
     }
   };
 
+  // Fonction pour gérer le clic sur une image Gucci (redirige vers la page détail avec l'image cliquée)
+  const handleGucciClick = (imagePath) => {
+    const fallbackProductId = 'cl-escarpins-noir-001';
+    navigate(`/product/${fallbackProductId}?image=${encodeURIComponent(imagePath)}`);
+  };
+
+  // Fonction pour gérer le clic sur une image Jonak (redirige vers la page détail avec l'image cliquée)
+  const handleJonakClick = (imagePath) => {
+    const jonakProductId = 'jonak-bottines-western-marron';
+    navigate(`/product/${jonakProductId}?image=${encodeURIComponent(imagePath)}`);
+  };
+  
   // Chemins des images pour chaque section
 
 
@@ -574,14 +586,20 @@ const Chaussures = () => {
                            });
                          })
                          .map((img, idx) => {
-                           // Vérifier si c'est une image Christian Louboutin
+                           // Vérifier si c'est une image Christian Louboutin ou Gucci
                            const isChristianLouboutin = img.folder === 'CritianlouboutinNoire';
+                           const isGucci = img.folder === 'Gucci';
+                           const isJonak = img.folder === 'Jonak';
                            const product = isChristianLouboutin ? findProductByImage(img.src) : null;
                            
                            return (
                              <div key={`${img.src}-${idx}`} className="col-md-6 col-lg-4">
                                <div className="product-card" 
-                                 onClick={isChristianLouboutin ? () => handleChristianLouboutinClick(img.src) : undefined}
+                                 onClick={
+                                   isChristianLouboutin
+                                     ? () => handleChristianLouboutinClick(img.src)
+                                     : (isGucci ? () => handleGucciClick(img.src) : (isJonak ? () => handleJonakClick(img.src) : undefined))
+                                 }
                                  style={{
                                    backgroundColor: 'white',
                                    border: '1px solid #e9ecef',
@@ -589,13 +607,13 @@ const Chaussures = () => {
                                    padding: '20px',
                                    height: '100%',
                                    transition: 'all 0.2s ease',
-                                   cursor: isChristianLouboutin ? 'pointer' : 'default'
+                                   cursor: (isChristianLouboutin || isGucci || isJonak) ? 'pointer' : 'default'
                                  }}
-                                 onMouseEnter={isChristianLouboutin ? (e) => {
+                                 onMouseEnter={(isChristianLouboutin || isGucci || isJonak) ? (e) => {
                                    e.target.style.transform = 'translateY(-2px)';
                                    e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
                                  } : undefined}
-                                 onMouseLeave={isChristianLouboutin ? (e) => {
+                                 onMouseLeave={(isChristianLouboutin || isGucci || isJonak) ? (e) => {
                                    e.target.style.transform = 'translateY(0)';
                                    e.target.style.boxShadow = 'none';
                                  } : undefined}
@@ -661,6 +679,68 @@ const Chaussures = () => {
                                        </span>
                                        <span style={{ fontSize: '0.9rem', color: '#666' }}>
                                          ★ {product.rating} ({product.reviewCount})
+                                       </span>
+                                     </>
+                                   ) : isGucci ? (
+                                     <>
+                                       <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
+                                         {(() => {
+                                           const gucciCatalog = [
+                                             { image: '/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® International.jpeg', price: 1800000, rating: 4.6, reviewCount: 210 },
+                                             { image: '/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® US.jpeg', price: 1820000, rating: 4.6, reviewCount: 195 },
+                                             { image: '/chaussures/femme/Gucci/Gucci Leather Sandals - Noir.jpeg', price: 1850000, rating: 4.7, reviewCount: 238 },
+                                             { image: '/chaussures/femme/Gucci/Gucci Sandals - Noir 3.jpeg', price: 1780000, rating: 4.5, reviewCount: 168 },
+                                             { image: "/chaussures/femme/Gucci/Women's Designer Luxury High Heels Pumps _ GUCCI® US.jpeg", price: 1900000, rating: 4.7, reviewCount: 256 }
+                                           ];
+                                           const match = gucciCatalog.find(i => i.image === img.src);
+                                           const price = match?.price || 0;
+                                           return price.toLocaleString();
+                                         })()} GNF
+                                       </span>
+                                       <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                         {(() => {
+                                           const gucciCatalog = [
+                                             { image: '/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® International.jpeg', price: 1800000, rating: 4.6, reviewCount: 210 },
+                                             { image: '/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® US.jpeg', price: 1820000, rating: 4.6, reviewCount: 195 },
+                                             { image: '/chaussures/femme/Gucci/Gucci Leather Sandals - Noir.jpeg', price: 1850000, rating: 4.7, reviewCount: 238 },
+                                             { image: '/chaussures/femme/Gucci/Gucci Sandals - Noir 3.jpeg', price: 1780000, rating: 4.5, reviewCount: 168 },
+                                             { image: "/chaussures/femme/Gucci/Women's Designer Luxury High Heels Pumps _ GUCCI® US.jpeg", price: 1900000, rating: 4.7, reviewCount: 256 }
+                                           ];
+                                           const match = gucciCatalog.find(i => i.image === img.src);
+                                           const rating = match?.rating || 4.6;
+                                           const reviews = match?.reviewCount || 200;
+                                           return `★ ${rating} (${reviews})`;
+                                         })()}
+                                       </span>
+                                     </>
+                                   ) : isJonak ? (
+                                     <>
+                                       <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
+                                         {(() => {
+                                           const jonakCatalog = [
+                                             { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg', price: 280000, rating: 4.1, reviewCount: 120 },
+                                             { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg', price: 282000, rating: 4.1, reviewCount: 110 },
+                                             { image: '/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg', price: 300000, rating: 4.2, reviewCount: 98 },
+                                             { image: '/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg', price: 305000, rating: 4.2, reviewCount: 101 }
+                                           ];
+                                           const match = jonakCatalog.find(i => i.image === img.src);
+                                           const price = match?.price || 0;
+                                           return price.toLocaleString();
+                                         })()} GNF
+                                       </span>
+                                       <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                         {(() => {
+                                           const jonakCatalog = [
+                                             { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg', price: 280000, rating: 4.1, reviewCount: 120 },
+                                             { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg', price: 282000, rating: 4.1, reviewCount: 110 },
+                                             { image: '/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg', price: 300000, rating: 4.2, reviewCount: 98 },
+                                             { image: '/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg', price: 305000, rating: 4.2, reviewCount: 101 }
+                                           ];
+                                           const match = jonakCatalog.find(i => i.image === img.src);
+                                           const rating = match?.rating || 4.1;
+                                           const reviews = match?.reviewCount || 100;
+                                           return `★ ${rating} (${reviews})`;
+                                         })()}
                                        </span>
                                      </>
                                    ) : (
