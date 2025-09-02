@@ -645,7 +645,19 @@ const Chaussures = () => {
                                    {isChristianLouboutin && product ? (
                                      <>
                                        <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
-                                         {product.price.toLocaleString()} GNF
+                                         {(() => {
+                                           const catalog = [
+                                             { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg', price: 2500000 },
+                                             { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg', price: 2450000 },
+                                             { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg', price: 2600000 },
+                                             { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg', price: 2700000 },
+                                             { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg', price: 2550000 },
+                                             { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg', price: 2650000 }
+                                           ];
+                                           const match = catalog.find(i => i.image === img.src);
+                                           const price = (match?.price ?? product.price) || 0;
+                                           return price.toLocaleString();
+                                         })()} GNF
                                        </span>
                                        <span style={{ fontSize: '0.9rem', color: '#666' }}>
                                          ★ {product.rating} ({product.reviewCount})

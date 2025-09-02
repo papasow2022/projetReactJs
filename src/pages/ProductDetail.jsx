@@ -227,6 +227,58 @@ export default function ProductDetail() {
     return { tips, care };
   };
 
+  // Dev-only: vérifie la cohérence tips/care pour toutes les images Femme
+  const verifyAllFemmeCatalogConsistency = () => {
+    try {
+      const brands = getAvailableBrands();
+      const issues = [];
+      const keywordSets = {
+        bottine: { tips: ['jean', 'trench', 'urbain'], care: ['imperméabilis', 'poussi', 'sécher'] },
+        sandale: { tips: ['robe', 'tailleur', 'estiv'], care: ['microfibre', 'humidité', 'housse'] },
+        platform: { tips: ['silhouette', 'pantalon', 'moderne'], care: ['plateforme', 'semelle'] },
+        slingback: { tips: ['robe', 'tailleur', 'cérémonie'], care: ['élastique', 'embauchoir'] },
+        escarpin: { tips: ['robe', 'pantalon', 'pochette'], care: ['patins', 'cuir'] }
+      };
+      const detectCategory = (p) => {
+        const s = (p || '').toLowerCase();
+        if (s.includes('bottine') || s.includes('boot')) return 'bottine';
+        if (s.includes('sandal') || s.includes('sandale')) return 'sandale';
+        if (s.includes('platform')) return 'platform';
+        if (s.includes('slingback')) return 'slingback';
+        return 'escarpin';
+      };
+      brands.forEach((b) => {
+        const catalog = getBrandCatalog(b.folder);
+        catalog.forEach((item) => {
+          const expected = detectCategory(item.image);
+          const kws = keywordSets[expected];
+          const hasTips = Array.isArray(item.tips) && item.tips.length > 0;
+          const hasCare = Array.isArray(item.care) && item.care.length > 0;
+          if (!hasTips || !hasCare) {
+            issues.push({ level: 'warn', brand: b.name, image: item.image, reason: 'tips/care manquants' });
+            return;
+          }
+          const tipsText = item.tips.join(' ').toLowerCase();
+          const careText = item.care.join(' ').toLowerCase();
+          const tipsOk = kws.tips.some((kw) => tipsText.includes(kw));
+          const careOk = kws.care.some((kw) => careText.includes(kw));
+          if (!tipsOk || !careOk) {
+            issues.push({ level: 'info', brand: b.name, image: item.image, expected, detail: { tipsOk, careOk } });
+          }
+        });
+      });
+      if (issues.length === 0) {
+        console.log('✅ Vérification Femme: tous les tips/care semblent cohérents.');
+      } else {
+        console.groupCollapsed(`🔍 Vérification Femme: ${issues.length} éléments à revoir`);
+        issues.forEach((it) => console.log(it));
+        console.groupEnd();
+      }
+    } catch (e) {
+      console.warn('⚠️ Vérification Femme échouée:', e);
+    }
+  };
+
   // Catalogue par marque: image -> { name, price, description, rating }
   const getBrandCatalog = (brandFolder) => {
     if (brandFolder === 'CritianlouboutinNoire') {
@@ -945,6 +997,10 @@ export default function ProductDetail() {
       if (brandToSet) {
         setSelectedBrand(brandToSet);
         console.log('🎯 Marque initialisée:', brandToSet.name);
+        if (import.meta.env?.DEV) {
+          // Lancer une vérification dev-only après init de la marque
+          setTimeout(() => verifyAllFemmeCatalogConsistency(), 0);
+        }
       }
     }
   }, [product]);
@@ -1679,8 +1735,11 @@ export default function ProductDetail() {
   let displayProduct = selectedGalleryProduct || product;
   if (product?.subcategory === 'femme' && selectedBrand) {
     const catalog = getBrandCatalog(selectedBrand.folder);
-    const images = (catalog && catalog.length > 0) ? catalog.map(i => i.image) : getBrandImages(selectedBrand.folder);
-    const currentImage = images[selectedImageIdx] || images[0];
+    // IMPORTANT: utiliser l'ordre des images de la galerie (qui place l'image cliquée en premier)
+    const orderedImages = galleryImages && galleryImages.length > 0
+      ? galleryImages
+      : ((catalog && catalog.length > 0) ? catalog.map(i => i.image) : getBrandImages(selectedBrand.folder));
+    const currentImage = orderedImages[selectedImageIdx] || orderedImages[0];
     const meta = (catalog || []).find(i => i.image === currentImage);
     const base = buildBrandDisplayProduct(selectedBrand) || product;
     const tc = getTipsCareForImage(currentImage, base?.brand);
