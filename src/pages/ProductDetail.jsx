@@ -101,6 +101,153 @@ export default function ProductDetail() {
   
   // État pour gérer la marque sélectionnée
   const [selectedBrand, setSelectedBrand] = useState(null);
+ 
+  // Construit un produit d'affichage cohérent pour une marque donnée (nom, prix, description, rating...)
+  const buildBrandDisplayProduct = (brand) => {
+    if (!brand) return null;
+    const base = {
+      ...product,
+      subcategory: 'femme',
+      category: product?.category || 'Chaussures',
+      reviewCount: 0,
+    };
+    switch (brand.folder) {
+      case 'CritianlouboutinNoire':
+        return {
+          ...base,
+          brand: 'Christian Louboutin',
+          name: 'Christian Louboutin Collection',
+          price: 2500000,
+          rating: 4.8,
+          description: 'Escarpins Christian Louboutin, design exclusif et élégant.'
+        };
+      case 'Gucci':
+        return {
+          ...base,
+          brand: 'Gucci',
+          name: 'Gucci Collection',
+          price: 1800000,
+          rating: 4.6,
+          description: 'Sélection Gucci femme, sandales design et finitions premium.'
+        };
+      case 'PradaBeige':
+        return {
+          ...base,
+          brand: 'Prada',
+          name: 'Prada Collection',
+          price: 2200000,
+          rating: 4.7,
+          description: 'Collection Prada femme, plateformes élégantes en cuir haut de gamme.'
+        };
+      case 'Zaranoire':
+        return {
+          ...base,
+          brand: 'Zara',
+          name: 'Zara Collection',
+          price: 450000,
+          rating: 4.3,
+          description: 'Sélection Zara femme, talons modernes et confortables.'
+        };
+      case 'Minelli':
+        return {
+          ...base,
+          brand: 'Minelli',
+          name: 'Minelli Collection',
+          price: 380000,
+          rating: 4.4,
+          description: 'Minelli femme, escarpins et bottines au confort quotidien.'
+        };
+      case 'Mango':
+        return {
+          ...base,
+          brand: 'Mango',
+          name: 'Mango Collection',
+          price: 320000,
+          rating: 4.2,
+          description: 'Mango femme, sandales fines au style minimal et chic.'
+        };
+      case 'Jonak':
+        return {
+          ...base,
+          brand: 'Jonak',
+          name: 'Jonak Collection',
+          price: 280000,
+          rating: 4.1,
+          description: 'Jonak femme, bottines et escarpins tendance.'
+        };
+      default:
+        return base;
+    }
+  };
+
+  // Catalogue par marque: image -> { name, price, description, rating }
+  const getBrandCatalog = (brandFolder) => {
+    if (brandFolder === 'CritianlouboutinNoire') {
+      return [
+        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg', name: 'Christian Louboutin Escarpins', price: 2500000, description: 'Escarpins Christian Louboutin, design exclusif et élégant.', rating: 4.8 },
+        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg', name: 'Christian Louboutin Heels Classic', price: 2450000, description: 'Talons aiguilles Classic, finition premium.', rating: 4.7 },
+        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg', name: 'Christian Louboutin Collection Spéciale', price: 2600000, description: 'Édition Collection Spéciale, détails raffinés.', rating: 4.9 },
+        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg', name: 'Christian Louboutin Édition Limitée', price: 2700000, description: 'Série limitée, matériaux d’exception.', rating: 5.0 },
+        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg', name: 'Christian Louboutin Design Exclusif', price: 2550000, description: 'Design exclusif, silhouette iconique.', rating: 4.8 },
+        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg', name: 'Christian Louboutin Collection Premium', price: 2650000, description: 'Collection Premium, confort et style.', rating: 4.9 }
+      ];
+    }
+    if (brandFolder === 'Gucci') {
+      return [
+        { image: "/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® International.jpeg", name: 'Gucci Sandals International', price: 1800000, description: 'Sandales à talons Gucci, style international.', rating: 4.6 },
+        { image: "/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® US.jpeg", name: 'Gucci Sandals US', price: 1820000, description: 'Sandales Gucci, édition US.', rating: 4.6 },
+        { image: '/chaussures/femme/Gucci/Gucci Leather Sandals - Noir.jpeg', name: 'Gucci Leather Sandals', price: 1850000, description: 'Sandales en cuir Gucci, coloris noir.', rating: 4.7 },
+        { image: '/chaussures/femme/Gucci/Gucci Sandals - Noir 3.jpeg', name: 'Gucci Sandals Noir', price: 1780000, description: 'Sandales Gucci noires, élégantes.', rating: 4.5 },
+        { image: "\/chaussures\/femme\/Gucci\/Women's Designer Luxury High Heels Pumps _ GUCCI® US.jpeg", name: 'Gucci Luxury Heels', price: 1900000, description: 'Escarpins de luxe Gucci.', rating: 4.7 }
+      ];
+    }
+    if (brandFolder === 'PradaBeige') {
+      return [
+        { image: '/chaussures/femme/PradaBeige/Prada Ankle Strap Platform Sandals - Beige.jpeg', name: 'Prada Platform Sandals', price: 2200000, description: 'Sandales plateformes Prada, beige.', rating: 4.7 },
+        { image: '/chaussures/femme/PradaBeige/Prada Gold Platform Sandals - Beige.jpeg', name: 'Prada Gold Platform', price: 2250000, description: 'Plateformes Prada, finitions dorées.', rating: 4.7 },
+        { image: '/chaussures/femme/PradaBeige/Prada Leather Platform Sandals - Beige.jpeg', name: 'Prada Leather Platform', price: 2180000, description: 'Plateformes en cuir Prada.', rating: 4.6 },
+        { image: '/chaussures/femme/PradaBeige/Prada Metallic Platform Sandals - Beige.jpeg', name: 'Prada Metallic Platform', price: 2230000, description: 'Plateformes métalliques Prada.', rating: 4.7 },
+        { image: '/chaussures/femme/PradaBeige/Prada Paige Platform Sandals - Beige.jpeg', name: 'Prada Paige Platform', price: 2210000, description: 'Modèle Paige par Prada.', rating: 4.6 },
+        { image: '/chaussures/femme/PradaBeige/Prada Sandales - Beige.jpeg', name: 'Prada Sandales Beige', price: 2100000, description: 'Sandales Prada, teinte beige.', rating: 4.5 },
+        { image: '/chaussures/femme/PradaBeige/Prada Suede Sandals - Beige.jpeg', name: 'Prada Suede Sandals', price: 2150000, description: 'Sandales Prada en daim.', rating: 4.6 }
+      ];
+    }
+    if (brandFolder === 'Zaranoire') {
+      return [
+        { image: '/chaussures/femme/Zaranoire/Zara Ankle Strap Heels - Noir.jpeg', name: 'Zara Ankle Strap Heels', price: 450000, description: 'Talons Zara à bride cheville.', rating: 4.3 },
+        { image: '/chaussures/femme/Zaranoire/Zara Classic Heels - Noir.jpeg', name: 'Zara Classic Heels', price: 440000, description: 'Escarpins classiques Zara.', rating: 4.2 },
+        { image: '/chaussures/femme/Zaranoire/Zara High Heel Platform Slingback Shoes - Noir.jpeg', name: 'Zara Platform Slingback', price: 470000, description: 'Plateformes slingback Zara.', rating: 4.3 },
+        { image: '/chaussures/femme/Zaranoire/Zara Pointed Toe Heels - Noir.jpeg', name: 'Zara Pointed Toe Heels', price: 455000, description: 'Escarpins à bout pointu Zara.', rating: 4.3 },
+        { image: '/chaussures/femme/Zaranoire/Zara Rhinestone Suede Heels - Noir.jpeg', name: 'Zara Rhinestone Suede', price: 465000, description: 'Escarpins en suède strass Zara.', rating: 4.4 },
+        { image: '/chaussures/femme/Zaranoire/Zara Strappy Heels - Noir.jpeg', name: 'Zara Strappy Heels', price: 448000, description: 'Talons à brides Zara.', rating: 4.2 }
+      ];
+    }
+    if (brandFolder === 'Minelli') {
+      return [
+        { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir.jpeg', name: 'Minelli Escarpins', price: 380000, description: 'Escarpins Minelli, élégants et confortables.', rating: 4.4 },
+        { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 2.jpeg', name: 'Minelli Escarpins 2', price: 385000, description: 'Variante Minelli noir 2.', rating: 4.4 },
+        { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 3.jpeg', name: 'Minelli Escarpins 3', price: 390000, description: 'Variante Minelli noir 3.', rating: 4.4 },
+        { image: '/chaussures/femme/Minelli/Minelli Tulin Bottines Talon - Noir.jpeg', name: 'Minelli Bottines Tulin', price: 420000, description: 'Bottines Minelli Tulin, talon.', rating: 4.5 }
+      ];
+    }
+    if (brandFolder === 'Mango') {
+      return [
+        { image: '/chaussures/femme/Mango/MANGO Ankle Strap Sandal in Nude at Nordstrom, Size 6_5Us.jpeg', name: 'Mango Ankle Strap Sandal', price: 320000, description: 'Sandales Mango, nude.', rating: 4.2 },
+        { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude.jpeg', name: 'Mango Strappy Sandals', price: 318000, description: 'Sandales à brides Mango.', rating: 4.2 },
+        { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 2.jpeg', name: 'Mango Strappy Sandals 2', price: 319000, description: 'Variante Mango 2.', rating: 4.2 },
+        { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 3.jpeg', name: 'Mango Strappy Sandals 3', price: 321000, description: 'Variante Mango 3.', rating: 4.2 }
+      ];
+    }
+    if (brandFolder === 'Jonak') {
+      return [
+        { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg', name: 'Jonak Tendance', price: 280000, description: 'Chaussures Jonak tendance.', rating: 4.1 },
+        { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg', name: 'Jonak Tendance 2', price: 282000, description: 'Variante Jonak tendance 2.', rating: 4.1 },
+        { image: '/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg', name: 'Jonak Santiags Basama', price: 300000, description: 'Bottines santiags Jonak.', rating: 4.2 },
+        { image: '/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg', name: 'Jonak Western Cuir', price: 305000, description: 'Bottines western Jonak en cuir.', rating: 4.2 }
+      ];
+    }
+    return [];
+  };
   
   // Fonction pour obtenir toutes les marques disponibles pour la section Femme
   const getAvailableBrands = () => {
@@ -187,80 +334,9 @@ export default function ProductDetail() {
     console.log('🔄 Changement de marque vers:', brand.name);
     setSelectedBrand(brand);
     setSelectedImageIdx(0); // Remettre l'image principale à la première position
-    
-    // Mettre à jour le produit affiché avec les informations de la nouvelle marque
-    if (brand.folder === 'CritianlouboutinNoire') {
-      // Créer un produit Christian Louboutin avec les nouvelles images
-      const newProduct = {
-        ...product,
-        brand: 'Christian Louboutin',
-        name: 'Christian Louboutin Collection',
-        price: 2500000, // Prix Christian Louboutin
-        rating: 4.8,
-        reviewCount: 156
-      };
-      setSelectedGalleryProduct(newProduct);
-    } else if (brand.folder === 'Gucci') {
-      const newProduct = {
-        ...product,
-        brand: 'Gucci',
-        name: 'Gucci Collection',
-        price: 1800000, // Prix Gucci
-        rating: 4.6,
-        reviewCount: 89
-      };
-      setSelectedGalleryProduct(newProduct);
-    } else if (brand.folder === 'PradaBeige') {
-      const newProduct = {
-        ...product,
-        brand: 'Prada',
-        name: 'Prada Collection',
-        price: 2200000, // Prix Prada
-        rating: 4.7,
-        reviewCount: 134
-      };
-      setSelectedGalleryProduct(newProduct);
-    } else if (brand.folder === 'Zaranoire') {
-      const newProduct = {
-        ...product,
-        brand: 'Zara',
-        name: 'Zara Collection',
-        price: 450000, // Prix Zara
-        rating: 4.3,
-        reviewCount: 67
-      };
-      setSelectedGalleryProduct(newProduct);
-    } else if (brand.folder === 'Minelli') {
-      const newProduct = {
-        ...product,
-        brand: 'Minelli',
-        name: 'Minelli Collection',
-        price: 380000, // Prix Minelli
-        rating: 4.4,
-        reviewCount: 45
-      };
-      setSelectedGalleryProduct(newProduct);
-    } else if (brand.folder === 'Mango') {
-      const newProduct = {
-        ...product,
-        brand: 'Mango',
-        name: 'Mango Collection',
-        price: 320000, // Prix Mango
-        rating: 4.2,
-        reviewCount: 38
-      };
-      setSelectedGalleryProduct(newProduct);
-    } else if (brand.folder === 'Jonak') {
-      const newProduct = {
-        ...product,
-        brand: 'Jonak',
-        name: 'Jonak Collection',
-        price: 280000, // Prix Jonak
-        rating: 4.1,
-        reviewCount: 29
-      };
-      setSelectedGalleryProduct(newProduct);
-    }
+    // Construire et appliquer un produit d'affichage pour la marque
+    const brandProduct = buildBrandDisplayProduct(brand);
+    if (brandProduct) setSelectedGalleryProduct(brandProduct);
   };
   
   // Initialiser la marque sélectionnée pour les produits Femme
@@ -434,8 +510,9 @@ export default function ProductDetail() {
     if (product?.subcategory === 'femme' && selectedBrand) {
       console.log('🔍 Affichage des images de la marque sélectionnée:', selectedBrand.name);
       
-      // Récupérer UNIQUEMENT les images de la marque sélectionnée
-      const brandImages = getBrandImages(selectedBrand.folder);
+      // Récupérer UNIQUEMENT les images de la marque sélectionnée (en prenant l’ordre du catalogue)
+      const catalog = getBrandCatalog(selectedBrand.folder);
+      const brandImages = (catalog && catalog.length > 0) ? catalog.map(i => i.image) : getBrandImages(selectedBrand.folder);
       console.log('📁 Images de la marque:', brandImages);
       
       // Si une image spécifique a été cliquée, la mettre en première position
@@ -757,6 +834,16 @@ export default function ProductDetail() {
     if (!product) return {};
     
     const mapping = {};
+
+    // Cas 1: Produits Femme avec une marque sélectionnée
+    if (product?.subcategory === 'femme' && selectedBrand) {
+      const brandImages = getBrandImages(selectedBrand.folder) || [];
+      const brandProduct = buildBrandDisplayProduct(selectedBrand);
+      brandImages.forEach((img) => {
+        mapping[img] = brandProduct;
+      });
+      return mapping;
+    }
     
     // Mapping spécial pour Christian Louboutin
     if (product.brand === 'Christian Louboutin') {
@@ -831,7 +918,7 @@ export default function ProductDetail() {
     }
     
     return mapping;
-  }, [product, allProducts, selectedVariant]);
+  }, [product, allProducts, selectedVariant, selectedBrand]);
   
   // Log pour déboguer le mapping Christian Louboutin
   if (product?.brand === 'Christian Louboutin') {
@@ -841,8 +928,14 @@ export default function ProductDetail() {
   
   // Mettre à jour la sélection du produit quand la galerie change
   useEffect(() => {
-    // Si on a des images pour cette couleur, sélectionner le premier produit
-    const currentImages = product?.subcategory === 'femme' && selectedBrand ? galleryImages : dynamicGalleryImages;
+    // Pour les produits Femme avec marque sélectionnée, caler aussi le displayProduct sur la marque
+    if (product?.subcategory === 'femme' && selectedBrand) {
+      const brandProduct = buildBrandDisplayProduct(selectedBrand);
+      if (brandProduct) setSelectedGalleryProduct(brandProduct);
+      return;
+    }
+    // Sinon, tenter de déduire un produit depuis la première image
+    const currentImages = dynamicGalleryImages;
     if (currentImages.length > 0 && imageToProductMapping[currentImages[0]]) {
       setSelectedGalleryProduct(imageToProductMapping[currentImages[0]]);
     }
@@ -853,7 +946,14 @@ export default function ProductDetail() {
     console.log('🖱️ Clic sur miniature:', index);
     setSelectedImageIdx(index);
     
-    // Récupérer le produit correspondant à cette image
+    // Si produit Femme avec marque sélectionnée, on fixe directement le produit d'affichage à la marque
+    if (product?.subcategory === 'femme' && selectedBrand) {
+      const brandProduct = buildBrandDisplayProduct(selectedBrand);
+      if (brandProduct) setSelectedGalleryProduct(brandProduct);
+      return;
+    }
+    
+    // Sinon, récupérer le produit correspondant à cette image via le mapping
     const currentImages = product?.subcategory === 'femme' && selectedBrand ? galleryImages : dynamicGalleryImages;
     const selectedImage = currentImages[index];
     console.log('📸 Image sélectionnée:', selectedImage);
@@ -992,8 +1092,22 @@ export default function ProductDetail() {
     );
   }
 
-  // Produit à afficher (soit le produit sélectionné dans la galerie, soit le produit principal)
-  const displayProduct = selectedGalleryProduct || product;
+  // Produit à afficher: priorité à la marque sélectionnée (UX demandé),
+  // sinon produit sélectionné via galerie, sinon produit source
+  // Si produit Femme et marque sélectionnée: afficher les métadonnées de l'image miniature active (catalogue)
+  let displayProduct = selectedGalleryProduct || product;
+  if (product?.subcategory === 'femme' && selectedBrand) {
+    const catalog = getBrandCatalog(selectedBrand.folder);
+    const images = (catalog && catalog.length > 0) ? catalog.map(i => i.image) : getBrandImages(selectedBrand.folder);
+    const currentImage = images[selectedImageIdx] || images[0];
+    const meta = (catalog || []).find(i => i.image === currentImage);
+    const base = buildBrandDisplayProduct(selectedBrand) || product;
+    if (meta) {
+      displayProduct = { ...base, name: meta.name, price: meta.price, description: meta.description, rating: meta.rating };
+    } else {
+      displayProduct = base;
+    }
+  }
 
   return (
     <>
