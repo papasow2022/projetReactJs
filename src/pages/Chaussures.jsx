@@ -228,8 +228,32 @@ const Chaussures = () => {
     const jonakProductId = 'jonak-bottines-western-marron';
     navigate(`/product/${jonakProductId}?image=${encodeURIComponent(imagePath)}`);
   };
-  
-  // Chemins des images pour chaque section
+
+  // Fonction pour gérer le clic sur une image Mango (redirige vers la page détail avec l'image cliquée)
+  const handleMangoClick = (imagePath) => {
+    const fallbackProductId = 'cl-escarpins-noir-001';
+    navigate(`/product/${fallbackProductId}?image=${encodeURIComponent(imagePath)}`);
+  };
+
+  // Fonction pour gérer le clic sur une image Minelli (redirige vers la page détail avec l'image cliquée)
+  const handleMinelliClick = (imagePath) => {
+    const fallbackProductId = 'cl-escarpins-noir-001';
+    navigate(`/product/${fallbackProductId}?image=${encodeURIComponent(imagePath)}`);
+      };
+   
+    // Fonction pour gérer le clic sur une image Zara (redirige vers la page détail avec l'image cliquée)
+    const handleZaraClick = (imagePath) => {
+      const fallbackProductId = 'cl-escarpins-noir-001';
+      navigate(`/product/${fallbackProductId}?image=${encodeURIComponent(imagePath)}`);
+    };
+
+    // Fonction pour gérer le clic sur une image Prada (redirige vers la page détail avec l'image cliquée)
+    const handlePradaClick = (imagePath) => {
+      const fallbackProductId = 'cl-escarpins-noir-001';
+      navigate(`/product/${fallbackProductId}?image=${encodeURIComponent(imagePath)}`);
+    };
+   
+    // Chemins des images pour chaque section
 
 
   const handleSubcategoryClick = (subcategoryId) => {
@@ -590,6 +614,10 @@ const Chaussures = () => {
                            const isChristianLouboutin = img.folder === 'CritianlouboutinNoire';
                            const isGucci = img.folder === 'Gucci';
                            const isJonak = img.folder === 'Jonak';
+                           const isMango = img.folder === 'Mango';
+                           const isMinelli = img.folder === 'Minelli';
+                           const isZara = img.folder === 'Zaranoire';
+                           const isPrada = img.folder === 'PradaBeige';
                            const product = isChristianLouboutin ? findProductByImage(img.src) : null;
                            
                            return (
@@ -598,7 +626,7 @@ const Chaussures = () => {
                                  onClick={
                                    isChristianLouboutin
                                      ? () => handleChristianLouboutinClick(img.src)
-                                     : (isGucci ? () => handleGucciClick(img.src) : (isJonak ? () => handleJonakClick(img.src) : undefined))
+                                     : (isGucci ? () => handleGucciClick(img.src) : (isJonak ? () => handleJonakClick(img.src) : (isMango ? () => handleMangoClick(img.src) : (isMinelli ? () => handleMinelliClick(img.src) : (isZara ? () => handleZaraClick(img.src) : (isPrada ? () => handlePradaClick(img.src) : undefined))))))
                                  }
                                  style={{
                                    backgroundColor: 'white',
@@ -607,13 +635,13 @@ const Chaussures = () => {
                                    padding: '20px',
                                    height: '100%',
                                    transition: 'all 0.2s ease',
-                                   cursor: (isChristianLouboutin || isGucci || isJonak) ? 'pointer' : 'default'
+                                   cursor: (isChristianLouboutin || isGucci || isJonak || isMango || isMinelli || isZara || isPrada) ? 'pointer' : 'default'
                                  }}
-                                 onMouseEnter={(isChristianLouboutin || isGucci || isJonak) ? (e) => {
+                                 onMouseEnter={(isChristianLouboutin || isGucci || isJonak || isMango || isMinelli || isZara || isPrada) ? (e) => {
                                    e.target.style.transform = 'translateY(-2px)';
                                    e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
                                  } : undefined}
-                                 onMouseLeave={(isChristianLouboutin || isGucci || isJonak) ? (e) => {
+                                 onMouseLeave={(isChristianLouboutin || isGucci || isJonak || isMango || isMinelli || isZara || isPrada) ? (e) => {
                                    e.target.style.transform = 'translateY(0)';
                                    e.target.style.boxShadow = 'none';
                                  } : undefined}
@@ -713,46 +741,176 @@ const Chaussures = () => {
                                          })()}
                                        </span>
                                      </>
-                                   ) : isJonak ? (
-                                     <>
-                                       <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
-                                         {(() => {
-                                           const jonakCatalog = [
-                                             { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg', price: 280000, rating: 4.1, reviewCount: 120 },
-                                             { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg', price: 282000, rating: 4.1, reviewCount: 110 },
-                                             { image: '/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg', price: 300000, rating: 4.2, reviewCount: 98 },
-                                             { image: '/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg', price: 305000, rating: 4.2, reviewCount: 101 }
-                                           ];
-                                           const match = jonakCatalog.find(i => i.image === img.src);
-                                           const price = match?.price || 0;
-                                           return price.toLocaleString();
-                                         })()} GNF
-                                       </span>
-                                       <span style={{ fontSize: '0.9rem', color: '#666' }}>
-                                         {(() => {
-                                           const jonakCatalog = [
-                                             { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg', price: 280000, rating: 4.1, reviewCount: 120 },
-                                             { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg', price: 282000, rating: 4.1, reviewCount: 110 },
-                                             { image: '/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg', price: 300000, rating: 4.2, reviewCount: 98 },
-                                             { image: '/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg', price: 305000, rating: 4.2, reviewCount: 101 }
-                                           ];
-                                           const match = jonakCatalog.find(i => i.image === img.src);
-                                           const rating = match?.rating || 4.1;
-                                           const reviews = match?.reviewCount || 100;
-                                           return `★ ${rating} (${reviews})`;
-                                         })()}
-                                       </span>
-                                     </>
-                                   ) : (
-                                     <>
-                                       <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
-                                         Prix sur demande
-                                       </span>
-                                       <span style={{ fontSize: '0.9rem', color: '#666' }}>
-                                         ★ 4.5+ (N/A)
-                                       </span>
-                                     </>
-                                   )}
+                                                                     ) : isJonak ? (
+                                    <>
+                                      <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
+                                        {(() => {
+                                          const jonakCatalog = [
+                                            { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg', price: 280000, rating: 4.1, reviewCount: 120 },
+                                            { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg', price: 282000, rating: 4.1, reviewCount: 110 },
+                                            { image: '/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg', price: 300000, rating: 4.2, reviewCount: 98 },
+                                            { image: '/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg', price: 305000, rating: 4.2, reviewCount: 101 }
+                                          ];
+                                          const match = jonakCatalog.find(i => i.image === img.src);
+                                          const price = match?.price || 0;
+                                          return price.toLocaleString();
+                                        })()} GNF
+                                      </span>
+                                      <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                        {(() => {
+                                          const jonakCatalog = [
+                                            { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg', price: 280000, rating: 4.1, reviewCount: 120 },
+                                            { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg', price: 282000, rating: 4.1, reviewCount: 110 },
+                                            { image: '/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg', price: 300000, rating: 4.2, reviewCount: 98 },
+                                            { image: '/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg', price: 305000, rating: 4.2, reviewCount: 101 }
+                                          ];
+                                          const match = jonakCatalog.find(i => i.image === img.src);
+                                          const rating = match?.rating || 4.1;
+                                          const reviews = match?.reviewCount || 100;
+                                          return `★ ${rating} (${reviews})`;
+                                        })()}
+                                      </span>
+                                    </>
+                                  ) : isMango ? (
+                                    <>
+                                      <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
+                                        {(() => {
+                                          const mangoCatalog = [
+                                            { image: '/chaussures/femme/Mango/MANGO Ankle Strap Sandal in Nude at Nordstrom, Size 6_5Us.jpeg', price: 320000, rating: 4.2, reviewCount: 145 },
+                                            { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude.jpeg', price: 318000, rating: 4.2, reviewCount: 132 },
+                                            { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 2.jpeg', price: 319000, rating: 4.2, reviewCount: 128 },
+                                            { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 3.jpeg', price: 321000, rating: 4.2, reviewCount: 140 }
+                                          ];
+                                          const match = mangoCatalog.find(i => i.image === img.src);
+                                          const price = match?.price || 0;
+                                          return price.toLocaleString();
+                                        })()} GNF
+                                      </span>
+                                      <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                        {(() => {
+                                          const mangoCatalog = [
+                                            { image: '/chaussures/femme/Mango/MANGO Ankle Strap Sandal in Nude at Nordstrom, Size 6_5Us.jpeg', price: 320000, rating: 4.2, reviewCount: 145 },
+                                            { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude.jpeg', price: 318000, rating: 4.2, reviewCount: 132 },
+                                            { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 2.jpeg', price: 319000, rating: 4.2, reviewCount: 128 },
+                                            { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 3.jpeg', price: 321000, rating: 4.2, reviewCount: 140 }
+                                          ];
+                                          const match = mangoCatalog.find(i => i.image === img.src);
+                                          const rating = match?.rating || 4.2;
+                                          const reviews = match?.reviewCount || 130;
+                                          return `★ ${rating} (${reviews})`;
+                                        })()}
+                                      </span>
+                                    </>
+                                  ) : isMinelli ? (
+                                    <>
+                                      <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
+                                        {(() => {
+                                          const minelliCatalog = [
+                                            { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir.jpeg', price: 380000, rating: 4.4, reviewCount: 165 },
+                                            { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 2.jpeg', price: 385000, rating: 4.4, reviewCount: 158 },
+                                            { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 3.jpeg', price: 390000, rating: 4.4, reviewCount: 172 },
+                                            { image: '/chaussures/femme/Minelli/Minelli Tulin Bottines Talon - Noir.jpeg', price: 420000, rating: 4.5, reviewCount: 189 }
+                                          ];
+                                          const match = minelliCatalog.find(i => i.image === img.src);
+                                          const price = match?.price || 0;
+                                          return price.toLocaleString();
+                                        })()} GNF
+                                      </span>
+                                      <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                        {(() => {
+                                          const minelliCatalog = [
+                                            { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir.jpeg', price: 380000, rating: 4.4, reviewCount: 165 },
+                                            { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 2.jpeg', price: 385000, rating: 4.4, reviewCount: 158 },
+                                            { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 3.jpeg', price: 390000, rating: 4.4, reviewCount: 172 },
+                                            { image: '/chaussures/femme/Minelli/Minelli Tulin Bottines Talon - Noir.jpeg', price: 420000, rating: 4.5, reviewCount: 189 }
+                                          ];
+                                          const match = minelliCatalog.find(i => i.image === img.src);
+                                          const rating = match?.rating || 4.4;
+                                          const reviews = match?.reviewCount || 160;
+                                          return `★ ${rating} (${reviews})`;
+                                        })()}
+                                      </span>
+                                    </>
+                                                                    ) : isZara ? (
+                                    <>
+                                      <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
+                                        {(() => {
+                                          const zaraCatalog = [
+                                            { image: '/chaussures/femme/Zaranoire/Zara Ankle Strap Heels - Noir.jpeg', price: 450000, rating: 4.3, reviewCount: 185 },
+                                            { image: '/chaussures/femme/Zaranoire/Zara Classic Heels - Noir.jpeg', price: 440000, rating: 4.2, reviewCount: 172 },
+                                            { image: '/chaussures/femme/Zaranoire/Zara High Heel Platform Slingback Shoes - Noir.jpeg', price: 470000, rating: 4.3, reviewCount: 198 },
+                                            { image: '/chaussures/femme/Zaranoire/Zara Pointed Toe Heels - Noir.jpeg', price: 455000, rating: 4.3, reviewCount: 165 },
+                                            { image: '/chaussures/femme/Zaranoire/Zara Rhinestone Suede Heels - Noir.jpeg', price: 465000, rating: 4.4, reviewCount: 189 },
+                                            { image: '/chaussures/femme/Zaranoire/Zara Strappy Heels - Noir.jpeg', price: 448000, rating: 4.2, reviewCount: 176 }
+                                          ];
+                                          const match = zaraCatalog.find(i => i.image === img.src);
+                                          const price = match?.price || 0;
+                                          return price.toLocaleString();
+                                        })()} GNF
+                                      </span>
+                                      <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                        {(() => {
+                                          const zaraCatalog = [
+                                            { image: '/chaussures/femme/Zaranoire/Zara Ankle Strap Heels - Noir.jpeg', price: 450000, rating: 4.3, reviewCount: 185 },
+                                            { image: '/chaussures/femme/Zaranoire/Zara Classic Heels - Noir.jpeg', price: 440000, rating: 4.2, reviewCount: 172 },
+                                            { image: '/chaussures/femme/Zaranoire/Zara High Heel Platform Slingback Shoes - Noir.jpeg', price: 470000, rating: 4.3, reviewCount: 198 },
+                                            { image: '/chaussures/femme/Zaranoire/Zara Pointed Toe Heels - Noir.jpeg', price: 455000, rating: 4.3, reviewCount: 165 },
+                                            { image: '/chaussures/femme/Zaranoire/Zara Rhinestone Suede Heels - Noir.jpeg', price: 465000, rating: 4.4, reviewCount: 189 },
+                                            { image: '/chaussures/femme/Zaranoire/Zara Strappy Heels - Noir.jpeg', price: 448000, rating: 4.2, reviewCount: 176 }
+                                          ];
+                                          const match = zaraCatalog.find(i => i.image === img.src);
+                                          const rating = match?.rating || 4.3;
+                                          const reviews = match?.reviewCount || 180;
+                                          return `★ ${rating} (${reviews})`;
+                                        })()}
+                                      </span>
+                                    </>
+                                  ) : isPrada ? (
+                                    <>
+                                      <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
+                                        {(() => {
+                                          const pradaCatalog = [
+                                            { image: '/chaussures/femme/PradaBeige/Prada Ankle Strap Platform Sandals - Beige.jpeg', price: 2200000, rating: 4.7, reviewCount: 245 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Gold Platform Sandals - Beige.jpeg', price: 2250000, rating: 4.7, reviewCount: 238 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Leather Platform Sandals - Beige.jpeg', price: 2180000, rating: 4.6, reviewCount: 256 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Metallic Platform Sandals - Beige.jpeg', price: 2230000, rating: 4.7, reviewCount: 267 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Paige Platform Sandals - Beige.jpeg', price: 2210000, rating: 4.6, reviewCount: 234 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Sandales - Beige.jpeg', price: 2100000, rating: 4.5, reviewCount: 289 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Suede Sandals - Beige.jpeg', price: 2150000, rating: 4.6, reviewCount: 278 }
+                                          ];
+                                          const match = pradaCatalog.find(i => i.image === img.src);
+                                          const price = match?.price || 0;
+                                          return price.toLocaleString();
+                                        })()} GNF
+                                      </span>
+                                      <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                        {(() => {
+                                          const pradaCatalog = [
+                                            { image: '/chaussures/femme/PradaBeige/Prada Ankle Strap Platform Sandals - Beige.jpeg', price: 2200000, rating: 4.7, reviewCount: 245 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Gold Platform Sandals - Beige.jpeg', price: 2250000, rating: 4.7, reviewCount: 238 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Leather Platform Sandals - Beige.jpeg', price: 2180000, rating: 4.6, reviewCount: 256 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Metallic Platform Sandals - Beige.jpeg', price: 2230000, rating: 4.7, reviewCount: 267 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Paige Platform Sandals - Beige.jpeg', price: 2210000, rating: 4.6, reviewCount: 234 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Sandales - Beige.jpeg', price: 2100000, rating: 4.5, reviewCount: 289 },
+                                            { image: '/chaussures/femme/PradaBeige/Prada Suede Sandals - Beige.jpeg', price: 2150000, rating: 4.6, reviewCount: 278 }
+                                          ];
+                                          const match = pradaCatalog.find(i => i.image === img.src);
+                                          const rating = match?.rating || 4.6;
+                                          const reviews = match?.reviewCount || 250;
+                                          return `★ ${rating} (${reviews})`;
+                                        })()}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#232f3e' }}>
+                                        Prix sur demande
+                                      </span>
+                                      <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                                        ★ 4.5+ (N/A)
+                                      </span>
+                                    </>
+                                  )}
                                  </div>
                                </div>
                              </div>

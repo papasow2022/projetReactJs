@@ -186,49 +186,106 @@ export default function ProductDetail() {
     }
   };
 
-  // Déduire conseils/entretien selon le type de chaussure détecté dans le nom de fichier
+  // Conseils/entretien: defaults par marque + overrides par modèle (image)
   const getTipsCareForImage = (imagePath = '', brandName = '') => {
     const p = (imagePath || '').toLowerCase();
+    const b = (brandName || '').toLowerCase();
     const tips = [];
     const care = [];
-    if (p.includes('bottine') || p.includes('boot')) {
-      tips.push('Parfait avec un jean skinny ou un trench');
-      tips.push("Idéal pour la mi-saison et l'hiver");
-      tips.push('Style urbain chic');
-      care.push('Imperméabiliser avant usage');
-      care.push('Brosser après exposition à la poussière');
-      care.push("Sécher à l'air libre, loin d'une source de chaleur");
-    } else if (p.includes('sandal') || p.includes('sandale')) {
-      tips.push('Sublime avec une robe fluide ou un tailleur léger');
-      tips.push('Parfait pour les occasions estivales');
-      tips.push('Mettre en valeur avec des accessoires dorés');
-      care.push('Nettoyage doux avec chiffon microfibre');
+
+    // Defaults par marque (ADN)
+    if (b.includes('louboutin')) {
+      tips.push('Élancer la silhouette avec des coupes nettes');
+      tips.push('Privilégier des accessoires minimalistes');
+      care.push('Éviter les surfaces abrasives');
+      care.push('Essuyer le cuir après usage');
+    } else if (b.includes('gucci')) {
+      tips.push('Jouer le chic urbain avec pièces structurées');
+      tips.push('Accorder avec touches dorées discrètes');
+      care.push('Nettoyage doux microfibre');
       care.push("Éviter l'humidité prolongée");
-      care.push('Ranger dans sa housse pour préserver les brides');
-    } else if (p.includes('platform')) {
-      tips.push('Équilibre silhouette avec pantalon droit ou jupe midi');
-      tips.push('Look audacieux et moderne');
-      care.push('Essuyer la plateforme après usage');
-      care.push('Vérifier régulièrement la semelle');
-    } else if (p.includes('slingback')) {
-      tips.push('Chic avec robe droite ou tailleur jupe');
-      tips.push('Idéal pour cérémonies et événements');
+    } else if (b.includes('prada')) {
+      tips.push('Contraster volumes avec lignes épurées');
+      tips.push('Souligner le design architectural');
+      care.push('Essuyer plateformes et vérifier semelles');
+      care.push('Stocker à plat, à l’abri de la chaleur');
+    } else if (b.includes('zara')) {
+      tips.push('Composer des looks tendance et accessibles');
+      tips.push('Miser sur des silhouettes épurées');
+      care.push('Protéger brides et bouts pointus');
+      care.push('Nettoyer régulièrement selon la matière');
+    } else if (b.includes('minelli')) {
+      tips.push('Cibler le confort chic du quotidien');
+      tips.push('Associer à vestiaire business-casual');
+      care.push('Utiliser embauchoirs');
+      care.push('Nourrir le cuir périodiquement');
+    } else if (b.includes('mango')) {
+      tips.push('Minimalisme estival, teintes nude/pastel');
+      tips.push('Favoriser lignes légères et accessoires fins');
+      care.push('Nettoyage doux');
+      care.push('Ranger en housse pour préserver les brides');
+    } else if (b.includes('jonak')) {
+      tips.push('Casual‑chic pour le quotidien');
+      tips.push('Equilibrer avec pièces fluides');
+      care.push('Spray protecteur adapté');
+      care.push('Stocker à l’abri de la lumière');
+    }
+
+    // Overrides par modèle (type/mot‑clé image) + matériaux spécifiques
+    if (p.includes('bottine') || p.includes('boot')) {
+      tips.push('Jean skinny ou trench pour la mi‑saison');
+      care.push('Imperméabiliser avant usage');
+      if (p.includes('suede') || p.includes('daim')) {
+        care.push("Brosser le suède à sec, éviter l'eau");
+      }
+    }
+    if (p.includes('slingback')) {
+      tips.push('Robe droite ou tailleur jupe pour une ligne nette');
       care.push("Protéger l'élastique de la bride");
-      care.push('Utiliser embauchoirs pour conserver la forme');
-    } else if (p.includes('heel') || p.includes('escarpin')) {
-      tips.push('Élégant avec une robe cocktail ou un pantalon tailleur');
-      tips.push('Accessoiriser avec une pochette minimaliste');
     }
-    // Fallback générique
-    if (tips.length === 0) {
-      tips.push('Parfait avec une robe ou un jean');
-      tips.push('Idéal pour les occasions spéciales');
-      tips.push('Style élégant et féminin');
+    if (p.includes('platform')) {
+      tips.push('Jupe midi/pantalon droit pour équilibrer la hauteur');
+      care.push("Essuyer la plateforme et contrôler l'usure");
+      if (p.includes('metallic') || p.includes('gold')) {
+        care.push('Éviter les rayures sur les finitions métalliques');
+      }
     }
-    if (care.length === 0) {
-      care.push('Nettoyage doux recommandé');
-      care.push("Protection contre l'humidité");
-      care.push('Stockage dans un endroit sec');
+    if (p.includes('sandale') || p.includes('sandal')) {
+      tips.push('Idéal avec robes fluides et tons lumineux');
+      care.push('Éviter humidité prolongée');
+      if (p.includes('strappy') || p.includes('brides')) {
+        care.push('Vérifier la tension des brides avant sortie');
+      }
+    }
+    if (p.includes('heel') || p.includes('escarpin') || p.includes('pointed')) {
+      tips.push('Robe cocktail ou pantalon tailleur');
+      care.push('Éviter chocs sur le bout/talon');
+      if (p.includes('leather') || p.includes('cuir')) {
+        care.push('Nourrir le cuir avec crème adaptée');
+      }
+      if (p.includes('rhinestone') || p.includes('strass')) {
+        care.push('Nettoyer délicatement les strass avec pinceau doux');
+      }
+    }
+    if (p.includes('ankle') || p.includes('cheville')) {
+      tips.push('Mettre en valeur la cheville avec ourlets courts');
+      care.push('Protéger la boucle de la bride cheville');
+    }
+    if (p.includes('nude') || p.includes('beige')) {
+      tips.push('Harmoniser avec teintes chair ou pastel');
+      care.push('Éviter les taches, nettoyer immédiatement');
+    }
+    if (p.includes('noir') || p.includes('black')) {
+      tips.push('Contraster avec pièces claires pour un look sophistiqué');
+      care.push('Protéger des rayures avec spray matifiant');
+    }
+
+    // Fallbacks si trop courts
+    if (tips.length < 2) {
+      tips.push('Composer avec basiques élégants');
+    }
+    if (care.length < 2) {
+      care.push('Stocker au sec, loin de la chaleur');
     }
     return { tips, care };
   };
@@ -2052,40 +2109,171 @@ export default function ProductDetail() {
           <div className="tab-content bg-white p-4 rounded shadow-sm mb-4">
             {activeTab === 'description' && (
               <div>
-                <h4>Description détaillée</h4>
-                <p>{displayProduct?.description || 'Aucune description disponible pour ce produit.'}</p>
-                {product?.subcategory === 'femme' ? null : (
-                  <>
-                    {Array.isArray(displayProduct?.tips) && displayProduct.tips.length > 0 ? (
-                      <>
-                        <h6 className="mt-3">Conseils de style</h6>
-                        <ul>
-                          {displayProduct.tips.map((t, i) => (
-                            <li key={`tip-${i}`}>{t}</li>
-                          ))}
+                <h4 className="mb-4 text-primary">Description détaillée</h4>
+                
+                {/* Description principale */}
+                <div className="mb-4">
+                  <h6 className="fw-bold mb-2">Présentation du produit</h6>
+                  <p className="text-muted lh-base">
+                    {displayProduct?.description || 'Aucune description disponible pour ce produit.'}
+                  </p>
+                </div>
+
+                {/* Informations clés */}
+                <div className="row mb-4">
+                  <div className="col-md-6">
+                    <div className="card border-0 bg-light">
+                      <div className="card-body">
+                        <h6 className="fw-bold text-primary mb-2">
+                          <i className="bi bi-star-fill me-2"></i>
+                          Qualité & Finition
+                        </h6>
+                        <ul className="list-unstyled mb-0">
+                          <li className="mb-1">
+                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                            Matériaux premium sélectionnés
+                          </li>
+                          <li className="mb-1">
+                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                            Finitions soignées et durables
+                          </li>
+                          <li className="mb-1">
+                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                            Contrôle qualité rigoureux
+                          </li>
                         </ul>
-                      </>
-                    ) : null}
-                    {Array.isArray(displayProduct?.care) && displayProduct.care.length > 0 ? (
-                      <>
-                        <h6 className="mt-2">Entretien</h6>
-                        <ul>
-                          {displayProduct.care.map((c, i) => (
-                            <li key={`care-${i}`}>{c}</li>
-                          ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="card border-0 bg-light">
+                      <div className="card-body">
+                        <h6 className="fw-bold text-primary mb-2">
+                          <i className="bi bi-heart-fill me-2"></i>
+                          Confort & Style
+                        </h6>
+                        <ul className="list-unstyled mb-0">
+                          <li className="mb-1">
+                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                            Design ergonomique et confortable
+                          </li>
+                          <li className="mb-1">
+                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                            Style moderne et intemporel
+                          </li>
+                          <li className="mb-1">
+                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                            Polyvalence d'utilisation
+                          </li>
                         </ul>
-                      </>
-                    ) : (
-                      <ul>
-                        <li>Technologie Air Max pour un amorti optimal</li>
-                        <li>Semelle extérieure en caoutchouc durable</li>
-                        <li>Tige en mesh respirant</li>
-                        <li>Doublure confortable</li>
-                        <li>Poids léger : 320g</li>
-                      </ul>
-                    )}
-                  </>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Conseils de style */}
+                {Array.isArray(displayProduct?.tips) && displayProduct.tips.length > 0 && (
+                  <div className="mb-4">
+                    <h6 className="fw-bold text-success mb-3">
+                      <i className="bi bi-lightbulb-fill me-2"></i>
+                      Conseils de style
+                    </h6>
+                    <div className="row">
+                      {displayProduct.tips.map((tip, i) => (
+                        <div key={`tip-${i}`} className="col-md-6 mb-2">
+                          <div className="d-flex align-items-start">
+                            <i className="bi bi-arrow-right-circle-fill text-success me-2 mt-1"></i>
+                            <span className="text-muted">{tip}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
+
+                {/* Conseils d'entretien */}
+                {Array.isArray(displayProduct?.care) && displayProduct.care.length > 0 && (
+                  <div className="mb-4">
+                    <h6 className="fw-bold text-info mb-3">
+                      <i className="bi bi-shield-check-fill me-2"></i>
+                      Conseils d'entretien
+                    </h6>
+                    <div className="row">
+                      {displayProduct.care.map((care, i) => (
+                        <div key={`care-${i}`} className="col-md-6 mb-2">
+                          <div className="d-flex align-items-start">
+                            <i className="bi bi-arrow-right-circle-fill text-info me-2 mt-1"></i>
+                            <span className="text-muted">{care}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Caractéristiques techniques */}
+                <div className="mb-4">
+                  <h6 className="fw-bold text-dark mb-3">
+                    <i className="bi bi-gear-fill me-2"></i>
+                    Caractéristiques techniques
+                  </h6>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <ul className="list-unstyled">
+                        <li className="mb-2">
+                          <strong>Catégorie :</strong> 
+                          <span className="text-muted ms-2">{displayProduct?.category || 'Non spécifiée'}</span>
+                        </li>
+                        <li className="mb-2">
+                          <strong>Marque :</strong> 
+                          <span className="text-muted ms-2">{displayProduct?.brand || 'Non spécifiée'}</span>
+                        </li>
+                        <li className="mb-2">
+                          <strong>Note :</strong> 
+                          <span className="text-muted ms-2">{displayProduct?.rating || 0}/5</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="col-md-6">
+                      <ul className="list-unstyled">
+                        <li className="mb-2">
+                          <strong>Prix :</strong> 
+                          <span className="text-muted ms-2">{formatGNF(displayProduct?.price || selectedVariant?.price || 0)}</span>
+                        </li>
+                        <li className="mb-2">
+                          <strong>Disponibilité :</strong> 
+                          <span className="text-success ms-2">En stock</span>
+                        </li>
+                        <li className="mb-2">
+                          <strong>Livraison :</strong> 
+                          <span className="text-muted ms-2">Gratuite</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Garantie et service */}
+                <div className="bg-primary bg-opacity-10 p-3 rounded">
+                  <h6 className="fw-bold text-primary mb-2">
+                    <i className="bi bi-shield-check me-2"></i>
+                    Garantie et service client
+                  </h6>
+                  <div className="row text-muted">
+                    <div className="col-md-4">
+                      <i className="bi bi-arrow-return-left me-2"></i>
+                      Retours gratuits sous 30 jours
+                    </div>
+                    <div className="col-md-4">
+                      <i className="bi bi-tools me-2"></i>
+                      Service après-vente disponible
+                    </div>
+                    <div className="col-md-4">
+                      <i className="bi bi-headset me-2"></i>
+                      Support client 24/7
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
             {activeTab === 'specs' && (
