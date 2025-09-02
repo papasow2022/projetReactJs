@@ -180,70 +180,651 @@ export default function ProductDetail() {
     }
   };
 
+  // Déduire conseils/entretien selon le type de chaussure détecté dans le nom de fichier
+  const getTipsCareForImage = (imagePath = '', brandName = '') => {
+    const p = (imagePath || '').toLowerCase();
+    const tips = [];
+    const care = [];
+    if (p.includes('bottine') || p.includes('boot')) {
+      tips.push('Parfait avec un jean skinny ou un trench');
+      tips.push("Idéal pour la mi-saison et l'hiver");
+      tips.push('Style urbain chic');
+      care.push('Imperméabiliser avant usage');
+      care.push('Brosser après exposition à la poussière');
+      care.push("Sécher à l'air libre, loin d'une source de chaleur");
+    } else if (p.includes('sandal') || p.includes('sandale')) {
+      tips.push('Sublime avec une robe fluide ou un tailleur léger');
+      tips.push('Parfait pour les occasions estivales');
+      tips.push('Mettre en valeur avec des accessoires dorés');
+      care.push('Nettoyage doux avec chiffon microfibre');
+      care.push("Éviter l'humidité prolongée");
+      care.push('Ranger dans sa housse pour préserver les brides');
+    } else if (p.includes('platform')) {
+      tips.push('Équilibre silhouette avec pantalon droit ou jupe midi');
+      tips.push('Look audacieux et moderne');
+      care.push('Essuyer la plateforme après usage');
+      care.push('Vérifier régulièrement la semelle');
+    } else if (p.includes('slingback')) {
+      tips.push('Chic avec robe droite ou tailleur jupe');
+      tips.push('Idéal pour cérémonies et événements');
+      care.push("Protéger l'élastique de la bride");
+      care.push('Utiliser embauchoirs pour conserver la forme');
+    } else if (p.includes('heel') || p.includes('escarpin')) {
+      tips.push('Élégant avec une robe cocktail ou un pantalon tailleur');
+      tips.push('Accessoiriser avec une pochette minimaliste');
+    }
+    // Fallback générique
+    if (tips.length === 0) {
+      tips.push('Parfait avec une robe ou un jean');
+      tips.push('Idéal pour les occasions spéciales');
+      tips.push('Style élégant et féminin');
+    }
+    if (care.length === 0) {
+      care.push('Nettoyage doux recommandé');
+      care.push("Protection contre l'humidité");
+      care.push('Stockage dans un endroit sec');
+    }
+    return { tips, care };
+  };
+
   // Catalogue par marque: image -> { name, price, description, rating }
   const getBrandCatalog = (brandFolder) => {
     if (brandFolder === 'CritianlouboutinNoire') {
       return [
-        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg', name: 'Christian Louboutin Escarpins', price: 2500000, description: 'Escarpins Christian Louboutin, design exclusif et élégant.', rating: 4.8 },
-        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg', name: 'Christian Louboutin Heels Classic', price: 2450000, description: 'Talons aiguilles Classic, finition premium.', rating: 4.7 },
-        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg', name: 'Christian Louboutin Collection Spéciale', price: 2600000, description: 'Édition Collection Spéciale, détails raffinés.', rating: 4.9 },
-        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg', name: 'Christian Louboutin Édition Limitée', price: 2700000, description: 'Série limitée, matériaux d’exception.', rating: 5.0 },
-        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg', name: 'Christian Louboutin Design Exclusif', price: 2550000, description: 'Design exclusif, silhouette iconique.', rating: 4.8 },
-        { image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg', name: 'Christian Louboutin Collection Premium', price: 2650000, description: 'Collection Premium, confort et style.', rating: 4.9 }
+        {
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg',
+          name: 'Christian Louboutin Escarpins',
+          price: 2500000,
+          description: 'Escarpins Christian Louboutin, design exclusif et élégant.',
+          rating: 4.8,
+          tips: [
+            'Élégant avec une robe cocktail ou un pantalon tailleur',
+            'Accessoiriser avec une pochette minimaliste'
+          ],
+          care: [
+            'Utiliser patins antidérapants si nécessaire',
+            'Nourrir le cuir régulièrement'
+          ]
+        },
+        {
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg',
+          name: 'Christian Louboutin Heels Classic',
+          price: 2450000,
+          description: 'Talons aiguilles Classic, finition premium.',
+          rating: 4.7,
+          tips: [
+            'Classique avec tailleur pantalon ou jupe crayon',
+            "Sublimer avec bijoux perle ou or fin"
+          ],
+          care: [
+            'Utiliser patins antidérapants si nécessaire',
+            "Hydrater le cuir pour conserver l'éclat"
+          ]
+        },
+        {
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg',
+          name: 'Christian Louboutin Collection Spéciale',
+          price: 2600000,
+          description: 'Édition Collection Spéciale, détails raffinés.',
+          rating: 4.9,
+          tips: [
+            'Mettre en valeur les détails avec robe midi satinée',
+            'Choisir pochette métallisée discrète'
+          ],
+          care: [
+            "Éviter contacts prolongés avec l'eau",
+            'Ranger dans housse pour protéger les finitions'
+          ]
+        },
+        {
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg',
+          name: 'Christian Louboutin Édition Limitée',
+          price: 2700000,
+          description: "Série limitée, matériaux d'exception.",
+          rating: 5.0,
+          tips: [
+            'Idéal pour tenues formelles et soirées',
+            "Accessoires minimalistes pour laisser la pièce s'exprimer"
+          ],
+          care: [
+            'Protéger les semelles avec patins adaptés',
+            'Éviter rayures en transport (housse séparée)'
+          ]
+        },
+        {
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg',
+          name: 'Christian Louboutin Design Exclusif',
+          price: 2550000,
+          description: 'Design exclusif, silhouette iconique.',
+          rating: 4.8,
+          tips: [
+            'Silhouette sculpturale avec robe colonne',
+            'Palette neutre pour souligner le design'
+          ],
+          care: [
+            'Essuyer après usage avec chiffon doux',
+            'Éviter chocs sur talon et bout'
+          ]
+        },
+        {
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg',
+          name: 'Christian Louboutin Collection Premium',
+          price: 2650000,
+          description: 'Collection Premium, confort et style.',
+          rating: 4.9,
+          tips: [
+            'Business chic avec blazer et pantalon droit',
+            'Relever avec ceinture fine ou foulard soie'
+          ],
+          care: [
+            'Nourrir le cuir régulièrement',
+            'Remplacer les patins dès usure'
+          ]
+        }
       ];
     }
     if (brandFolder === 'Gucci') {
       return [
-        { image: "/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® International.jpeg", name: 'Gucci Sandals International', price: 1800000, description: 'Sandales à talons Gucci, style international.', rating: 4.6 },
-        { image: "/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® US.jpeg", name: 'Gucci Sandals US', price: 1820000, description: 'Sandales Gucci, édition US.', rating: 4.6 },
-        { image: '/chaussures/femme/Gucci/Gucci Leather Sandals - Noir.jpeg', name: 'Gucci Leather Sandals', price: 1850000, description: 'Sandales en cuir Gucci, coloris noir.', rating: 4.7 },
-        { image: '/chaussures/femme/Gucci/Gucci Sandals - Noir 3.jpeg', name: 'Gucci Sandals Noir', price: 1780000, description: 'Sandales Gucci noires, élégantes.', rating: 4.5 },
-        { image: "\/chaussures\/femme\/Gucci\/Women's Designer Luxury High Heels Pumps _ GUCCI® US.jpeg", name: 'Gucci Luxury Heels', price: 1900000, description: 'Escarpins de luxe Gucci.', rating: 4.7 }
+        {
+          image: "/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® International.jpeg",
+          name: 'Gucci Sandals International',
+          price: 1800000,
+          description: 'Sandales à talons Gucci, style international.',
+          rating: 4.6,
+          tips: [
+            'Sublime avec une robe fluide ou un tailleur léger',
+            'Parfait pour les occasions estivales',
+            'Mettre en valeur avec des accessoires dorés'
+          ],
+          care: [
+            'Nettoyage doux avec chiffon microfibre',
+            "Éviter l'humidité prolongée",
+            'Ranger dans sa housse pour préserver les brides'
+          ]
+        },
+        {
+          image: "/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® US.jpeg",
+          name: 'Gucci Sandals US',
+          price: 1820000,
+          description: 'Sandales Gucci, édition US.',
+          rating: 4.6,
+          tips: [
+            'Sublime avec une robe fluide ou un tailleur léger',
+            'Parfait pour les occasions estivales',
+            'Mettre en valeur avec des accessoires dorés'
+          ],
+          care: [
+            'Nettoyage doux avec chiffon microfibre',
+            "Éviter l'humidité prolongée",
+            'Ranger dans sa housse pour préserver les brides'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Gucci/Gucci Leather Sandals - Noir.jpeg',
+          name: 'Gucci Leather Sandals',
+          price: 1850000,
+          description: 'Sandales en cuir Gucci, coloris noir.',
+          rating: 4.7,
+          tips: [
+            'Sublime avec une robe fluide ou un tailleur léger',
+            'Parfait pour les occasions estivales',
+            'Mettre en valeur avec des accessoires dorés'
+          ],
+          care: [
+            'Nettoyage doux avec chiffon microfibre',
+            "Éviter l'humidité prolongée",
+            'Ranger dans sa housse pour préserver les brides'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Gucci/Gucci Sandals - Noir 3.jpeg',
+          name: 'Gucci Sandals Noir',
+          price: 1780000,
+          description: 'Sandales Gucci noires, élégantes.',
+          rating: 4.5,
+          tips: [
+            'Sublime avec une robe fluide ou un tailleur léger',
+            'Parfait pour les occasions estivales',
+            'Mettre en valeur avec des accessoires dorés'
+          ],
+          care: [
+            'Nettoyage doux avec chiffon microfibre',
+            "Éviter l'humidité prolongée",
+            'Ranger dans sa housse pour préserver les brides'
+          ]
+        },
+        {
+          image: "\/chaussures\/femme\/Gucci\/Women's Designer Luxury High Heels Pumps _ GUCCI® US.jpeg",
+          name: 'Gucci Luxury Heels',
+          price: 1900000,
+          description: 'Escarpins de luxe Gucci.',
+          rating: 4.7,
+          tips: [
+            'Élégant avec une robe cocktail ou un pantalon tailleur',
+            'Accessoiriser avec une pochette minimaliste'
+          ],
+          care: [
+            'Utiliser patins antidérapants si nécessaire',
+            'Nourrir le cuir régulièrement'
+          ]
+        }
       ];
     }
     if (brandFolder === 'PradaBeige') {
       return [
-        { image: '/chaussures/femme/PradaBeige/Prada Ankle Strap Platform Sandals - Beige.jpeg', name: 'Prada Platform Sandals', price: 2200000, description: 'Sandales plateformes Prada, beige.', rating: 4.7 },
-        { image: '/chaussures/femme/PradaBeige/Prada Gold Platform Sandals - Beige.jpeg', name: 'Prada Gold Platform', price: 2250000, description: 'Plateformes Prada, finitions dorées.', rating: 4.7 },
-        { image: '/chaussures/femme/PradaBeige/Prada Leather Platform Sandals - Beige.jpeg', name: 'Prada Leather Platform', price: 2180000, description: 'Plateformes en cuir Prada.', rating: 4.6 },
-        { image: '/chaussures/femme/PradaBeige/Prada Metallic Platform Sandals - Beige.jpeg', name: 'Prada Metallic Platform', price: 2230000, description: 'Plateformes métalliques Prada.', rating: 4.7 },
-        { image: '/chaussures/femme/PradaBeige/Prada Paige Platform Sandals - Beige.jpeg', name: 'Prada Paige Platform', price: 2210000, description: 'Modèle Paige par Prada.', rating: 4.6 },
-        { image: '/chaussures/femme/PradaBeige/Prada Sandales - Beige.jpeg', name: 'Prada Sandales Beige', price: 2100000, description: 'Sandales Prada, teinte beige.', rating: 4.5 },
-        { image: '/chaussures/femme/PradaBeige/Prada Suede Sandals - Beige.jpeg', name: 'Prada Suede Sandals', price: 2150000, description: 'Sandales Prada en daim.', rating: 4.6 }
+        {
+          image: '/chaussures/femme/PradaBeige/Prada Ankle Strap Platform Sandals - Beige.jpeg',
+          name: 'Prada Platform Sandals',
+          price: 2200000,
+          description: 'Sandales plateformes Prada, beige.',
+          rating: 4.7,
+          tips: [
+            'Équilibre silhouette avec pantalon droit ou jupe midi',
+            'Look audacieux et moderne'
+          ],
+          care: [
+            'Essuyer la plateforme après usage',
+            'Vérifier régulièrement la semelle'
+          ]
+        },
+        {
+          image: '/chaussures/femme/PradaBeige/Prada Gold Platform Sandals - Beige.jpeg',
+          name: 'Prada Gold Platform',
+          price: 2250000,
+          description: 'Plateformes Prada, finitions dorées.',
+          rating: 4.7,
+          tips: [
+            'Équilibre silhouette avec pantalon droit ou jupe midi',
+            'Look audacieux et moderne'
+          ],
+          care: [
+            'Essuyer la plateforme après usage',
+            'Vérifier régulièrement la semelle'
+          ]
+        },
+        {
+          image: '/chaussures/femme/PradaBeige/Prada Leather Platform Sandals - Beige.jpeg',
+          name: 'Prada Leather Platform',
+          price: 2180000,
+          description: 'Plateformes en cuir Prada.',
+          rating: 4.6,
+          tips: [
+            'Équilibre silhouette avec pantalon droit ou jupe midi',
+            'Look audacieux et moderne'
+          ],
+          care: [
+            'Essuyer la plateforme après usage',
+            'Vérifier régulièrement la semelle'
+          ]
+        },
+        {
+          image: '/chaussures/femme/PradaBeige/Prada Metallic Platform Sandals - Beige.jpeg',
+          name: 'Prada Metallic Platform',
+          price: 2230000,
+          description: 'Plateformes métalliques Prada.',
+          rating: 4.7,
+          tips: [
+            'Équilibre silhouette avec pantalon droit ou jupe midi',
+            'Look audacieux et moderne'
+          ],
+          care: [
+            'Essuyer la plateforme après usage',
+            'Vérifier régulièrement la semelle'
+          ]
+        },
+        {
+          image: '/chaussures/femme/PradaBeige/Prada Paige Platform Sandals - Beige.jpeg',
+          name: 'Prada Paige Platform',
+          price: 2210000,
+          description: 'Modèle Paige par Prada.',
+          rating: 4.6,
+          tips: [
+            'Équilibre silhouette avec pantalon droit ou jupe midi',
+            'Look audacieux et moderne'
+          ],
+          care: [
+            'Essuyer la plateforme après usage',
+            'Vérifier régulièrement la semelle'
+          ]
+        },
+        {
+          image: '/chaussures/femme/PradaBeige/Prada Sandales - Beige.jpeg',
+          name: 'Prada Sandales Beige',
+          price: 2100000,
+          description: 'Sandales Prada, teinte beige.',
+          rating: 4.5,
+          tips: [
+            'Sublime avec une robe fluide ou un tailleur léger',
+            'Parfait pour les occasions estivales',
+            'Mettre en valeur avec des accessoires dorés'
+          ],
+          care: [
+            'Nettoyage doux avec chiffon microfibre',
+            "Éviter l'humidité prolongée",
+            'Ranger dans sa housse pour préserver les brides'
+          ]
+        },
+        {
+          image: '/chaussures/femme/PradaBeige/Prada Suede Sandals - Beige.jpeg',
+          name: 'Prada Suede Sandals',
+          price: 2150000,
+          description: 'Sandales Prada en daim.',
+          rating: 4.6,
+          tips: [
+            'Sublime avec une robe fluide ou un tailleur léger',
+            'Parfait pour les occasions estivales',
+            'Mettre en valeur avec des accessoires dorés'
+          ],
+          care: [
+            'Nettoyage doux avec chiffon microfibre',
+            "Éviter l'humidité prolongée",
+            'Ranger dans sa housse pour préserver les brides'
+          ]
+        }
       ];
     }
     if (brandFolder === 'Zaranoire') {
       return [
-        { image: '/chaussures/femme/Zaranoire/Zara Ankle Strap Heels - Noir.jpeg', name: 'Zara Ankle Strap Heels', price: 450000, description: 'Talons Zara à bride cheville.', rating: 4.3 },
-        { image: '/chaussures/femme/Zaranoire/Zara Classic Heels - Noir.jpeg', name: 'Zara Classic Heels', price: 440000, description: 'Escarpins classiques Zara.', rating: 4.2 },
-        { image: '/chaussures/femme/Zaranoire/Zara High Heel Platform Slingback Shoes - Noir.jpeg', name: 'Zara Platform Slingback', price: 470000, description: 'Plateformes slingback Zara.', rating: 4.3 },
-        { image: '/chaussures/femme/Zaranoire/Zara Pointed Toe Heels - Noir.jpeg', name: 'Zara Pointed Toe Heels', price: 455000, description: 'Escarpins à bout pointu Zara.', rating: 4.3 },
-        { image: '/chaussures/femme/Zaranoire/Zara Rhinestone Suede Heels - Noir.jpeg', name: 'Zara Rhinestone Suede', price: 465000, description: 'Escarpins en suède strass Zara.', rating: 4.4 },
-        { image: '/chaussures/femme/Zaranoire/Zara Strappy Heels - Noir.jpeg', name: 'Zara Strappy Heels', price: 448000, description: 'Talons à brides Zara.', rating: 4.2 }
+        {
+          image: '/chaussures/femme/Zaranoire/Zara Ankle Strap Heels - Noir.jpeg',
+          name: 'Zara Ankle Strap Heels',
+          price: 450000,
+          description: 'Talons Zara à bride cheville.',
+          rating: 4.3,
+          tips: [
+            'Mettre en valeur la cheville avec une jupe midi',
+            'Associer à un haut asymétrique pour allonger la silhouette'
+          ],
+          care: [
+            "Protéger la bride et la boucle de l'humidité",
+            'Ranger sur support pour éviter les plis des brides'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Zaranoire/Zara Classic Heels - Noir.jpeg',
+          name: 'Zara Classic Heels',
+          price: 440000,
+          description: 'Escarpins classiques Zara.',
+          rating: 4.2,
+          tips: [
+            'Élégant avec une robe cocktail ou un pantalon tailleur',
+            'Accessoiriser avec une pochette minimaliste'
+          ],
+          care: [
+            'Utiliser patins antidérapants si nécessaire',
+            'Nourrir le cuir régulièrement'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Zaranoire/Zara High Heel Platform Slingback Shoes - Noir.jpeg',
+          name: 'Zara Platform Slingback',
+          price: 470000,
+          description: 'Plateformes slingback Zara.',
+          rating: 4.3,
+          tips: [
+            'Équilibre silhouette avec pantalon droit ou jupe midi',
+            'Look audacieux et moderne'
+          ],
+          care: [
+            'Essuyer la plateforme après usage',
+            'Vérifier régulièrement la semelle'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Zaranoire/Zara Pointed Toe Heels - Noir.jpeg',
+          name: 'Zara Pointed Toe Heels',
+          price: 455000,
+          description: 'Escarpins à bout pointu Zara.',
+          rating: 4.3,
+          tips: [
+            'Affiner la silhouette avec pantalon cigarette',
+            'Souligner le bout pointu avec ourlets courts'
+          ],
+          care: [
+            "Éviter les chocs sur l'extrémité du bout",
+            'Utiliser embauchoirs pour préserver la pointe'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Zaranoire/Zara Rhinestone Suede Heels - Noir.jpeg',
+          name: 'Zara Rhinestone Suede',
+          price: 465000,
+          description: 'Escarpins en suède strass Zara.',
+          rating: 4.4,
+          tips: [
+            'Parfait pour soirée avec robe noire sobre',
+            'Laisser les strass briller, accessoires discrets'
+          ],
+          care: [
+            'Brosser le suède à sec après usage',
+            "Éviter l'eau, utiliser spray protecteur pour suède"
+          ]
+        },
+        {
+          image: '/chaussures/femme/Zaranoire/Zara Strappy Heels - Noir.jpeg',
+          name: 'Zara Strappy Heels',
+          price: 448000,
+          description: 'Talons à brides Zara.',
+          rating: 4.2,
+          tips: [
+            'Idéal avec robe fluide et accessoires métalliques',
+            'Jouer sur des teintes neutres pour un look épuré'
+          ],
+          care: [
+            'Vérifier la tension des brides avant sortie',
+            "Nettoyer les boucles pour éviter l'oxydation"
+          ]
+        }
       ];
     }
     if (brandFolder === 'Minelli') {
       return [
-        { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir.jpeg', name: 'Minelli Escarpins', price: 380000, description: 'Escarpins Minelli, élégants et confortables.', rating: 4.4 },
-        { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 2.jpeg', name: 'Minelli Escarpins 2', price: 385000, description: 'Variante Minelli noir 2.', rating: 4.4 },
-        { image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 3.jpeg', name: 'Minelli Escarpins 3', price: 390000, description: 'Variante Minelli noir 3.', rating: 4.4 },
-        { image: '/chaussures/femme/Minelli/Minelli Tulin Bottines Talon - Noir.jpeg', name: 'Minelli Bottines Tulin', price: 420000, description: 'Bottines Minelli Tulin, talon.', rating: 4.5 }
+        {
+          image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir.jpeg',
+          name: 'Minelli Escarpins',
+          price: 380000,
+          description: 'Escarpins Minelli, élégants et confortables.',
+          rating: 4.4,
+          tips: [
+            'Élégant avec une robe cocktail ou un pantalon tailleur',
+            'Accessoiriser avec une pochette minimaliste'
+          ],
+          care: [
+            'Utiliser patins antidérapants si nécessaire',
+            'Nourrir le cuir régulièrement'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 2.jpeg',
+          name: 'Minelli Escarpins 2',
+          price: 385000,
+          description: 'Variante Minelli noir 2.',
+          rating: 4.4,
+          tips: [
+            'Associer à une veste tailleur structurée',
+            'Jouer avec des bijoux argentés minimalistes'
+          ],
+          care: [
+            'Utiliser des embauchoirs pour garder la forme',
+            'Éviter les surfaces abrasives lors de la marche'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir 3.jpeg',
+          name: 'Minelli Escarpins 3',
+          price: 390000,
+          description: 'Variante Minelli noir 3.',
+          rating: 4.4,
+          tips: [
+            'Look soirée avec robe midi ou combinaison chic',
+            'Contraster avec une ceinture fine'
+          ],
+          care: [
+            'Essuyer délicatement après chaque usage',
+            'Protéger les talons avec embouts si besoin'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Minelli/Minelli Tulin Bottines Talon - Noir.jpeg',
+          name: 'Minelli Bottines Tulin',
+          price: 420000,
+          description: 'Bottines Minelli Tulin, talon.',
+          rating: 4.5,
+          tips: [
+            'Parfait avec un jean skinny ou un trench',
+            "Idéal pour la mi-saison et l'hiver",
+            'Style urbain chic'
+          ],
+          care: [
+            'Imperméabiliser avant usage',
+            'Brosser après exposition à la poussière',
+            "Sécher à l'air libre, loin d'une source de chaleur"
+          ]
+        }
       ];
     }
     if (brandFolder === 'Mango') {
       return [
-        { image: '/chaussures/femme/Mango/MANGO Ankle Strap Sandal in Nude at Nordstrom, Size 6_5Us.jpeg', name: 'Mango Ankle Strap Sandal', price: 320000, description: 'Sandales Mango, nude.', rating: 4.2 },
-        { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude.jpeg', name: 'Mango Strappy Sandals', price: 318000, description: 'Sandales à brides Mango.', rating: 4.2 },
-        { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 2.jpeg', name: 'Mango Strappy Sandals 2', price: 319000, description: 'Variante Mango 2.', rating: 4.2 },
-        { image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 3.jpeg', name: 'Mango Strappy Sandals 3', price: 321000, description: 'Variante Mango 3.', rating: 4.2 }
+        {
+          image: '/chaussures/femme/Mango/MANGO Ankle Strap Sandal in Nude at Nordstrom, Size 6_5Us.jpeg',
+          name: 'Mango Ankle Strap Sandal',
+          price: 320000,
+          description: 'Sandales Mango, nude.',
+          rating: 4.2,
+          tips: [
+            'Élancer la jambe avec jupe fendue',
+            'Associer à des tons nude ou pastel',
+            'Accessoires dorés fins pour un rendu chic'
+          ],
+          care: [
+            'Nettoyage doux avec chiffon microfibre',
+            "Éviter l'humidité prolongée",
+            'Ranger dans sa housse pour préserver les brides'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude.jpeg',
+          name: 'Mango Strappy Sandals',
+          price: 318000,
+          description: 'Sandales à brides Mango.',
+          rating: 4.2,
+          tips: [
+            'Mettre en valeur les brides avec robe midi',
+            'Parfait pour les looks de journée en été',
+            "Boucles d'oreilles pendantes subtiles"
+          ],
+          care: [
+            'Essuyer les brides après usage',
+            "Éviter contact prolongé avec sable/sel",
+            'Ranger avec séparateurs pour éviter frottements'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 2.jpeg',
+          name: 'Mango Strappy Sandals 2',
+          price: 319000,
+          description: 'Variante Mango 2.',
+          rating: 4.2,
+          tips: [
+            'Look minimal avec tailleur short',
+            "S'accorder à un sac seau clair",
+            'Bracelets fins empilés'
+          ],
+          care: [
+            'Nettoyer semelle immédiatement après usage',
+            'Éviter chaleur directe pour sécher',
+            'Housse respirante recommandée'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude 3.jpeg',
+          name: 'Mango Strappy Sandals 3',
+          price: 321000,
+          description: 'Variante Mango 3.',
+          rating: 4.2,
+          tips: [
+            'Jouer la transparence avec matières légères',
+            'Associer à veste lin oversize',
+            'Collier ras-du-cou discret'
+          ],
+          care: [
+            'Retirer poussière avec brosse douce',
+            "Éviter parfums/solvants",
+            'Stocker à plat pour éviter déformation'
+          ]
+        }
       ];
     }
     if (brandFolder === 'Jonak') {
       return [
-        { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg', name: 'Jonak Tendance', price: 280000, description: 'Chaussures Jonak tendance.', rating: 4.1 },
-        { image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg', name: 'Jonak Tendance 2', price: 282000, description: 'Variante Jonak tendance 2.', rating: 4.1 },
-        { image: '/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg', name: 'Jonak Santiags Basama', price: 300000, description: 'Bottines santiags Jonak.', rating: 4.2 },
-        { image: '/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg', name: 'Jonak Western Cuir', price: 305000, description: 'Bottines western Jonak en cuir.', rating: 4.2 }
+        {
+          image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg',
+          name: 'Jonak Tendance',
+          price: 280000,
+          description: 'Chaussures Jonak tendance.',
+          rating: 4.1,
+          tips: [
+            'Casual chic avec jean droit et chemise fluide',
+            'Rehausser avec blazer léger',
+            'Accessoires minimalistes pour un look quotidien'
+          ],
+          care: [
+            'Nettoyer avec chiffon doux après usage',
+            'Utiliser spray protecteur adapté à la matière',
+            "Stocker à l'abri de la lumière directe"
+          ]
+        },
+        {
+          image: '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak (1).jpeg',
+          name: 'Jonak Tendance 2',
+          price: 282000,
+          description: 'Variante Jonak tendance 2.',
+          rating: 4.1,
+          tips: [
+            'Élégant au quotidien avec robe chemise',
+            'Associer à sac crossbody pour confort',
+            'Jeux de textures (denim, coton, cuir)'
+          ],
+          care: [
+            'Éliminer la poussière avec brosse douce',
+            "Éviter l'humidité prolongée",
+            'Ranger dans housse respirante'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Jonak/Jonak Bottines Santiags Basama - Marron.jpeg',
+          name: 'Jonak Santiags Basama',
+          price: 300000,
+          description: 'Bottines santiags Jonak.',
+          rating: 4.2,
+          tips: [
+            'Esprit western avec jean slim et veste en cuir',
+            'Jouer le contraste avec robe bohème',
+            'Accessoiriser avec ceinture à boucle'
+          ],
+          care: [
+            'Imperméabiliser le cuir régulièrement',
+            'Brosser les surpiqûres pour enlever la poussière',
+            'Sécher loin de toute source de chaleur'
+          ]
+        },
+        {
+          image: '/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg',
+          name: 'Jonak Western Cuir',
+          price: 305000,
+          description: 'Bottines western Jonak en cuir.',
+          rating: 4.2,
+          tips: [
+            'Cowgirl chic avec jupe midi et cardigan',
+            'Superbe avec trench beige ou manteau laine',
+            'Mettre en avant la tige avec ourlets courts'
+          ],
+          care: [
+            'Nourrir le cuir pour éviter le craquèlement',
+            'Dépoussiérer avec brosse douce après usage',
+            'Conserver avec embauchoirs pour maintenir la forme'
+          ]
+        }
       ];
     }
     return [];
@@ -510,7 +1091,7 @@ export default function ProductDetail() {
     if (product?.subcategory === 'femme' && selectedBrand) {
       console.log('🔍 Affichage des images de la marque sélectionnée:', selectedBrand.name);
       
-      // Récupérer UNIQUEMENT les images de la marque sélectionnée (en prenant l’ordre du catalogue)
+      // Récupérer UNIQUEMENT les images de la marque sélectionnée (en prenant l'ordre du catalogue)
       const catalog = getBrandCatalog(selectedBrand.folder);
       const brandImages = (catalog && catalog.length > 0) ? catalog.map(i => i.image) : getBrandImages(selectedBrand.folder);
       console.log('📁 Images de la marque:', brandImages);
@@ -1102,10 +1683,13 @@ export default function ProductDetail() {
     const currentImage = images[selectedImageIdx] || images[0];
     const meta = (catalog || []).find(i => i.image === currentImage);
     const base = buildBrandDisplayProduct(selectedBrand) || product;
+    const tc = getTipsCareForImage(currentImage, base?.brand);
+    const tips = (meta && meta.tips) ? meta.tips : tc.tips;
+    const care = (meta && meta.care) ? meta.care : tc.care;
     if (meta) {
-      displayProduct = { ...base, name: meta.name, price: meta.price, description: meta.description, rating: meta.rating };
+      displayProduct = { ...base, name: meta.name, price: meta.price, description: meta.description, rating: meta.rating, tips, care };
     } else {
-      displayProduct = base;
+      displayProduct = { ...base, tips, care };
     }
   }
 
@@ -1294,7 +1878,7 @@ export default function ProductDetail() {
             </div>
             
             {/* Section spécifique au genre */}
-            {isFemme && <FemmeSpecificSection product={product} />}
+            {isFemme && <FemmeSpecificSection product={displayProduct} />}
             {isHomme && <HommeSpecificSection product={product} />}
           </div>
           {/* Colonne droite Amazon-like */}
@@ -1430,7 +2014,7 @@ export default function ProductDetail() {
               <div>
                 <h4>Questions & Réponses</h4>
                 <div className="mb-3">
-                  <strong>Conseils d’entretien :</strong>
+                  <strong>Conseils d'entretien :</strong>
                   <ul>
                     <li>Nettoyez vos chaussures avec un chiffon doux et humide.</li>
                     <li>Évitez l'exposition prolongée au soleil pour préserver les couleurs.</li>
