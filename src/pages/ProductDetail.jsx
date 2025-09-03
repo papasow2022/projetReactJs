@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useProducts } from '../contexts/ProductsContext';
 import Footer from "../components/Footer";
 import FemmeSpecificSection from "../components/FemmeSpecificSection";
@@ -1087,7 +1087,7 @@ export default function ProductDetail() {
       } else if (product?.brand === 'Jonak' || product?.image?.includes('Jonak')) {
         brandToSet = { id: 'Jonak', name: 'Jonak', folder: 'Jonak' };
       }
-
+      
       if (brandToSet) {
         setSelectedBrand(brandToSet);
         console.log('🎯 Marque initialisée:', brandToSet.name);
@@ -2060,8 +2060,21 @@ export default function ProductDetail() {
                 <span>Livraison : <b>{displayProduct?.deliveryDate || 'Gratuite demain'}</b></span>
               </div>
                           <div className="mb-2" style={{ fontSize: 15 }}>
-              <span>Vendu par <b>{displayProduct?.brand || 'Boutique'}</b></span>
-              <span className="badge bg-primary ms-2">Vendeur vérifié</span>
+                                                        <div>
+                              <span>Vendu par <b>{displayProduct?.brand || 'Boutique'}</b></span>
+                              {(() => {
+                                // Badges dynamiques selon la marque et le produit
+                                if (displayProduct?.brand === 'Christian Louboutin' || displayProduct?.brand === 'Gucci' || displayProduct?.brand === 'Prada') {
+                                  return <span className="badge bg-warning text-dark ms-2">Boutique officielle</span>;
+                                } else if (displayProduct?.brand === 'Zara' || displayProduct?.brand === 'Mango' || displayProduct?.brand === 'Minelli') {
+                                  return <span className="badge bg-success ms-2">Vendeur vérifié</span>;
+                                } else if (displayProduct?.price > 1000000) {
+                                  return <span className="badge bg-info ms-2">Premium</span>;
+                                } else {
+                                  return <span className="badge bg-primary ms-2">Vendeur vérifié</span>;
+                                }
+                              })()}
+                            </div>
             </div>
               <div className="mb-2">
                 <label className="form-label fw-bold mb-1">Quantité :</label>
@@ -2141,7 +2154,7 @@ export default function ProductDetail() {
                             <i className="bi bi-check-circle-fill text-success me-2"></i>
                             Contrôle qualité rigoureux
                           </li>
-                        </ul>
+                </ul>
                       </div>
                     </div>
                   </div>
@@ -2253,27 +2266,29 @@ export default function ProductDetail() {
                   </div>
                 </div>
 
-                {/* Garantie et service */}
-                <div className="bg-primary bg-opacity-10 p-3 rounded">
-                  <h6 className="fw-bold text-primary mb-2">
-                    <i className="bi bi-shield-check me-2"></i>
-                    Garantie et service client
-                  </h6>
-                  <div className="row text-muted">
-                    <div className="col-md-4">
-                      <i className="bi bi-arrow-return-left me-2"></i>
-                      Retours gratuits sous 30 jours
-                    </div>
-                    <div className="col-md-4">
-                      <i className="bi bi-tools me-2"></i>
-                      Service après-vente disponible
-                    </div>
-                    <div className="col-md-4">
-                      <i className="bi bi-headset me-2"></i>
-                      Support client 24/7
-                    </div>
-                  </div>
-                </div>
+                                 {/* Garantie et service */}
+                 <div className="bg-primary bg-opacity-10 p-3 rounded">
+                   <h6 className="fw-bold text-primary mb-2">
+                     <i className="bi bi-shield-check me-2"></i>
+                     Garantie et service client
+                   </h6>
+                   <div className="row text-muted">
+                     <div className="col-md-4">
+                       <i className="bi bi-arrow-return-left me-2"></i>
+                       Retours gratuits sous 30 jours
+                     </div>
+                     <div className="col-md-4">
+                       <i className="bi bi-tools me-2"></i>
+                       Service après-vente disponible
+                     </div>
+                     <div className="col-md-4">
+                       <i className="bi bi-headset me-2"></i>
+                       Support client 24/7
+                     </div>
+                   </div>
+                 </div>
+
+
               </div>
             )}
             {activeTab === 'specs' && (

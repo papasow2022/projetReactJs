@@ -248,6 +248,25 @@ export default function Header() {
         </form>
         {/* À droite : langue, compte, retours & commandes, panier */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Bouton Devenir vendeur - Prominent */}
+          <Link to="/vendeur" style={{
+            background: '#ffd814',
+            color: '#232f3e',
+            textDecoration: 'none',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            fontWeight: '600',
+            fontSize: '14px',
+            border: '1px solid #e47911',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            marginRight: '8px'
+          }}>
+            <i className="bi bi-shop" style={{ fontSize: '14px' }}></i>
+            Devenir vendeur
+          </Link>
           {/* Sélecteur de langue */}
           <div style={{ display: 'flex', alignItems: 'center', marginRight: 8, position: 'relative' }} ref={langBtnRef}>
             <button
@@ -417,19 +436,80 @@ export default function Header() {
           </button>
           </li>
           <li style={{ display: 'flex', alignItems: 'center', height: 38 }}>
-            <Link to="/offres-du-jour" style={{ color: '#fff', textDecoration: 'none' }}>Offres du jour</Link>
+            <Link to="/offres-du-jour" style={{ 
+              color: '#fff', 
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 8px',
+              borderRadius: '4px',
+              transition: 'all 0.2s'
+            }}>
+              <i className="bi bi-lightning-fill" style={{ fontSize: '14px', color: '#ffd814' }}></i>
+              Offres du jour
+            </Link>
           </li>
           <li style={{ display: 'flex', alignItems: 'center', height: 38 }}>
-            <Link to="/cartes-cadeaux" style={{ color: '#fff', textDecoration: 'none' }}>Cartes-cadeaux</Link>
+            <Link to="/cartes-cadeaux" style={{ 
+              color: '#fff', 
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 8px',
+              borderRadius: '4px',
+              transition: 'all 0.2s'
+            }}>
+              <i className="bi bi-gift-fill" style={{ fontSize: '14px', color: '#ff6b6b' }}></i>
+              Cartes-cadeaux
+            </Link>
           </li>
           <li style={{ display: 'flex', alignItems: 'center', height: 38 }}>
-            <Link to="/vendeur" style={{ color: '#fff', textDecoration: 'none' }}>Vendeur</Link>
+            <Link to="/vendeur" style={{ 
+              color: '#ffd814', 
+              textDecoration: 'none', 
+              fontWeight: '600',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <i className="bi bi-shop" style={{ fontSize: '14px' }}></i>
+              Vendeur
+            </Link>
           </li>
           <li style={{ display: 'flex', alignItems: 'center', height: 38 }}>
-            <Link to="/nouveautes" style={{ color: '#fff', textDecoration: 'none' }}>Nouveautés</Link>
+            <Link to="/nouveautes" style={{ 
+              color: '#fff', 
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 8px',
+              borderRadius: '4px',
+              transition: 'all 0.2s'
+            }}>
+              <i className="bi bi-star-fill" style={{ fontSize: '14px', color: '#ffd814' }}></i>
+              Nouveautés
+            </Link>
           </li>
           <li style={{ display: 'flex', alignItems: 'center', height: 38 }}>
-            <Link to="/service-client" style={{ color: '#fff', textDecoration: 'none' }}>Service client</Link>
+            <Link to="/service-client" style={{ 
+              color: '#fff', 
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 8px',
+              borderRadius: '4px',
+              transition: 'all 0.2s'
+            }}>
+              <i className="bi bi-headset" style={{ fontSize: '14px', color: '#4ecdc4' }}></i>
+              Service client
+            </Link>
           </li>
         </ul>
       </nav>

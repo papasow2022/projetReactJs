@@ -239,7 +239,41 @@ export default function Footer() {
               </ul>
             </div>
 
-            {/* Colonne 4 : Newsletter et contact */}
+            {/* Colonne 4 : Vendeurs */}
+            <div className="col-lg-2 col-md-6">
+              <h6 className="fw-bold text-warning mb-4 text-uppercase letter-spacing-1">
+                <i className="bi bi-shop me-2"></i>
+                Pour les vendeurs
+              </h6>
+              <ul className="list-unstyled">
+                <li className="mb-3">
+                  <Link to="/vendeur" className="text-dark text-decoration-none d-flex align-items-center hover-warning">
+                    <i className="bi bi-chevron-right me-2 text-warning transition-all"></i>
+                    Devenir vendeur
+                  </Link>
+                </li>
+                <li className="mb-3">
+                  <Link to="/inscription-vendeur" className="text-dark text-decoration-none d-flex align-items-center hover-warning">
+                    <i className="bi bi-chevron-right me-2 text-warning transition-all"></i>
+                    S'inscrire
+                  </Link>
+                </li>
+                <li className="mb-3">
+                  <Link to="/support-vendeur" className="text-dark text-decoration-none d-flex align-items-center hover-warning">
+                    <i className="bi bi-chevron-right me-2 text-warning transition-all"></i>
+                    Support vendeur
+                  </Link>
+                </li>
+                <li className="mb-3">
+                  <Link to="/vendeur/onboarding" className="text-dark text-decoration-none d-flex align-items-center hover-warning">
+                    <i className="bi bi-chevron-right me-2 text-warning transition-all"></i>
+                    Guide de démarrage
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Colonne 5 : Newsletter et contact */}
             <div className="col-lg-3 col-md-6">
               {/* Newsletter */}
               <div className="mb-4">
