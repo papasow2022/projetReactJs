@@ -10,6 +10,7 @@ import {
   BiStore, 
   BiPalette, 
   BiCar, 
+  BiPackage,
   BiCheckCircle, 
   BiXCircle,
   BiInfoCircle,
@@ -54,6 +55,16 @@ const typesVendeur = {
     fraisMensuels: 'Aucun',
     limitations: ['Marge réduite', 'Moins de contrôle qualité'],
     documents: ['Pièce d\'identité', 'Accord avec fournisseur', 'Justificatif d\'adresse']
+  },
+  fbp: {
+    nom: 'Fulfillment by Papasow',
+    icon: BiPackage,
+    description: 'Envoyez vos produits, nous gérons la logistique',
+    commission: '12%',
+    fraisMensuels: 'Frais de stockage selon volume',
+    limitations: ['Frais de stockage', 'Processus d\'envoi initial'],
+    documents: ['Pièce d\'identité', 'Justificatif d\'adresse', 'Liste des produits à envoyer'],
+    badge: 'POPULAIRE'
   }
 };
 

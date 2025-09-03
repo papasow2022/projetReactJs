@@ -119,6 +119,34 @@ const typesVendeur = [
     },
     couleur: 'info',
     recommande: false
+  },
+  {
+    id: 'fbp',
+    titre: 'Fulfillment by Papasow',
+    sousTitre: 'FBP - Logistique gérée',
+    icon: BiPackage,
+    description: 'Envoyez vos produits à Papasow, nous gérons tout le reste',
+    avantages: [
+      'Stockage dans nos entrepôts',
+      'Expédition gérée par Papasow',
+      'Service client inclus',
+      'Retours simplifiés',
+      'Livraison Prime (gratuite)',
+      'Gestion des stocks automatisée'
+    ],
+    limitations: [
+      'Frais de stockage mensuels',
+      'Processus d\'envoi initial',
+      'Moins de contrôle sur l\'emballage'
+    ],
+    frais: {
+      inscription: 'Gratuit',
+      commission: '12%',
+      mensuel: 'Frais de stockage selon volume'
+    },
+    couleur: 'danger',
+    recommande: true,
+    badge: 'POPULAIRE'
   }
 ];
 
