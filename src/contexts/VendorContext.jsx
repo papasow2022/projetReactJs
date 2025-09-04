@@ -369,6 +369,85 @@ export const VendorProvider = ({ children }) => {
     return filteredOrders.reduce((total, order) => total + (order.total || 0), 0);
   };
 
+  // Fonction pour créer un vendeur de test validé
+  const createTestVendor = (email) => {
+    const vendorId = 'VD-TEST-' + Date.now();
+    const testVendor = {
+      id: vendorId,
+      email: email,
+      businessName: 'Boutique Test',
+      contactName: 'Vendeur Test',
+      phone: '+33123456789',
+      address: {
+        street: '123 Rue de Test',
+        city: 'Paris',
+        postalCode: '75001',
+        country: 'France'
+      },
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      isVerified: true,
+      rating: 4.5,
+      totalSales: 1250.50,
+      totalOrders: 45,
+      totalProducts: 12,
+      balance: 850.30,
+      commission: 0.15,
+      settings: {
+        autoAcceptOrders: true,
+        notifications: {
+          newOrder: true,
+          lowStock: true,
+          negativeReview: true,
+          paymentReceived: true
+        },
+        shipping: {
+          freeShippingThreshold: 50,
+          defaultShippingCost: 5.99
+        }
+      }
+    };
+
+    const updatedVendors = { ...vendors, [vendorId]: testVendor };
+    setVendors(updatedVendors);
+    localStorage.setItem('vendors', JSON.stringify(updatedVendors));
+
+    // Initialiser les statistiques de test
+    const testStats = {
+      [vendorId]: {
+        dailySales: [
+          { date: '2024-01-01', amount: 125.50 },
+          { date: '2024-01-02', amount: 89.30 },
+          { date: '2024-01-03', amount: 156.80 }
+        ],
+        monthlySales: [
+          { month: '2024-01', amount: 1250.50 },
+          { month: '2023-12', amount: 980.20 }
+        ],
+        topProducts: [
+          { id: '1', name: 'Produit Test 1', sales: 25 },
+          { id: '2', name: 'Produit Test 2', sales: 18 }
+        ],
+        customerMetrics: {
+          newCustomers: 12,
+          returningCustomers: 8,
+          averageOrderValue: 27.80
+        },
+        performance: {
+          orderFulfillmentRate: 98.5,
+          customerSatisfaction: 4.5,
+          responseTime: 2.3
+        }
+      }
+    };
+
+    const updatedStats = { ...vendorStats, ...testStats };
+    setVendorStats(updatedStats);
+    localStorage.setItem('vendorStats', JSON.stringify(updatedStats));
+
+    return testVendor;
+  };
+
   const value = {
     vendors,
     currentVendor,
@@ -377,6 +456,7 @@ export const VendorProvider = ({ children }) => {
     vendorNotifications,
     loading,
     createVendor,
+    createTestVendor,
     updateVendor,
     getVendor,
     getVendorStats,

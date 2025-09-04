@@ -12,7 +12,12 @@ import {
   BiCog,
   BiHelpCircle,
   BiBell,
-  BiPlus
+  BiPlus,
+  BiCreditCard,
+  BiArrowBack,
+  BiCheckCircle,
+  BiInfoCircle,
+  BiXCircle
 } from 'react-icons/bi';
 import OnboardingNavigation from '../components/OnboardingNavigation';
 import { Line } from 'react-chartjs-2';
@@ -44,7 +49,12 @@ const DashboardVendeur = () => {
     { title: 'Ajouter un produit', icon: BiPlus, link: '/vendeur/produits/ajouter', color: 'primary' },
     { title: 'Gérer les stocks', icon: BiPackage, link: '/vendeur/stocks', color: 'success' },
     { title: 'Voir les commandes', icon: BiCalendar, link: '/vendeur/commandes', color: 'info' },
-    { title: 'Analytics', icon: BiBarChart, link: '/vendeur/analytics', color: 'warning' }
+    { title: 'Analytics', icon: BiBarChart, link: '/vendeur/analytics', color: 'warning' },
+    { title: 'Messagerie', icon: BiBell, link: '/vendeur/messagerie', color: 'secondary' },
+    { title: 'Gestion des avis', icon: BiStar, link: '/vendeur/avis', color: 'info' },
+    { title: 'Promotions', icon: BiTrendingUp, link: '/vendeur/promotions', color: 'success' },
+    { title: 'Gestion des retours', icon: BiArrowBack, link: '/vendeur/retours', color: 'warning' },
+    { title: 'Gestion des paiements', icon: BiCreditCard, link: '/vendeur/paiements', color: 'primary' }
   ]);
 
   // MOCK DATA pour analytics avancés
@@ -465,7 +475,7 @@ const DashboardVendeur = () => {
                   >
                     {notification.type === 'success' && <BiCheckCircle style={{ fontSize: '1.2rem', color: '#28a745' }} />}
                     {notification.type === 'info' && <BiInfoCircle style={{ fontSize: '1.2rem', color: '#17a2b8' }} />}
-                    {notification.type === 'warning' && <BiWarning style={{ fontSize: '1.2rem', color: '#ffc107' }} />}
+                    {notification.type === 'warning' && <BiXCircle style={{ fontSize: '1.2rem', color: '#ffc107' }} />}
                     <div>
                       <p style={{ margin: 0, fontWeight: '500' }}>{notification.message}</p>
                       <small style={{ color: '#666' }}>{notification.time}</small>

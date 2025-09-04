@@ -12,7 +12,7 @@ import {
   BiInfoCircle,
   BiCalculator,
   BiGlobe,
-  BiPackage,
+
   BiCreditCard,
   BiBarChart
 } from 'react-icons/bi';
@@ -119,51 +119,10 @@ const typesVendeur = [
     },
     couleur: 'info',
     recommande: false
-  },
-  {
-    id: 'fbp',
-    titre: 'Fulfillment by Papasow',
-    sousTitre: 'FBP - Logistique gérée',
-    icon: BiPackage,
-    description: 'Envoyez vos produits à Papasow, nous gérons tout le reste',
-    avantages: [
-      'Stockage dans nos entrepôts',
-      'Expédition gérée par Papasow',
-      'Service client inclus',
-      'Retours simplifiés',
-      'Livraison Prime (gratuite)',
-      'Gestion des stocks automatisée'
-    ],
-    limitations: [
-      'Frais de stockage mensuels',
-      'Processus d\'envoi initial',
-      'Moins de contrôle sur l\'emballage'
-    ],
-    frais: {
-      inscription: 'Gratuit',
-      commission: '12%',
-      mensuel: 'Frais de stockage selon volume'
-    },
-    couleur: 'danger',
-    recommande: true,
-    badge: 'POPULAIRE'
   }
 ];
 
-const services = [
-  {
-    titre: 'Fulfillment par Papasow',
-    description: 'Nous gérons le stockage, l\'emballage et l\'expédition',
-    avantages: ['Livraison rapide', 'Service client géré', 'Retours simplifiés'],
-    frais: '15% + frais de stockage'
-  },
-  {
-    titre: 'Fulfillment par Vendeur',
-    description: 'Vous gérez vous-même la logistique',
-    avantages: ['Contrôle total', 'Coûts optimisés', 'Flexibilité'],
-    frais: 'Commission standard uniquement'
-  }
-];
+
 
 export default function Vendeur() {
   const [selectedType, setSelectedType] = useState(null);
@@ -309,42 +268,7 @@ export default function Vendeur() {
         </div>
       </section>
 
-      {/* Services de fulfillment */}
-      <section style={{ maxWidth: 1200, margin: '40px auto', padding: '0 20px' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 800, color: '#232f3e', marginBottom: 40 }}>
-          Services de Fulfillment
-        </h2>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24 }}>
-          {services.map((service, index) => (
-            <div key={index} style={{ 
-              background: '#fff', 
-              borderRadius: 12, 
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
-              padding: 32 
-            }}>
-              <h3 style={{ fontSize: 24, fontWeight: 800, color: '#232f3e', marginBottom: 16 }}>{service.titre}</h3>
-              <p style={{ color: '#555', marginBottom: 24, lineHeight: 1.6 }}>{service.description}</p>
-              
-              <div style={{ marginBottom: 24 }}>
-                <h4 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Avantages</h4>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
-                  {service.avantages.map((avantage, idx) => (
-                    <li key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                      <BiCheckCircle style={{ color: '#28a745', marginRight: 8 }} />
-                      <span style={{ fontSize: 14 }}>{avantage}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
 
-              <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
-                <strong>Frais:</strong> {service.frais}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* Statistiques */}
       <section style={{ background: '#fff', margin: '40px 0', padding: '40px 20px' }}>

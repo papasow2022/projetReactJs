@@ -4,6 +4,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./hooks/useAuth.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import VendorProtectedRoute from "./components/VendorProtectedRoute";
+import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import Header from "./components/Header";
 import Home from "./pages/Home";
 import ProductDetail from "./pages/ProductDetail";
@@ -58,6 +59,25 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { DailyDealsProvider } from './contexts/DailyDealsContext';
 import { CartProvider } from './contexts/CartContext';
 import { VendorProvider } from './contexts/VendorContext';
+import { MessagingProvider } from './contexts/MessagingContext';
+import { ReviewsProvider } from './contexts/ReviewsContext';
+import { PromotionsProvider } from './contexts/PromotionsContext';
+import { ReturnsProvider } from './contexts/ReturnsContext';
+import { PaymentsProvider } from './contexts/PaymentsContext';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminVendors from './pages/AdminVendors';
+import AdminProducts from './pages/AdminProducts';
+import AdminOrders from './pages/AdminOrders';
+import AdminReviews from './pages/AdminReviews';
+import AdminAnalytics from './pages/AdminAnalytics';
+import AdminPayments from './pages/AdminPayments';
+import AdminSupport from './pages/AdminSupport';
+import AdminSettings from './pages/AdminSettings';
+import MessagerieVendeur from './pages/MessagerieVendeur';
+import GestionAvisVendeur from './pages/GestionAvisVendeur';
+import OutilsPromotionVendeur from './pages/OutilsPromotionVendeur';
+import GestionRetoursVendeur from './pages/GestionRetoursVendeur';
+import GestionPaiementsVendeur from './pages/GestionPaiementsVendeur';
 
 
 export default function App() {
@@ -70,6 +90,11 @@ export default function App() {
               <CommandesProvider>
                 <ProductsProvider>
                   <VendorProvider>
+                    <MessagingProvider>
+                      <ReviewsProvider>
+                        <PromotionsProvider>
+                          <ReturnsProvider>
+                            <PaymentsProvider>
               <Router>
                 <Header />
                 <Routes>
@@ -226,6 +251,31 @@ export default function App() {
                       <ConfigurationCompte />
                     </VendorProtectedRoute>
                   } />
+                  <Route path="/vendeur/messagerie" element={
+                    <VendorProtectedRoute>
+                      <MessagerieVendeur />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/avis" element={
+                    <VendorProtectedRoute>
+                      <GestionAvisVendeur />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/promotions" element={
+                    <VendorProtectedRoute>
+                      <OutilsPromotionVendeur />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/retours" element={
+                    <VendorProtectedRoute>
+                      <GestionRetoursVendeur />
+                    </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/paiements" element={
+                    <VendorProtectedRoute>
+                      <GestionPaiementsVendeur />
+                    </VendorProtectedRoute>
+                  } />
                   
                   {/* Route d'onboarding vendeur */}
                   <Route path="/vendeur/onboarding" element={
@@ -236,8 +286,59 @@ export default function App() {
                   
                 {/* Ajoutez d'autres routes ici si nécessaire */}
                 {/* Exemple : <Route path="/categorie/femme" element={<Femme />} /> */}
+                {/* Routes Admin */}
+                <Route path="/admin/dashboard" element={
+                  <AdminProtectedRoute>
+                    <AdminDashboard />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/vendors" element={
+                  <AdminProtectedRoute>
+                    <AdminVendors />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/products" element={
+                  <AdminProtectedRoute>
+                    <AdminProducts />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/orders" element={
+                  <AdminProtectedRoute>
+                    <AdminOrders />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/reviews" element={
+                  <AdminProtectedRoute>
+                    <AdminReviews />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/analytics" element={
+                  <AdminProtectedRoute>
+                    <AdminAnalytics />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/payments" element={
+                  <AdminProtectedRoute>
+                    <AdminPayments />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/support" element={
+                  <AdminProtectedRoute>
+                    <AdminSupport />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/settings" element={
+                  <AdminProtectedRoute>
+                    <AdminSettings />
+                  </AdminProtectedRoute>
+                } />
                 </Routes>
               </Router>
+                            </PaymentsProvider>
+                          </ReturnsProvider>
+                        </PromotionsProvider>
+                      </ReviewsProvider>
+                    </MessagingProvider>
                   </VendorProvider>
             </ProductsProvider>
           </CommandesProvider>

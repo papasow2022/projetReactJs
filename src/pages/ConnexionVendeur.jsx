@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { useVendor } from '../contexts/VendorContext';
 import { useLanguage } from "../contexts/LanguageContext";
 import { BiUser, BiLock, BiStore, BiShield } from 'react-icons/bi';
 
 const ConnexionVendeur = () => {
   const navigate = useNavigate();
   const { setUser } = useAuth();
+  const { createTestVendor } = useVendor();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('vendeur');
@@ -22,17 +24,23 @@ const ConnexionVendeur = () => {
     // Ici, tu pourrais faire un appel API pour vérifier les identifiants
     // Pour la démo, on accepte n'importe quel email/mot de passe
     if (role === 'vendeur') {
+      // Créer un vendeur de test validé
+      const testVendor = createTestVendor(email);
+      
       const userData = {
         email,
         isVendor: true,
-        isVendorValidated: true,
+        isVendorValidated: true,  // ✅ Vendeur validé pour les tests
+        vendorStatus: 'active',   // ✅ Statut actif
+        vendorId: testVendor.id,  // ✅ ID du vendeur créé
         isAdmin: false,
         isLoggedIn: true,
         loginTime: new Date().toISOString()
       };
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
-      navigate('/vendeur/commandes');
+      // Redirection vers le dashboard vendeur
+      navigate('/vendeur/dashboard');
     } else {
       const userData = {
         email,

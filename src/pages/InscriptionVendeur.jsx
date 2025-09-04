@@ -87,6 +87,8 @@ export default function InscriptionVendeur() {
   const [formData, setFormData] = useState({
     // Type de compte
     typeVendeur: searchParams.get('type') || 'professionnel',
+    // Mode de fulfillment (gestion des commandes/expédition)
+    fulfillmentMode: 'fbm', // 'fbm' (le vendeur gère) ou 'fbp' (le site gère)
     
     // Informations personnelles
     prenom: '',
@@ -133,13 +135,48 @@ export default function InscriptionVendeur() {
     // Simulation de traitement
     console.log('Données du formulaire vendeur:', formData);
     
-    // Mettre à jour le statut utilisateur pour devenir vendeur
+    // Créer l'entité vendeur (mock) et récupérer un vendorId
+    const creation = createVendor({
+      typeVendeur: formData.typeVendeur,
+      fulfillmentMode: formData.fulfillmentMode,
+      informations: {
+        prenom: formData.prenom,
+        nom: formData.nom,
+        email: formData.email,
+        telephone: formData.telephone,
+        pays: formData.pays,
+        adresse: formData.adresse,
+        ville: formData.ville,
+        codePostal: formData.codePostal,
+        entreprise: {
+          nom: formData.nomEntreprise,
+          type: formData.typeEntreprise,
+          secteur: formData.secteurActivite,
+          siret: formData.numeroSiret,
+          adresse: formData.adresseEntreprise,
+          ville: formData.villeEntreprise,
+          codePostal: formData.codePostalEntreprise
+        }
+      },
+      documents: {
+        pieceIdentite: !!formData.pieceIdentite,
+        registreCommerce: !!formData.registreCommerce,
+        justificatifAdresse: !!formData.justificatifAdresse,
+        portfolio: !!formData.portfolio,
+        accordFournisseur: !!formData.accordFournisseur
+      }
+    });
+
+    const vendorId = creation?.vendorId || ('VD-' + Date.now());
+
+    // Mettre à jour le statut utilisateur pour devenir vendeur (en attente de validation)
     if (user) {
       updateUser({
         isVendor: true,
         isVendorValidated: false,
-        vendorId: 'VD-' + Date.now(),
-        vendorStatus: 'pending'
+        vendorId,
+        vendorStatus: 'pending',
+        fulfillmentMode: formData.fulfillmentMode
       });
     }
     
@@ -219,6 +256,35 @@ export default function InscriptionVendeur() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Sélection du mode de fulfillment */}
+        <div className="mt-4">
+          <h5 className="fw-bold mb-2">Mode de gestion des commandes</h5>
+          <div className="row g-3">
+            <div className="col-md-6">
+              <div className={`border rounded p-3 h-100 ${formData.fulfillmentMode === 'fbm' ? 'border-primary' : 'border-light'}`} style={{ cursor: 'pointer' }} onClick={() => setFormData(prev => ({ ...prev, fulfillmentMode: 'fbm' }))}>
+                <div className="d-flex align-items-start">
+                  <input type="radio" className="form-check-input me-2 mt-1" name="fulfillmentMode" checked={formData.fulfillmentMode === 'fbm'} onChange={() => setFormData(prev => ({ ...prev, fulfillmentMode: 'fbm' }))} />
+                  <div>
+                    <div className="fw-bold">FBM — Le vendeur gère (préparation et expédition)</div>
+                    <small className="text-muted">Vous préparez et expédiez les commandes. Vous contrôlez la logistique.</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-6">
+              <div className={`border rounded p-3 h-100 ${formData.fulfillmentMode === 'fbp' ? 'border-primary' : 'border-light'}`} style={{ cursor: 'pointer' }} onClick={() => setFormData(prev => ({ ...prev, fulfillmentMode: 'fbp' }))}>
+                <div className="d-flex align-items-start">
+                  <input type="radio" className="form-check-input me-2 mt-1" name="fulfillmentMode" checked={formData.fulfillmentMode === 'fbp'} onChange={() => setFormData(prev => ({ ...prev, fulfillmentMode: 'fbp' }))} />
+                  <div>
+                    <div className="fw-bold">FBP — Le site gère (stockage et expédition)</div>
+                    <small className="text-muted">Vous envoyez le stock à notre entrepôt. Nous expédions aux clients.</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
