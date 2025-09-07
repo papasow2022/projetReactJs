@@ -20,11 +20,29 @@ import {
   BiXCircle
 } from 'react-icons/bi';
 import OnboardingNavigation from '../components/OnboardingNavigation';
+import RealtimeMetricsSimple from '../components/RealtimeMetricsSimple';
+import ThemeToggleSimple from '../components/ThemeToggleSimple';
+import { useThemeColors } from '../contexts/ThemeContext';
+import { useRealtime } from '../contexts/RealtimeContext';
+import { 
+  RevenueChart, 
+  ConversionFunnelChart, 
+  ProductPerformanceChart, 
+  MetricsRadarChart,
+  MetricCard 
+} from '../components/AdvancedCharts';
+import PerformanceMetricsSimple from '../components/PerformanceMetricsSimple';
+import AIPredictionsSimple from '../components/AIPredictionsSimple';
+import OrderWorkflowSimple from '../components/OrderWorkflowSimple';
+import MarketingToolsSimple from '../components/MarketingToolsSimple';
+import ExternalIntegrationsSimple from '../components/ExternalIntegrationsSimple';
 import { Line } from 'react-chartjs-2';
 import { Chart, LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, Tooltip, Legend } from 'chart.js';
 Chart.register(LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, Tooltip, Legend);
 
 const DashboardVendeur = () => {
+  const colors = useThemeColors();
+  const { realtimeData } = useRealtime();
   const [selectedPeriod, setSelectedPeriod] = useState('7j');
   const [notifications, setNotifications] = useState([
     { id: 1, type: 'success', message: 'Votre compte a été validé avec succès', time: '2h' },
@@ -127,27 +145,62 @@ const DashboardVendeur = () => {
   };
 
   return (
-    <div className="dashboard-vendeur" style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
+    <div 
+      className="dashboard-vendeur" 
+      style={{ 
+        minHeight: '100vh', 
+        backgroundColor: colors.background,
+        color: colors.text,
+        transition: 'all 0.3s ease'
+      }}
+    >
       {/* Header */}
-      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e0e0e0', padding: '1rem 0' }}>
+      <div 
+        style={{ 
+          backgroundColor: colors.card, 
+          borderBottom: `1px solid ${colors.border}`, 
+          padding: '1rem 0',
+          boxShadow: `0 2px 4px ${colors.shadow}`
+        }}
+      >
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: '600', color: '#232f3e' }}>
+              <h1 style={{ 
+                margin: 0, 
+                fontSize: '1.8rem', 
+                fontWeight: '600', 
+                color: colors.text 
+              }}>
                 Dashboard Vendeur
               </h1>
-              <p style={{ margin: '0.5rem 0 0 0', color: '#666', fontSize: '0.9rem' }}>
+              <p style={{ 
+                margin: '0.5rem 0 0 0', 
+                color: colors.textSecondary, 
+                fontSize: '0.9rem' 
+              }}>
                 Bienvenue sur votre espace vendeur papasow
               </p>
             </div>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              {/* Métriques temps réel compactes */}
+              <RealtimeMetricsSimple compact={true} />
+              
+              {/* Sélecteur de thème */}
+              <ThemeToggleSimple variant="dropdown" size="sm" />
+              
+              {/* Notifications */}
               <div style={{ position: 'relative' }}>
-                <BiBell style={{ fontSize: '1.5rem', color: '#666', cursor: 'pointer' }} />
+                <BiBell style={{ 
+                  fontSize: '1.5rem', 
+                  color: colors.textSecondary, 
+                  cursor: 'pointer' 
+                }} />
                 <span style={{
                   position: 'absolute',
                   top: '-5px',
                   right: '-5px',
-                  backgroundColor: '#e74c3c',
+                  backgroundColor: colors.danger,
                   color: 'white',
                   borderRadius: '50%',
                   width: '18px',
@@ -160,8 +213,14 @@ const DashboardVendeur = () => {
                   {notifications.length}
                 </span>
               </div>
+              
+              {/* Paramètres */}
               <Link to="/vendeur/parametres" style={{ textDecoration: 'none' }}>
-                <BiCog style={{ fontSize: '1.5rem', color: '#666', cursor: 'pointer' }} />
+                <BiCog style={{ 
+                  fontSize: '1.5rem', 
+                  color: colors.textSecondary, 
+                  cursor: 'pointer' 
+                }} />
               </Link>
             </div>
           </div>
@@ -196,140 +255,184 @@ const DashboardVendeur = () => {
           </div>
         </div>
 
-        {/* Métriques principales */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <BiDollar style={{ fontSize: '2rem', color: '#28a745' }} />
-              <span style={{ 
-                color: metrics.ventes.trend === 'up' ? '#28a745' : '#dc3545',
-                fontSize: '0.9rem',
-                fontWeight: '500'
-              }}>
-                {metrics.ventes.change}
-              </span>
-            </div>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', fontWeight: '600' }}>
-              {metrics.ventes.value}
-            </h3>
-            <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>Ventes totales</p>
+        {/* Métriques principales avec nouvelles cartes animées */}
+        <div className="row g-3 mb-4">
+          <div className="col-lg-3 col-md-6">
+            <MetricCard
+              title="Ventes totales"
+              value={metrics.ventes.value}
+              change={metrics.ventes.change}
+              icon={<BiDollar size={24} />}
+              color="success"
+              trend={metrics.ventes.trend}
+            />
           </div>
-
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <BiPackage style={{ fontSize: '2rem', color: '#007bff' }} />
-              <span style={{ 
-                color: metrics.commandes.trend === 'up' ? '#28a745' : '#dc3545',
-                fontSize: '0.9rem',
-                fontWeight: '500'
-              }}>
-                {metrics.commandes.change}
-              </span>
-            </div>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', fontWeight: '600' }}>
-              {metrics.commandes.value}
-            </h3>
-            <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>Commandes</p>
+          <div className="col-lg-3 col-md-6">
+            <MetricCard
+              title="Commandes"
+              value={metrics.commandes.value}
+              change={metrics.commandes.change}
+              icon={<BiPackage size={24} />}
+              color="primary"
+              trend={metrics.commandes.trend}
+            />
           </div>
-
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <BiUser style={{ fontSize: '2rem', color: '#ffc107' }} />
-              <span style={{ 
-                color: metrics.clients.trend === 'up' ? '#28a745' : '#dc3545',
-                fontSize: '0.9rem',
-                fontWeight: '500'
-              }}>
-                {metrics.clients.change}
-              </span>
-            </div>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', fontWeight: '600' }}>
-              {metrics.clients.value}
-            </h3>
-            <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>Nouveaux clients</p>
+          <div className="col-lg-3 col-md-6">
+            <MetricCard
+              title="Nouveaux clients"
+              value={metrics.clients.value}
+              change={metrics.clients.change}
+              icon={<BiUser size={24} />}
+              color="warning"
+              trend={metrics.clients.trend}
+            />
           </div>
-
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <BiStar style={{ fontSize: '2rem', color: '#fd7e14' }} />
-              <span style={{ 
-                color: metrics.evaluation.trend === 'up' ? '#28a745' : '#dc3545',
-                fontSize: '0.9rem',
-                fontWeight: '500'
-              }}>
-                {metrics.evaluation.change}
-              </span>
-            </div>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', fontWeight: '600' }}>
-              {metrics.evaluation.value}
-            </h3>
-            <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>Évaluation moyenne</p>
-          </div>
-          {/* Nouvelle métrique : Trafic */}
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <BiBarChart style={{ fontSize: '2rem', color: '#17a2b8' }} />
-              <span style={{ color: '#17a2b8', fontSize: '0.9rem', fontWeight: '500' }}>+15%</span>
-            </div>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', fontWeight: '600' }}>{analytics.trafic.reduce((a, b) => a + b, 0)}</h3>
-            <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>Visites (7j)</p>
-          </div>
-          {/* Nouvelle métrique : Taux de clics */}
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <BiTrendingUp style={{ fontSize: '2rem', color: '#6610f2' }} />
-              <span style={{ color: '#6610f2', fontSize: '0.9rem', fontWeight: '500' }}>+8%</span>
-            </div>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', fontWeight: '600' }}>{Math.round((analytics.clics.reduce((a, b) => a + b, 0) / analytics.trafic.reduce((a, b) => a + b, 0)) * 100)}%</h3>
-            <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>Taux de clics</p>
-          </div>
-          {/* Nouvelle métrique : Taux de conversion */}
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <BiTrendingDown style={{ fontSize: '2rem', color: '#e83e8c' }} />
-              <span style={{ color: '#e83e8c', fontSize: '0.9rem', fontWeight: '500' }}>+2%</span>
-            </div>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', fontWeight: '600' }}>{Math.round((analytics.conversions.reduce((a, b) => a + b, 0) / analytics.clics.reduce((a, b) => a + b, 0)) * 100)}%</h3>
-            <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>Taux de conversion</p>
-          </div>
-          {/* Nouvelle métrique : Panier moyen */}
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <BiDollar style={{ fontSize: '2rem', color: '#20c997' }} />
-              <span style={{ color: '#20c997', fontSize: '0.9rem', fontWeight: '500' }}>+1.5%</span>
-            </div>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', fontWeight: '600' }}>€{analytics.panierMoyen}</h3>
-            <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>Panier moyen</p>
+          <div className="col-lg-3 col-md-6">
+            <MetricCard
+              title="Évaluation moyenne"
+              value={metrics.evaluation.value}
+              change={metrics.evaluation.change}
+              icon={<BiStar size={24} />}
+              color="info"
+              trend={metrics.evaluation.trend}
+            />
           </div>
         </div>
 
-        {/* Graphiques d'évolution */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <h4 style={{ marginBottom: '1rem' }}>Évolution du trafic</h4>
-            <Line data={{
-              labels: analytics.labels,
-              datasets: [{
-                label: 'Visites',
-                data: analytics.trafic,
-                borderColor: '#17a2b8',
-                backgroundColor: 'rgba(23,162,184,0.1)',
-                tension: 0.4
-              }]
-            }} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+        {/* Métriques temps réel complètes */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <RealtimeMetricsSimple />
           </div>
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <h4 style={{ marginBottom: '1rem' }}>Évolution des ventes</h4>
-            <Line data={{
-              labels: analytics.labels,
-              datasets: [{
-                label: 'Conversions',
-                data: analytics.conversions,
-                borderColor: '#28a745',
-                backgroundColor: 'rgba(40,167,69,0.1)',
-                tension: 0.4
-              }]
-            }} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+        </div>
+
+        {/* Métriques de performance avancées */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <PerformanceMetricsSimple period={selectedPeriod} />
+          </div>
+        </div>
+
+        {/* Prédictions IA */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <AIPredictionsSimple period={selectedPeriod} />
+          </div>
+        </div>
+
+        {/* Workflow des commandes */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <OrderWorkflowSimple />
+          </div>
+        </div>
+
+        {/* Outils de marketing */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <MarketingToolsSimple />
+          </div>
+        </div>
+
+        {/* Intégrations externes */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <ExternalIntegrationsSimple />
+          </div>
+        </div>
+
+        {/* Graphiques avancés */}
+        <div className="row g-4 mb-4">
+          <div className="col-lg-8">
+            <div 
+              className="card border-0 shadow-sm"
+              style={{ 
+                backgroundColor: colors.card,
+                border: `1px solid ${colors.border}`
+              }}
+            >
+              <div className="card-body">
+                <h4 style={{ color: colors.text, marginBottom: '1.5rem' }}>
+                  Évolution des revenus avec prédictions IA
+                </h4>
+                <RevenueChart 
+                  data={{
+                    labels: analytics.labels,
+                    revenue: analytics.trafic.map(v => v * 50) // Simuler des revenus
+                  }}
+                  predictions={analytics.trafic.slice(-3).map(v => v * 60)} // Prédictions IA
+                  period={selectedPeriod}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="col-lg-4">
+            <div 
+              className="card border-0 shadow-sm"
+              style={{ 
+                backgroundColor: colors.card,
+                border: `1px solid ${colors.border}`
+              }}
+            >
+              <div className="card-body">
+                <h4 style={{ color: colors.text, marginBottom: '1.5rem' }}>
+                  Entonnoir de conversion
+                </h4>
+                <ConversionFunnelChart 
+                  data={{
+                    labels: ['Visiteurs', 'Pages vues', 'Ajouts panier', 'Commandes', 'Paiements'],
+                    values: [1000, 750, 300, 150, 120]
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="row g-4 mb-4">
+          <div className="col-lg-6">
+            <div 
+              className="card border-0 shadow-sm"
+              style={{ 
+                backgroundColor: colors.card,
+                border: `1px solid ${colors.border}`
+              }}
+            >
+              <div className="card-body">
+                <h4 style={{ color: colors.text, marginBottom: '1.5rem' }}>
+                  Performance des produits
+                </h4>
+                <ProductPerformanceChart 
+                  data={{
+                    labels: ['Nike Air Max', 'Adidas Superstar', 'Puma RS-X', 'Veste Nike', 'Sac Adidas'],
+                    sales: [120, 98, 75, 60, 55],
+                    views: [450, 380, 320, 280, 250]
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="col-lg-6">
+            <div 
+              className="card border-0 shadow-sm"
+              style={{ 
+                backgroundColor: colors.card,
+                border: `1px solid ${colors.border}`
+              }}
+            >
+              <div className="card-body">
+                <h4 style={{ color: colors.text, marginBottom: '1.5rem' }}>
+                  Métriques de performance
+                </h4>
+                <MetricsRadarChart 
+                  data={{
+                    labels: ['Performance', 'Qualité', 'Service', 'Prix', 'Innovation'],
+                    current: [85, 90, 78, 82, 75],
+                    targets: [90, 95, 85, 88, 80]
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -477,7 +580,7 @@ const DashboardVendeur = () => {
                     {notification.type === 'info' && <BiInfoCircle style={{ fontSize: '1.2rem', color: '#17a2b8' }} />}
                     {notification.type === 'warning' && <BiXCircle style={{ fontSize: '1.2rem', color: '#ffc107' }} />}
                     <div>
-                      <p style={{ margin: 0, fontWeight: '500' }}>{notification.message}</p>
+                      <p style={{ margin: 0, fontWeight: '500' }}>{typeof notification.message === 'string' ? notification.message : JSON.stringify(notification.message)}</p>
                       <small style={{ color: '#666' }}>{notification.time}</small>
                     </div>
                   </div>

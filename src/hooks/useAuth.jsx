@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [roles, setRoles] = useState([]); // e.g., ['superadmin','moderator','finance','support','viewer']
 
   useEffect(() => {
     // Vérifier si l'utilisateur est connecté au chargement
@@ -30,6 +31,7 @@ export const AuthProvider = ({ children }) => {
           if (hoursDiff < 24 && userData.isLoggedIn) {
             setUser(userData);
             setIsAuthenticated(true);
+            setRoles(userData.roles || (userData.isAdmin ? ['superadmin'] : []));
           } else {
             // Session expirée
             logout();
@@ -62,6 +64,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
         setIsAuthenticated(true);
+        setRoles(userData.roles || (userData.isAdmin ? ['superadmin'] : []));
         return { success: true };
       } else {
         return { success: false, error: response.error };
@@ -77,6 +80,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     setUser(null);
     setIsAuthenticated(false);
+    setRoles([]);
   };
 
   const updateUser = (updates) => {
@@ -84,8 +88,13 @@ export const AuthProvider = ({ children }) => {
       const updatedUser = { ...user, ...updates };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
+      if (updates.roles) setRoles(updates.roles);
     }
   };
+
+  // RBAC helpers
+  const hasRole = (role) => roles.includes(role);
+  const hasAnyRole = (required = []) => required.length === 0 || required.some(r => roles.includes(r));
 
   const simulateLoginAPI = async (email, password) => {
     // Simulation d'un délai réseau
@@ -95,7 +104,7 @@ export const AuthProvider = ({ children }) => {
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     const found = users.find(u => u.email === email && u.password === password);
     if (found) {
-      // On retourne toutes les infos stockées avec les propriétés vendeur
+      // On retourne toutes les infos stockées avec les propriétés vendeur et admin
       return { success: true, user: {
         email: found.email,
         prenom: found.prenom,
@@ -104,6 +113,9 @@ export const AuthProvider = ({ children }) => {
         birthDate: found.birthDate,
         gender: found.gender,
         newsletter: found.newsletter,
+        // Propriétés admin
+        isAdmin: found.isAdmin || false,
+        roles: found.roles || [],
         // Propriétés vendeur (par défaut false)
         isVendor: found.isVendor || false,
         isVendorValidated: found.isVendorValidated || false,
@@ -123,7 +135,11 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     login,
     logout,
-    updateUser
+    updateUser,
+    roles,
+    setRoles,
+    hasRole,
+    hasAnyRole
   };
 
   return (

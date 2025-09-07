@@ -77,7 +77,7 @@ const NotificationContainer = () => {
               {notification.type === 'info' && <i className="bi bi-info-circle-fill"></i>}
             </div>
             <div className="notification-message">
-              {notification.message}
+              {typeof notification.message === 'string' ? notification.message : JSON.stringify(notification.message)}
             </div>
             <button
               className="notification-close"

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { exportToCsv } from '../utils/csvExport';
 import { Link } from 'react-router-dom';
+import { useAudit } from '../contexts/AuditContext';
 import { 
   BiPackage, 
   BiSearch, 
@@ -19,7 +21,12 @@ export default function AdminProducts() {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [vendorFilter, setVendorFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const { addAuditEntry } = useAudit();
 
   useEffect(() => {
     loadProducts();
@@ -27,7 +34,7 @@ export default function AdminProducts() {
 
   useEffect(() => {
     filterProducts();
-  }, [products, searchTerm, statusFilter]);
+  }, [products, searchTerm, statusFilter, vendorFilter, dateFrom, dateTo]);
 
   const loadProducts = () => {
     setLoading(true);
@@ -114,23 +121,90 @@ export default function AdminProducts() {
       filtered = filtered.filter(product => product.status === statusFilter);
     }
 
+    // Filtre par vendeur
+    if (vendorFilter) {
+      const q = vendorFilter.toLowerCase();
+      filtered = filtered.filter(p => `${p.vendor} ${p.vendorId}`.toLowerCase().includes(q));
+    }
+
+    // Filtre par date
+    if (dateFrom) {
+      const from = new Date(dateFrom).getTime();
+      filtered = filtered.filter(p => new Date(p.submittedAt).getTime() >= from);
+    }
+    if (dateTo) {
+      const to = new Date(dateTo).getTime();
+      filtered = filtered.filter(p => new Date(p.submittedAt).getTime() <= to);
+    }
+
     setFilteredProducts(filtered);
   };
 
   const approveProduct = (productId) => {
+    const product = products.find(p => p.id === productId);
     setProducts(prev => prev.map(p => 
       p.id === productId ? { ...p, status: 'approved' } : p
     ));
+    // Enregistrer dans l'audit
+    addAuditEntry('product_approved', { type: 'product', id: productId }, { 
+      productName: product?.name || 'Produit inconnu',
+      vendor: product?.vendor || 'Vendeur inconnu'
+    });
   };
 
   const rejectProduct = (productId) => {
+    const product = products.find(p => p.id === productId);
     setProducts(prev => prev.map(p => 
       p.id === productId ? { ...p, status: 'rejected' } : p
     ));
+    // Enregistrer dans l'audit
+    addAuditEntry('product_rejected', { type: 'product', id: productId }, { 
+      productName: product?.name || 'Produit inconnu',
+      vendor: product?.vendor || 'Vendeur inconnu'
+    });
   };
 
   const deleteProduct = (productId) => {
+    const product = products.find(p => p.id === productId);
     setProducts(prev => prev.filter(p => p.id !== productId));
+    // Enregistrer dans l'audit
+    addAuditEntry('product_deleted', { type: 'product', id: productId }, { 
+      productName: product?.name || 'Produit inconnu',
+      vendor: product?.vendor || 'Vendeur inconnu'
+    });
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+  const isAllSelected = filteredProducts.length > 0 && selectedIds.length === filteredProducts.length;
+  const toggleSelectAll = () => {
+    if (isAllSelected) setSelectedIds([]);
+    else setSelectedIds(filteredProducts.map(p => p.id));
+  };
+  const approveSelected = () => {
+    setProducts(prev => prev.map(p => selectedIds.includes(p.id) ? { ...p, status: 'approved' } : p));
+    // Enregistrer dans l'audit
+    selectedIds.forEach(id => {
+      const product = products.find(p => p.id === id);
+      addAuditEntry('product_approved_bulk', { type: 'product', id }, { 
+        productName: product?.name || 'Produit inconnu',
+        vendor: product?.vendor || 'Vendeur inconnu'
+      });
+    });
+    setSelectedIds([]);
+  };
+  const rejectSelected = () => {
+    setProducts(prev => prev.map(p => selectedIds.includes(p.id) ? { ...p, status: 'rejected' } : p));
+    // Enregistrer dans l'audit
+    selectedIds.forEach(id => {
+      const product = products.find(p => p.id === id);
+      addAuditEntry('product_rejected_bulk', { type: 'product', id }, { 
+        productName: product?.name || 'Produit inconnu',
+        vendor: product?.vendor || 'Vendeur inconnu'
+      });
+    });
+    setSelectedIds([]);
   };
 
   const getStatusBadge = (status) => {
@@ -167,10 +241,32 @@ export default function AdminProducts() {
           <p className="text-muted mb-0">Gérer et valider les produits des vendeurs</p>
         </div>
         <div className="d-flex gap-2">
+          <button
+            className="btn btn-outline-secondary"
+            onClick={() => {
+              const rows = filteredProducts.map(p => ({
+                id: p.id,
+                name: p.name,
+                vendor: p.vendor,
+                vendorId: p.vendorId,
+                category: p.category,
+                price: p.price,
+                status: p.status,
+                submittedAt: p.submittedAt,
+                reported: p.reported,
+                reportReason: p.reportReason
+              }));
+              exportToCsv('admin_products.csv', rows);
+            }}
+          >
+            Export CSV
+          </button>
           <button className="btn btn-outline-primary" onClick={loadProducts}>
             <BiPackage className="me-2" />
             Actualiser
           </button>
+          <button className="btn btn-success" disabled={selectedIds.length===0} onClick={approveSelected}>Approuver la sélection</button>
+          <button className="btn btn-danger" disabled={selectedIds.length===0} onClick={rejectSelected}>Rejeter la sélection</button>
         </div>
       </div>
 
@@ -249,10 +345,13 @@ export default function AdminProducts() {
               </select>
             </div>
             <div className="col-md-3">
-              <button className="btn btn-outline-secondary w-100">
-                <BiFilter className="me-2" />
-                Plus de filtres
-              </button>
+              <input className="form-control" placeholder="Filtrer par vendeur ou ID vendeur" value={vendorFilter} onChange={(e)=>setVendorFilter(e.target.value)} />
+            </div>
+            <div className="col-md-3">
+              <div className="d-flex gap-2">
+                <input type="date" className="form-control" value={dateFrom} onChange={(e)=>setDateFrom(e.target.value)} />
+                <input type="date" className="form-control" value={dateTo} onChange={(e)=>setDateTo(e.target.value)} />
+              </div>
             </div>
           </div>
         </div>
@@ -275,6 +374,9 @@ export default function AdminProducts() {
               <table className="table table-hover mb-0">
                 <thead className="table-light">
                   <tr>
+                    <th>
+                      <input type="checkbox" checked={filteredProducts.length>0 && selectedIds.length===filteredProducts.length} onChange={toggleSelectAll} />
+                    </th>
                     <th>Produit</th>
                     <th>Vendeur</th>
                     <th>Catégorie</th>
@@ -287,6 +389,9 @@ export default function AdminProducts() {
                 <tbody>
                   {filteredProducts.map((product) => (
                     <tr key={product.id}>
+                      <td className="align-middle">
+                        <input type="checkbox" checked={selectedIds.includes(product.id)} onChange={()=>toggleSelect(product.id)} />
+                      </td>
                       <td>
                         <div className="d-flex align-items-center">
                           <div className="flex-shrink-0 me-3">

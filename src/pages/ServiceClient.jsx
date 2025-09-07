@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Footer from '../components/Footer';
 import '../amazon-like.css';
+import { saveTicket, getTickets, addConversation } from '../utils/ticketStorage';
+import realtimeChat from '../utils/realtimeChat';
+import AIChatWidget from '../components/AIChatWidget';
 
 const sujetsPopulaires = [
   { icon: 'bi bi-box-seam', titre: 'Suivre ma commande', desc: 'Consultez le statut de vos commandes et livraisons.', lien: '/commandes' },
@@ -70,7 +73,7 @@ const contactMethods = [
     icon: 'bi bi-telephone-fill',
     title: 'Téléphone',
     desc: 'Service client disponible 7j/7',
-    contact: '+224 123 456 789',
+    contact: '611819930',
     availability: 'Lun-Ven: 8h-20h | Sam-Dim: 9h-18h',
     color: 'primary',
     action: 'Appeler maintenant'
@@ -79,7 +82,7 @@ const contactMethods = [
     icon: 'bi bi-envelope-fill',
     title: 'Email',
     desc: 'Réponse sous 24h',
-    contact: 'service-client@papasow.com',
+    contact: 'sowdian57@gmail.com',
     availability: 'Réponse garantie sous 24h',
     color: 'success',
     action: 'Envoyer un email'
@@ -97,7 +100,7 @@ const contactMethods = [
     icon: 'bi bi-whatsapp',
     title: 'WhatsApp',
     desc: 'Support via WhatsApp',
-    contact: '+224 123 456 789',
+    contact: '666706273',
     availability: 'Lun-Ven: 9h-18h',
     color: 'success',
     action: 'WhatsApp'
@@ -110,6 +113,33 @@ export default function ServiceClient() {
   const [activeTab, setActiveTab] = useState('centre-aide');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  
+  // États pour le formulaire de contact
+  const [formData, setFormData] = useState({
+    prenom: '',
+    nom: '',
+    email: '',
+    telephone: '',
+    sujet: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  
+  // États pour les conversations
+  const [userTickets, setUserTickets] = useState([]);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [showTicketDetails, setShowTicketDetails] = useState(false);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [isReplying, setIsReplying] = useState(false);
+  
+  // États pour le chat temps réel
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
+  const [typingUsers, setTypingUsers] = useState({});
+  const [newMessageNotification, setNewMessageNotification] = useState(null);
+  
+  // État pour le chat IA
+  const [showAIChat, setShowAIChat] = useState(false);
 
   // Détecter l'ancre dans l'URL au chargement
   useEffect(() => {
@@ -149,6 +179,198 @@ export default function ServiceClient() {
     setActiveTab(tabId);
     window.location.hash = tabId;
     setShowSearchResults(false);
+  };
+
+  // Gestion du formulaire de contact
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Créer le ticket
+      const ticket = {
+        subject: formData.sujet,
+        user: `${formData.prenom} ${formData.nom}`,
+        email: formData.email,
+        priority: getPriorityFromSubject(formData.sujet),
+        status: 'open',
+        description: formData.message,
+        category: formData.sujet,
+        telephone: formData.telephone
+      };
+
+      // Sauvegarder le ticket
+      const savedTicket = saveTicket(ticket);
+      
+      // Réinitialiser le formulaire
+      setFormData({
+        prenom: '',
+        nom: '',
+        email: '',
+        telephone: '',
+        sujet: '',
+        message: ''
+      });
+      
+      setSubmitSuccess(true);
+      
+      // Recharger les conversations si on est sur l'onglet
+      if (activeTab === 'mes-conversations') {
+        loadUserTickets();
+      }
+      
+      // Masquer le message de succès après 5 secondes
+      setTimeout(() => {
+        setSubmitSuccess(false);
+      }, 5000);
+      
+    } catch (error) {
+      console.error('Erreur lors de la création du ticket:', error);
+      alert('Une erreur est survenue. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Déterminer la priorité basée sur le sujet
+  const getPriorityFromSubject = (sujet) => {
+    const highPrioritySubjects = ['livraison', 'paiement'];
+    const mediumPrioritySubjects = ['retour', 'commande'];
+    
+    if (highPrioritySubjects.includes(sujet)) return 'high';
+    if (mediumPrioritySubjects.includes(sujet)) return 'medium';
+    return 'low';
+  };
+
+  // Charger les tickets de l'utilisateur
+  const loadUserTickets = () => {
+    const allTickets = getTickets();
+    // Pour la démo, on affiche TOUS les tickets récents
+    // En réalité, on filtrerait par l'email de l'utilisateur connecté
+    const recentTickets = allTickets.filter(ticket => {
+      // Afficher les tickets des 7 derniers jours
+      const ticketDate = new Date(ticket.createdAt);
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      return ticketDate > weekAgo;
+    });
+    setUserTickets(recentTickets);
+  };
+
+  // Ouvrir les détails d'un ticket
+  const handleViewTicket = (ticket) => {
+    setSelectedTicket(ticket);
+    setShowTicketDetails(true);
+  };
+
+  // Envoyer une réponse
+  const handleSendReply = async () => {
+    if (!replyMessage.trim()) {
+      alert('Veuillez saisir un message');
+      return;
+    }
+
+    setIsReplying(true);
+    try {
+      const newConversation = {
+        type: 'customer',
+        message: replyMessage,
+        author: selectedTicket.user
+      };
+
+      // Ajouter la conversation au ticket
+      const updatedTicket = addConversation(selectedTicket.id, newConversation);
+      
+      if (updatedTicket) {
+        setSelectedTicket(updatedTicket);
+        setUserTickets(userTickets.map(ticket => 
+          ticket.id === selectedTicket.id ? updatedTicket : ticket
+        ));
+        
+        // Envoyer via le chat temps réel
+        realtimeChat.sendMessage(selectedTicket.id, newConversation);
+        
+        setReplyMessage('');
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi de la réponse:', error);
+      alert('Une erreur est survenue. Veuillez réessayer.');
+    } finally {
+      setIsReplying(false);
+    }
+  };
+
+  // Charger les tickets quand on change d'onglet
+  useEffect(() => {
+    if (activeTab === 'mes-conversations') {
+      loadUserTickets();
+    }
+  }, [activeTab]);
+
+  // Gestion du chat temps réel
+  useEffect(() => {
+    // Se connecter au chat temps réel
+    realtimeChat.connect().then(() => {
+      setIsRealtimeConnected(true);
+      console.log('✅ Chat temps réel connecté');
+    });
+
+    // Écouter les nouveaux messages
+    const handleNewMessage = (data) => {
+      console.log('📨 Nouveau message reçu:', data);
+      
+      // Mettre à jour les tickets
+      loadUserTickets();
+      
+      // Afficher une notification
+      setNewMessageNotification({
+        ticketId: data.ticketId,
+        message: data.message,
+        ticket: data.ticket
+      });
+      
+      // Masquer la notification après 5 secondes
+      setTimeout(() => {
+        setNewMessageNotification(null);
+      }, 5000);
+    };
+
+    // Écouter les indicateurs de frappe
+    const handleTyping = (data) => {
+      setTypingUsers(prev => ({
+        ...prev,
+        [data.ticketId]: data.isTyping ? data.userId : null
+      }));
+    };
+
+    // S'abonner aux événements
+    realtimeChat.subscribe('newMessage', handleNewMessage);
+    realtimeChat.subscribe('userTyping', handleTyping);
+
+    // Nettoyage à la déconnexion
+    return () => {
+      realtimeChat.unsubscribe('newMessage', handleNewMessage);
+      realtimeChat.unsubscribe('userTyping', handleTyping);
+      realtimeChat.disconnect();
+      setIsRealtimeConnected(false);
+    };
+  }, []);
+
+  // Gestion de la frappe
+  const handleTyping = (ticketId) => {
+    realtimeChat.startTyping(ticketId, 'client');
+    
+    // Arrêter la frappe après 3 secondes d'inactivité
+    setTimeout(() => {
+      realtimeChat.stopTyping(ticketId, 'client');
+    }, 3000);
   };
 
   return (
@@ -214,6 +436,16 @@ export default function ServiceClient() {
                 >
                   <i className="bi bi-book me-2"></i>
                   Base de connaissances
+                </button>
+              </li>
+              <li className="nav-item" role="presentation">
+                <button
+                  className={`nav-link ${activeTab === 'mes-conversations' ? 'active' : ''}`}
+                  onClick={() => handleTabClick('mes-conversations')}
+                  style={{fontWeight: 600, fontSize: '1.1rem'}}
+                >
+                  <i className="bi bi-chat-dots me-2"></i>
+                  Mes conversations
                 </button>
               </li>
               <li className="nav-item" role="presentation">
@@ -334,6 +566,110 @@ export default function ServiceClient() {
                 </div>
               </div>
 
+              {/* Section Mes conversations */}
+              <div className={`tab-pane fade ${activeTab === 'mes-conversations' ? 'show active' : ''}`}>
+                <div className="row">
+                  <div className="col-12">
+                    <div className="text-center mb-4">
+                      <h3 className="text-primary fw-bold">
+                        <i className="bi bi-chat-dots me-2"></i>
+                        Mes conversations
+                        {isRealtimeConnected && (
+                          <span className="badge bg-success ms-2" title="Chat temps réel actif">
+                            <i className="bi bi-wifi me-1"></i>
+                            Temps réel
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-muted">Consultez l'historique de vos échanges avec notre équipe support</p>
+                    </div>
+
+                    {/* Notification de nouveau message */}
+                    {newMessageNotification && (
+                      <div className="alert alert-info alert-dismissible fade show" role="alert">
+                        <i className="bi bi-bell me-2"></i>
+                        <strong>Nouveau message !</strong> Vous avez reçu une réponse sur le ticket {newMessageNotification.ticketId}
+                        <button 
+                          type="button" 
+                          className="btn-close" 
+                          onClick={() => setNewMessageNotification(null)}
+                        ></button>
+                      </div>
+                    )}
+
+                    {userTickets.length === 0 ? (
+                      <div className="text-center py-5">
+                        <i className="bi bi-chat-dots text-muted" style={{fontSize: '4rem'}}></i>
+                        <h4 className="text-muted mt-3">Aucune conversation</h4>
+                        <p className="text-muted">Vous n'avez pas encore de conversation avec notre équipe support.</p>
+                        <button 
+                          className="btn btn-primary"
+                          onClick={() => handleTabClick('contact')}
+                        >
+                          <i className="bi bi-plus me-2"></i>
+                          Créer une nouvelle demande
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="row g-3">
+                        {userTickets.map(ticket => (
+                          <div key={ticket.id} className="col-12">
+                            <div className="card border-0 shadow-sm">
+                              <div className="card-body">
+                                <div className="row align-items-center">
+                                  <div className="col-md-8">
+                                    <div className="d-flex align-items-center mb-2">
+                                      <h5 className="mb-0 me-3">{ticket.subject}</h5>
+                                      <span className={`badge ${
+                                        ticket.priority === 'high' ? 'bg-danger' :
+                                        ticket.priority === 'medium' ? 'bg-warning' : 'bg-info'
+                                      }`}>
+                                        {ticket.priority === 'high' ? 'Haute' :
+                                         ticket.priority === 'medium' ? 'Moyenne' : 'Basse'}
+                                      </span>
+                                    </div>
+                                    <p className="text-muted mb-2">{ticket.description}</p>
+                                    <small className="text-muted">
+                                      <i className="bi bi-calendar me-1"></i>
+                                      Créé le {new Date(ticket.createdAt).toLocaleDateString('fr-FR')}
+                                    </small>
+                                  </div>
+                                  <div className="col-md-4 text-end">
+                                    <div className="mb-2">
+                                      <span className={`badge ${
+                                        ticket.status === 'open' ? 'bg-success' :
+                                        ticket.status === 'pending' ? 'bg-warning' :
+                                        ticket.status === 'closed' ? 'bg-secondary' : 'bg-info'
+                                      }`}>
+                                        {ticket.status === 'open' ? 'Ouvert' :
+                                         ticket.status === 'pending' ? 'En cours' :
+                                         ticket.status === 'closed' ? 'Fermé' : ticket.status}
+                                      </span>
+                                    </div>
+                                    <div className="mb-2">
+                                      <small className="text-muted">
+                                        {ticket.conversations?.length || 0} message(s)
+                                      </small>
+                                    </div>
+                                    <button 
+                                      className="btn btn-outline-primary btn-sm"
+                                      onClick={() => handleViewTicket(ticket)}
+                                    >
+                                      <i className="bi bi-eye me-1"></i>
+                                      Voir la conversation
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Section Contact service client */}
               <div className={`tab-pane fade ${activeTab === 'contact' ? 'show active' : ''}`}>
                 <div className="row g-4 mb-5">
@@ -348,7 +684,22 @@ export default function ServiceClient() {
                           <p className="text-muted small mb-2">{method.desc}</p>
                           <div className="fw-bold text-primary mb-2">{method.contact}</div>
                           <div className="text-muted small mb-3">{method.availability}</div>
-                          <button className="btn btn-outline-primary btn-sm">{method.action}</button>
+                          <button 
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={() => {
+                              if (method.title === 'Chat en ligne') {
+                                setShowAIChat(true);
+                              } else if (method.title === 'Téléphone') {
+                                window.open(`tel:${method.contact}`, '_self');
+                              } else if (method.title === 'Email') {
+                                window.open(`mailto:${method.contact}?subject=Demande de support Papasow`, '_blank');
+                              } else if (method.title === 'WhatsApp') {
+                                window.open(`https://wa.me/${method.contact}?text=Bonjour, j'ai besoin d'aide avec mon compte Papasow`, '_blank');
+                              }
+                            }}
+                          >
+                            {method.action}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -366,27 +717,69 @@ export default function ServiceClient() {
                         </h4>
                       </div>
                       <div className="card-body p-4">
-                        <form>
+                        {submitSuccess && (
+                          <div className="alert alert-success alert-dismissible fade show" role="alert">
+                            <i className="bi bi-check-circle me-2"></i>
+                            <strong>Message envoyé avec succès !</strong> Votre demande a été transmise à notre équipe. 
+                            Vous recevrez une réponse dans les plus brefs délais.
+                            <button type="button" className="btn-close" onClick={() => setSubmitSuccess(false)}></button>
+                          </div>
+                        )}
+                        
+                        <form onSubmit={handleSubmit}>
                           <div className="row g-3">
                             <div className="col-md-6">
                               <label className="form-label fw-bold">Prénom *</label>
-                              <input type="text" className="form-control" required />
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                name="prenom"
+                                value={formData.prenom}
+                                onChange={handleInputChange}
+                                required 
+                              />
                             </div>
                             <div className="col-md-6">
                               <label className="form-label fw-bold">Nom *</label>
-                              <input type="text" className="form-control" required />
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                name="nom"
+                                value={formData.nom}
+                                onChange={handleInputChange}
+                                required 
+                              />
                             </div>
                             <div className="col-md-6">
                               <label className="form-label fw-bold">Email *</label>
-                              <input type="email" className="form-control" required />
+                              <input 
+                                type="email" 
+                                className="form-control" 
+                                name="email"
+                                value={formData.email}
+                                onChange={handleInputChange}
+                                required 
+                              />
                             </div>
                             <div className="col-md-6">
                               <label className="form-label fw-bold">Téléphone</label>
-                              <input type="tel" className="form-control" />
+                              <input 
+                                type="tel" 
+                                className="form-control" 
+                                name="telephone"
+                                value={formData.telephone}
+                                onChange={handleInputChange}
+                              />
                             </div>
                             <div className="col-12">
                               <label className="form-label fw-bold">Sujet *</label>
-                              <select className="form-select" required>
+                              <select 
+                                className="form-select" 
+                                name="sujet"
+                                value={formData.sujet}
+                                onChange={handleInputChange}
+                                required
+                              >
                                 <option value="">Choisir un sujet</option>
                                 <option value="commande">Question sur ma commande</option>
                                 <option value="retour">Retour/Remboursement</option>
@@ -398,12 +791,33 @@ export default function ServiceClient() {
                             </div>
                             <div className="col-12">
                               <label className="form-label fw-bold">Message *</label>
-                              <textarea className="form-control" rows="5" required placeholder="Décrivez votre problème en détail..."></textarea>
+                              <textarea 
+                                className="form-control" 
+                                rows="5" 
+                                name="message"
+                                value={formData.message}
+                                onChange={handleInputChange}
+                                required 
+                                placeholder="Décrivez votre problème en détail..."
+                              ></textarea>
                             </div>
                             <div className="col-12">
-                              <button type="submit" className="btn btn-primary btn-lg w-100">
-                                <i className="bi bi-send me-2"></i>
-                                Envoyer le message
+                              <button 
+                                type="submit" 
+                                className="btn btn-primary btn-lg w-100"
+                                disabled={isSubmitting}
+                              >
+                                {isSubmitting ? (
+                                  <>
+                                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    Envoi en cours...
+                                  </>
+                                ) : (
+                                  <>
+                                    <i className="bi bi-send me-2"></i>
+                                    Envoyer le message
+                                  </>
+                                )}
                               </button>
                             </div>
                           </div>
@@ -447,7 +861,149 @@ export default function ServiceClient() {
           </div>
         </div>
       </div>
+
+      {/* Modal de détails de conversation */}
+      {showTicketDetails && selectedTicket && (
+        <div className="modal fade show" style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="bi bi-chat-dots me-2"></i>
+                  {selectedTicket.subject}
+                </h5>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={() => setShowTicketDetails(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {/* Informations du ticket */}
+                <div className="row mb-4">
+                  <div className="col-md-6">
+                    <strong>Ticket :</strong> {selectedTicket.id}<br/>
+                    <strong>Statut :</strong> 
+                    <span className={`badge ms-2 ${
+                      selectedTicket.status === 'open' ? 'bg-success' :
+                      selectedTicket.status === 'pending' ? 'bg-warning' :
+                      selectedTicket.status === 'closed' ? 'bg-secondary' : 'bg-info'
+                    }`}>
+                      {selectedTicket.status === 'open' ? 'Ouvert' :
+                       selectedTicket.status === 'pending' ? 'En cours' :
+                       selectedTicket.status === 'closed' ? 'Fermé' : selectedTicket.status}
+                    </span>
+                  </div>
+                  <div className="col-md-6">
+                    <strong>Priorité :</strong>
+                    <span className={`badge ms-2 ${
+                      selectedTicket.priority === 'high' ? 'bg-danger' :
+                      selectedTicket.priority === 'medium' ? 'bg-warning' : 'bg-info'
+                    }`}>
+                      {selectedTicket.priority === 'high' ? 'Haute' :
+                       selectedTicket.priority === 'medium' ? 'Moyenne' : 'Basse'}
+                    </span><br/>
+                    <strong>Créé le :</strong> {new Date(selectedTicket.createdAt).toLocaleDateString('fr-FR')}
+                  </div>
+                </div>
+
+                {/* Conversation */}
+                <div className="border rounded p-3 mb-3" style={{maxHeight: '400px', overflowY: 'auto'}}>
+                  <h6 className="mb-3">
+                    <i className="bi bi-chat-text me-2"></i>
+                    Conversation
+                  </h6>
+                  {selectedTicket.conversations && selectedTicket.conversations.length > 0 ? (
+                    selectedTicket.conversations.map((msg, index) => (
+                      <div key={index} className={`mb-3 p-3 rounded ${
+                        msg.type === 'customer' ? 'bg-light border-start border-primary border-3' :
+                        msg.type === 'agent' ? 'bg-primary text-white' :
+                        'bg-warning text-dark'
+                      }`}>
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <strong>
+                            {msg.type === 'customer' ? 'Vous' :
+                             msg.type === 'agent' ? 'Agent Support' :
+                             'Note interne'}
+                          </strong>
+                          <small className="opacity-75">
+                            {new Date(msg.timestamp).toLocaleString('fr-FR')}
+                          </small>
+                        </div>
+                        <p className="mb-0">{msg.message}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted text-center py-3">Aucune conversation disponible</p>
+                  )}
+                </div>
+
+                {/* Formulaire de réponse */}
+                {selectedTicket.status !== 'closed' && (
+                  <div className="border rounded p-3">
+                    <h6 className="mb-3">
+                      <i className="bi bi-reply me-2"></i>
+                      Répondre
+                    </h6>
+                    <div className="mb-3">
+                      <textarea
+                        className="form-control"
+                        rows="4"
+                        placeholder="Tapez votre message..."
+                        value={replyMessage}
+                        onChange={(e) => {
+                          setReplyMessage(e.target.value);
+                          handleTyping(selectedTicket.id);
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Indicateur de frappe */}
+                    {typingUsers[selectedTicket.id] && (
+                      <div className="mb-2">
+                        <small className="text-muted">
+                          <i className="bi bi-pencil me-1"></i>
+                          {typingUsers[selectedTicket.id] === 'agent' ? 'Agent Support' : 'Vous'} est en train d'écrire...
+                        </small>
+                      </div>
+                    )}
+                    <div className="d-flex justify-content-end gap-2">
+                      <button 
+                        className="btn btn-outline-secondary"
+                        onClick={() => setShowTicketDetails(false)}
+                      >
+                        Fermer
+                      </button>
+                      <button 
+                        className="btn btn-primary"
+                        onClick={handleSendReply}
+                        disabled={isReplying || !replyMessage.trim()}
+                      >
+                        {isReplying ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2"></span>
+                            Envoi...
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-send me-2"></i>
+                            Envoyer
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
+      
+      {/* Widget de chat IA */}
+      {showAIChat && <AIChatWidget onClose={() => setShowAIChat(false)} />}
     </>
   );
 } 

@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import './utils/fixAdminAccount.js';
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./hooks/useAuth.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -49,6 +50,7 @@ import ListeBoutiques from './pages/ListeBoutiques';
 import { CommandesProvider } from "./contexts/CommandesContext";
 import { ProductsProvider } from "./contexts/ProductsContext";
 import ConnexionVendeur from './pages/ConnexionVendeur';
+import ConnexionAdmin from './pages/ConnexionAdmin';
 import RetoursVendeur from './pages/RetoursVendeur';
 import HistoriqueEchanges from './pages/HistoriqueEchanges';
 import MesEchanges from './pages/MesEchanges';
@@ -59,6 +61,8 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { DailyDealsProvider } from './contexts/DailyDealsContext';
 import { CartProvider } from './contexts/CartContext';
 import { VendorProvider } from './contexts/VendorContext';
+import { AuditProvider } from './contexts/AuditContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import { MessagingProvider } from './contexts/MessagingContext';
 import { ReviewsProvider } from './contexts/ReviewsContext';
 import { PromotionsProvider } from './contexts/PromotionsContext';
@@ -73,28 +77,37 @@ import AdminAnalytics from './pages/AdminAnalytics';
 import AdminPayments from './pages/AdminPayments';
 import AdminSupport from './pages/AdminSupport';
 import AdminSettings from './pages/AdminSettings';
+import AdminAudit from './pages/AdminAudit';
+import AdminUsers from './pages/AdminUsers';
 import MessagerieVendeur from './pages/MessagerieVendeur';
 import GestionAvisVendeur from './pages/GestionAvisVendeur';
 import OutilsPromotionVendeur from './pages/OutilsPromotionVendeur';
 import GestionRetoursVendeur from './pages/GestionRetoursVendeur';
 import GestionPaiementsVendeur from './pages/GestionPaiementsVendeur';
+import GlobalSearchOverlay from './components/GlobalSearchOverlay';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { RealtimeProvider } from './contexts/RealtimeContext';
 
 
 export default function App() {
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <NotificationProvider>
-          <DailyDealsProvider>
-            <CartProvider>
-              <CommandesProvider>
-                <ProductsProvider>
-                  <VendorProvider>
-                    <MessagingProvider>
-                      <ReviewsProvider>
-                        <PromotionsProvider>
-                          <ReturnsProvider>
-                            <PaymentsProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <RealtimeProvider>
+              <DailyDealsProvider>
+                <CartProvider>
+                  <CommandesProvider>
+                    <ProductsProvider>
+                      <VendorProvider>
+                        <AuditProvider>
+                          <CurrencyProvider>
+                        <MessagingProvider>
+                          <ReviewsProvider>
+                            <PromotionsProvider>
+                              <ReturnsProvider>
+                                <PaymentsProvider>
               <Router>
                 <Header />
                 <Routes>
@@ -122,6 +135,7 @@ export default function App() {
                   <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
                   <Route path="/boutiques" element={<ListeBoutiques />} />
                   <Route path="/connexion-vendeur" element={<ConnexionVendeur />} />
+                <Route path="/connexion-admin" element={<ConnexionAdmin />} />
                   <Route path="/vendeur/retours" element={
                     <VendorProtectedRoute>
                       <RetoursVendeur />
@@ -332,20 +346,35 @@ export default function App() {
                     <AdminSettings />
                   </AdminProtectedRoute>
                 } />
+                <Route path="/admin/audit" element={
+                  <AdminProtectedRoute roles={["superadmin","moderator","finance","viewer"]}>
+                    <AdminAudit />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/users" element={
+                  <AdminProtectedRoute roles={["superadmin"]}>
+                    <AdminUsers />
+                  </AdminProtectedRoute>
+                } />
                 </Routes>
+                <GlobalSearchOverlay />
               </Router>
-                            </PaymentsProvider>
-                          </ReturnsProvider>
-                        </PromotionsProvider>
-                      </ReviewsProvider>
-                    </MessagingProvider>
+                                </PaymentsProvider>
+                              </ReturnsProvider>
+                            </PromotionsProvider>
+                          </ReviewsProvider>
+                        </MessagingProvider>
+                      </CurrencyProvider>
+                    </AuditProvider>
                   </VendorProvider>
-            </ProductsProvider>
-          </CommandesProvider>
-        </CartProvider>
-      </DailyDealsProvider>
-    </NotificationProvider>
-      </AuthProvider>
-    </LanguageProvider>
+                </ProductsProvider>
+              </CommandesProvider>
+            </CartProvider>
+          </DailyDealsProvider>
+        </RealtimeProvider>
+      </NotificationProvider>
+    </AuthProvider>
+  </LanguageProvider>
+</ThemeProvider>
   );
 }

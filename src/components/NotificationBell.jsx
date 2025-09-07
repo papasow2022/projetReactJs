@@ -85,7 +85,7 @@ const NotificationBell = () => {
                       <div className="d-flex align-items-center mb-1">
                         <span className="me-2">{getTypeIcon(notification.type)}</span>
                         <span className={`fw-bold ${getTypeClass(notification.type)}`}>
-                          {notification.message}
+                          {typeof notification.message === 'string' ? notification.message : JSON.stringify(notification.message)}
                         </span>
                       </div>
                       <small className="text-muted">
@@ -93,7 +93,7 @@ const NotificationBell = () => {
                       </small>
                       {notification.data.details && (
                         <div className="mt-1 small text-muted">
-                          {notification.data.details}
+                          {typeof notification.data.details === 'string' ? notification.data.details : JSON.stringify(notification.data.details)}
                         </div>
                       )}
                     </div>

@@ -3,10 +3,13 @@ import React, { useState, useRef, useEffect } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../hooks/useAuth.jsx";
 import { useCart } from "../contexts/CartContext";
+import { useThemeColors } from "../contexts/ThemeContext";
 import { Link } from "react-router-dom";
 import LivraisonLocation from './LivraisonLocation.jsx';
 import NotificationBell from './NotificationBell';
 import AmazonCartSidebar from './AmazonCartSidebar';
+import ThemeToggle from './ThemeToggle';
+import SmartAlerts from './SmartAlerts';
 // import 'bootstrap/dist/css/bootstrap.min.css';
 
 const LANGUAGES = [
@@ -95,6 +98,7 @@ export default function Header() {
   const { currentLanguage, changeLanguage, t } = useLanguage();
   const { user, logout } = useAuth();
   const { getCartItemCount, setShowCartSidebar } = useCart();
+  const colors = useThemeColors();
   const [langDropdown, setLangDropdown] = useState(false);
   const selectedLang = LANGUAGES.find(lang => lang.code === currentLanguage) || LANGUAGES[0];
   const langBtnRef = useRef(null);
@@ -248,25 +252,6 @@ export default function Header() {
         </form>
         {/* À droite : langue, compte, retours & commandes, panier */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Bouton Devenir vendeur - Prominent */}
-          <Link to="/vendeur" style={{
-            background: '#ffd814',
-            color: '#232f3e',
-            textDecoration: 'none',
-            padding: '8px 16px',
-            borderRadius: '6px',
-            fontWeight: '600',
-            fontSize: '14px',
-            border: '1px solid #e47911',
-            transition: 'all 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            marginRight: '8px'
-          }}>
-            <i className="bi bi-shop" style={{ fontSize: '14px' }}></i>
-            Devenir vendeur
-          </Link>
           {/* Sélecteur de langue */}
           <div style={{ display: 'flex', alignItems: 'center', marginRight: 8, position: 'relative' }} ref={langBtnRef}>
             <button
@@ -378,7 +363,17 @@ export default function Header() {
             <span style={{ fontSize: 11, color: '#ddd', lineHeight: 1 }}>{t('returnsShort')}</span>
             <span style={{ fontWeight: 600, fontSize: 15, color: '#fff', lineHeight: 1.1 }}>{t('andOrders')}</span>
           </Link>
-          {/* Notifications */}
+          {/* Sélecteur de thème */}
+          <div style={{ marginRight: 16 }}>
+            <ThemeToggle variant="dropdown" size="sm" />
+          </div>
+          
+          {/* Alertes intelligentes */}
+          <div style={{ marginRight: 16 }}>
+            <SmartAlerts />
+          </div>
+          
+          {/* Notifications classiques */}
           <div style={{ marginRight: 16 }}>
             <NotificationBell />
           </div>

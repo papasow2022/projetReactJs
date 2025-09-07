@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { exportToCsv } from '../utils/csvExport';
 import { 
   BiCreditCard,
   BiWallet,
@@ -14,6 +15,9 @@ export default function AdminPayments() {
   const [payouts, setPayouts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [vendorFilter, setVendorFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -30,11 +34,12 @@ export default function AdminPayments() {
     setTimeout(() => { setPayouts(mock); setLoading(false); }, 600);
   };
 
-  const filtered = payouts.filter(p => {
-    const matchesSearch = `${p.id} ${p.vendor} ${p.vendorId}`.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filtered = payouts
+    .filter(p => `${p.id} ${p.vendor} ${p.vendorId}`.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(p => statusFilter === 'all' || p.status === statusFilter)
+    .filter(p => vendorFilter ? `${p.vendor} ${p.vendorId}`.toLowerCase().includes(vendorFilter.toLowerCase()) : true)
+    .filter(p => dateFrom ? new Date(p.date).getTime() >= new Date(dateFrom).getTime() : true)
+    .filter(p => dateTo ? new Date(p.date).getTime() <= new Date(dateTo).getTime() : true);
 
   const badge = (status) => {
     if (status === 'completed') return <span className="badge bg-success">Terminé</span>;
@@ -53,6 +58,23 @@ export default function AdminPayments() {
           <p className="text-muted mb-0">Commissions et reversements aux vendeurs</p>
         </div>
         <div className="d-flex gap-2">
+          <button
+            className="btn btn-outline-secondary"
+            onClick={() => {
+              const rows = filtered.map(p => ({
+                id: p.id,
+                vendor: p.vendor,
+                vendorId: p.vendorId,
+                amount: p.amount,
+                status: p.status,
+                method: p.method,
+                date: p.date
+              }));
+              exportToCsv('admin_payments.csv', rows);
+            }}
+          >
+            Export CSV
+          </button>
           <button className="btn btn-outline-primary" onClick={loadPayouts}>
             <BiRefresh className="me-2" />Actualiser
           </button>
@@ -113,7 +135,13 @@ export default function AdminPayments() {
               </select>
             </div>
             <div className="col-md-3">
-              <button className="btn btn-outline-secondary w-100"><BiFilter className="me-2"/>Plus de filtres</button>
+              <input className="form-control" placeholder="Filtrer par vendeur ou ID vendeur" value={vendorFilter} onChange={(e)=>setVendorFilter(e.target.value)} />
+            </div>
+            <div className="col-md-3">
+              <div className="d-flex gap-2">
+                <input type="date" className="form-control" value={dateFrom} onChange={(e)=>setDateFrom(e.target.value)} />
+                <input type="date" className="form-control" value={dateTo} onChange={(e)=>setDateTo(e.target.value)} />
+              </div>
             </div>
           </div>
         </div>

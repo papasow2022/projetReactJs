@@ -19,6 +19,7 @@ export const VendorProvider = ({ children }) => {
   const [vendorStats, setVendorStats] = useState({});
   const [vendorOrders, setVendorOrders] = useState([]);
   const [vendorNotifications, setVendorNotifications] = useState([]);
+  const [vendorHistory, setVendorHistory] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,6 +43,10 @@ export const VendorProvider = ({ children }) => {
       // Charger les notifications des vendeurs
       const storedNotifications = JSON.parse(localStorage.getItem('vendorNotifications') || '{}');
       setVendorNotifications(storedNotifications);
+
+      // Charger l'historique des vendeurs
+      const storedHistory = JSON.parse(localStorage.getItem('vendorHistory') || '{}');
+      setVendorHistory(storedHistory);
 
       setLoading(false);
     } catch (error) {
@@ -129,6 +134,137 @@ export const VendorProvider = ({ children }) => {
       console.error('Erreur lors de la mise à jour du vendeur:', error);
       return { success: false, error: error.message };
     }
+  };
+
+  // Historique des actions sur vendeurs
+  const addVendorHistory = (vendorId, action, details = {}) => {
+    try {
+      const historyForVendor = vendorHistory[vendorId] || [];
+      const entry = {
+        id: 'VH-' + Date.now(),
+        vendorId,
+        action, // e.g., 'approved', 'rejected', 'suspended', 'unsuspended', 'rated'
+        details,
+        createdAt: new Date().toISOString()
+      };
+      const updatedHistory = { ...vendorHistory, [vendorId]: [entry, ...historyForVendor] };
+      setVendorHistory(updatedHistory);
+      localStorage.setItem('vendorHistory', JSON.stringify(updatedHistory));
+      return entry;
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout à l\'historique vendeur:', error);
+      return null;
+    }
+  };
+
+  const getVendorHistory = (vendorId) => {
+    return vendorHistory[vendorId] || [];
+  };
+
+  // Notation vendeur (agrégée)
+  const rateVendor = (vendorId, ratingValue) => {
+    try {
+      const vendor = vendors[vendorId];
+      if (!vendor) return { success: false, error: 'Vendor not found' };
+      const currentRating = Number(vendor.rating || 0);
+      const ratingCount = Number(vendor.ratingCount || 0);
+      const newCount = ratingCount + 1;
+      const newRating = ((currentRating * ratingCount) + Number(ratingValue)) / newCount;
+      const result = updateVendor(vendorId, { rating: Number(newRating.toFixed(2)), ratingCount: newCount });
+      if (result.success) addVendorHistory(vendorId, 'rated', { ratingValue });
+      return result;
+    } catch (error) {
+      console.error('Erreur lors de la notation du vendeur:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Suspension / Réactivation
+  const suspendVendor = (vendorId, reason, untilIsoString = null) => {
+    try {
+      const result = updateVendor(vendorId, { status: 'suspended', suspension: { isSuspended: true, reason, until: untilIsoString } });
+      if (result.success) {
+        addVendorHistory(vendorId, 'suspended', { reason, until: untilIsoString });
+        // Enregistrer dans l'audit
+        const vendor = vendors[vendorId];
+        if (vendor) {
+          // Récupérer l'utilisateur connecté pour l'audit
+          const storedUser = localStorage.getItem('user');
+          const currentUser = storedUser ? JSON.parse(storedUser) : null;
+          const actor = currentUser?.email || 'admin@unknown.com';
+          
+          const auditEntry = {
+            id: 'AUD-' + Date.now(),
+            action: 'vendor_suspended',
+            subject: { type: 'vendor', id: vendorId },
+            details: `Vendeur "${vendor.businessName || vendor.informations?.email}" suspendu - ${reason}`,
+            actor: actor,
+            createdAt: new Date().toISOString()
+          };
+          
+          // Ajouter à l'audit
+          const existingAudit = JSON.parse(localStorage.getItem('adminAuditLog') || '[]');
+          const updatedAudit = [auditEntry, ...existingAudit].slice(0, 500);
+          localStorage.setItem('adminAuditLog', JSON.stringify(updatedAudit));
+        }
+      }
+      return result;
+    } catch (error) {
+      console.error('Erreur lors de la suspension du vendeur:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const unsuspendVendor = (vendorId) => {
+    try {
+      const result = updateVendor(vendorId, { status: 'approved', suspension: { isSuspended: false, reason: null, until: null } });
+      if (result.success) {
+        addVendorHistory(vendorId, 'unsuspended', {});
+        // Enregistrer dans l'audit
+        const vendor = vendors[vendorId];
+        if (vendor) {
+          // Récupérer l'utilisateur connecté pour l'audit
+          const storedUser = localStorage.getItem('user');
+          const currentUser = storedUser ? JSON.parse(storedUser) : null;
+          const actor = currentUser?.email || 'admin@unknown.com';
+          
+          const auditEntry = {
+            id: 'AUD-' + Date.now(),
+            action: 'vendor_unsuspended',
+            subject: { type: 'vendor', id: vendorId },
+            details: `Vendeur "${vendor.businessName || vendor.informations?.email}" réactivé`,
+            actor: actor,
+            createdAt: new Date().toISOString()
+          };
+          
+          // Ajouter à l'audit
+          const existingAudit = JSON.parse(localStorage.getItem('adminAuditLog') || '[]');
+          const updatedAudit = [auditEntry, ...existingAudit].slice(0, 500);
+          localStorage.setItem('adminAuditLog', JSON.stringify(updatedAudit));
+        }
+      }
+      return result;
+    } catch (error) {
+      console.error('Erreur lors de la réactivation du vendeur:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Actions de masse
+  const bulkApproveVendors = (vendorIds = []) => {
+    vendorIds.forEach((id) => {
+      updateVendor(id, { status: 'approved', isVerified: true });
+      addVendorHistory(id, 'approved', {});
+    });
+    return { success: true };
+  };
+
+  const bulkRejectVendors = (vendorIds = [], reason = 'Non conforme') => {
+    vendorIds.forEach((id) => {
+      updateVendor(id, { status: 'rejected', isVerified: false, rejectionReason: reason });
+      addVendorHistory(id, 'rejected', { reason });
+    });
+    return { success: true };
   };
 
   // Fonction pour obtenir un vendeur
@@ -454,6 +590,7 @@ export const VendorProvider = ({ children }) => {
     vendorStats,
     vendorOrders,
     vendorNotifications,
+    vendorHistory,
     loading,
     createVendor,
     createTestVendor,
@@ -467,7 +604,15 @@ export const VendorProvider = ({ children }) => {
     markNotificationAsRead,
     getVendorNotifications,
     calculateVendorRevenue,
-    setCurrentVendor
+    setCurrentVendor,
+    // new APIs
+    addVendorHistory,
+    getVendorHistory,
+    rateVendor,
+    suspendVendor,
+    unsuspendVendor,
+    bulkApproveVendors,
+    bulkRejectVendors
   };
 
   return (

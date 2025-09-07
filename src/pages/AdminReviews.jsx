@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAudit } from '../contexts/AuditContext';
 import { 
   BiStar, 
   BiSearch, 
@@ -21,6 +22,7 @@ export default function AdminReviews() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [ratingFilter, setRatingFilter] = useState('all');
   const [loading, setLoading] = useState(false);
+  const { addAuditEntry } = useAudit();
 
   useEffect(() => {
     loadReviews();
@@ -159,19 +161,43 @@ export default function AdminReviews() {
   };
 
   const approveReview = (reviewId) => {
+    const review = reviews.find(r => r.id === reviewId);
     setReviews(prev => prev.map(r => 
       r.id === reviewId ? { ...r, status: 'approved' } : r
     ));
+    // Enregistrer dans l'audit
+    addAuditEntry('review_approved', { type: 'review', id: reviewId }, { 
+      reviewId: reviewId,
+      rating: review?.rating || 'inconnu',
+      product: review?.product || 'Produit inconnu',
+      customer: review?.customer || 'Client inconnu'
+    });
   };
 
   const rejectReview = (reviewId) => {
+    const review = reviews.find(r => r.id === reviewId);
     setReviews(prev => prev.map(r => 
       r.id === reviewId ? { ...r, status: 'rejected' } : r
     ));
+    // Enregistrer dans l'audit
+    addAuditEntry('review_rejected', { type: 'review', id: reviewId }, { 
+      reviewId: reviewId,
+      rating: review?.rating || 'inconnu',
+      product: review?.product || 'Produit inconnu',
+      customer: review?.customer || 'Client inconnu'
+    });
   };
 
   const deleteReview = (reviewId) => {
+    const review = reviews.find(r => r.id === reviewId);
     setReviews(prev => prev.filter(r => r.id !== reviewId));
+    // Enregistrer dans l'audit
+    addAuditEntry('review_deleted', { type: 'review', id: reviewId }, { 
+      reviewId: reviewId,
+      rating: review?.rating || 'inconnu',
+      product: review?.product || 'Produit inconnu',
+      customer: review?.customer || 'Client inconnu'
+    });
   };
 
   const getStatusBadge = (status) => {

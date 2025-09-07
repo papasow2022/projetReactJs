@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAudit } from '../contexts/AuditContext';
 import { 
   BiShoppingBag, 
   BiSearch, 
@@ -19,6 +20,7 @@ export default function AdminOrders() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(false);
+  const { addAuditEntry } = useAudit();
 
   useEffect(() => {
     loadOrders();
@@ -146,9 +148,17 @@ export default function AdminOrders() {
   };
 
   const updateOrderStatus = (orderId, newStatus) => {
+    const order = orders.find(o => o.id === orderId);
     setOrders(prev => prev.map(order => 
       order.id === orderId ? { ...order, status: newStatus } : order
     ));
+    // Enregistrer dans l'audit
+    addAuditEntry('order_status_updated', { type: 'order', id: orderId }, { 
+      orderId: orderId,
+      oldStatus: order?.status || 'inconnu',
+      newStatus: newStatus,
+      customer: order?.customer || 'Client inconnu'
+    });
   };
 
   const getStatusBadge = (status) => {

@@ -10,8 +10,12 @@ import {
   BiStar,
   BiCalendar,
   BiRefresh,
-  BiDownload
+  BiDownload,
+  BiFilter,
+  BiSearch
 } from 'react-icons/bi';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { exportToCsv } from '../utils/csvExport';
 
 export default function AdminAnalytics() {
   const [analytics, setAnalytics] = useState({
@@ -19,9 +23,15 @@ export default function AdminAnalytics() {
     sales: [],
     vendors: [],
     products: [],
-    customers: []
+    customers: [],
+    categories: [],
+    revenueChart: { labels: [], datasets: [] },
+    salesChart: { labels: [], datasets: [] },
+    categoryChart: { labels: [], datasets: [] }
   });
   const [timeRange, setTimeRange] = useState('30d');
+  const [vendorFilter, setVendorFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -31,30 +41,51 @@ export default function AdminAnalytics() {
   const loadAnalytics = () => {
     setLoading(true);
     
-    // Simuler des données de test
+    // Générer 30 jours de données réalistes
+    const generateSalesData = (days) => {
+      const data = [];
+      const baseDate = new Date();
+      baseDate.setDate(baseDate.getDate() - days);
+      
+      for (let i = 0; i < days; i++) {
+        const date = new Date(baseDate);
+        date.setDate(date.getDate() + i);
+        
+        // Variation réaliste des ventes (weekend plus élevé)
+        const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+        const baseRevenue = isWeekend ? 2500 : 1800;
+        const variation = (Math.random() - 0.5) * 1000;
+        const revenue = Math.max(500, baseRevenue + variation);
+        const orders = Math.floor(revenue / (30 + Math.random() * 20));
+        
+        data.push({
+          date: date.toISOString().split('T')[0],
+          revenue: Math.round(revenue * 100) / 100,
+          orders: orders
+        });
+      }
+      return data;
+    };
+
+    const salesData = generateSalesData(30);
+    const totalRevenue = salesData.reduce((sum, day) => sum + day.revenue, 0);
+    const totalOrders = salesData.reduce((sum, day) => sum + day.orders, 0);
+    
     const mockAnalytics = {
       overview: {
-        totalRevenue: 125450.75,
-        totalOrders: 3420,
+        totalRevenue: totalRevenue,
+        totalOrders: totalOrders,
         totalVendors: 45,
         totalProducts: 1250,
         totalCustomers: 2890,
-        averageOrderValue: 36.68,
+        averageOrderValue: Math.round((totalRevenue / totalOrders) * 100) / 100,
         conversionRate: 3.2,
         revenueGrowth: 12.5,
         ordersGrowth: 8.3,
         vendorsGrowth: 15.2,
         customersGrowth: 18.7
       },
-      sales: [
-        { date: '2024-01-01', revenue: 1250.50, orders: 45 },
-        { date: '2024-01-02', revenue: 1890.30, orders: 52 },
-        { date: '2024-01-03', revenue: 1567.80, orders: 38 },
-        { date: '2024-01-04', revenue: 2100.25, orders: 61 },
-        { date: '2024-01-05', revenue: 1789.90, orders: 47 },
-        { date: '2024-01-06', revenue: 2345.60, orders: 68 },
-        { date: '2024-01-07', revenue: 1987.45, orders: 55 }
-      ],
+      sales: salesData,
       vendors: [
         { name: 'Boutique Sport', revenue: 12500.50, orders: 245, products: 45, rating: 4.8 },
         { name: 'Mode & Style', revenue: 9870.30, orders: 189, products: 32, rating: 4.6 },
@@ -74,7 +105,47 @@ export default function AdminAnalytics() {
         { segment: 'Clients récurrents', count: 1200, percentage: 41.5 },
         { segment: 'Clients VIP', count: 180, percentage: 6.2 },
         { segment: 'Clients inactifs', count: 1060, percentage: 36.7 }
-      ]
+      ],
+      categories: [
+        { name: 'Chaussures', revenue: 45000, orders: 1200, products: 300 },
+        { name: 'Vêtements', revenue: 32000, orders: 800, products: 250 },
+        { name: 'Électronique', revenue: 28000, orders: 150, products: 100 },
+        { name: 'Accessoires', revenue: 15000, orders: 600, products: 200 },
+        { name: 'Montres', revenue: 12000, orders: 80, products: 50 }
+      ],
+      revenueChart: {
+        labels: salesData.map(day => new Date(day.date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })),
+        datasets: [{
+          label: 'Revenus (€)',
+          data: salesData.map(day => day.revenue),
+          borderColor: 'rgb(75, 192, 192)',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          tension: 0.1
+        }]
+      },
+      salesChart: {
+        labels: salesData.map(day => new Date(day.date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })),
+        datasets: [{
+          label: 'Commandes',
+          data: salesData.map(day => day.orders),
+          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        }]
+      },
+      categoryChart: {
+        labels: ['Chaussures', 'Vêtements', 'Électronique', 'Accessoires', 'Montres'],
+        datasets: [{
+          data: [45000, 32000, 28000, 15000, 12000],
+          backgroundColor: [
+            '#FF6384',
+            '#36A2EB',
+            '#FFCE56',
+            '#4BC0C0',
+            '#9966FF'
+          ]
+        }]
+      }
     };
 
     setTimeout(() => {
@@ -126,11 +197,41 @@ export default function AdminAnalytics() {
             <option value="90d">90 derniers jours</option>
             <option value="1y">1 an</option>
           </select>
+          <input 
+            className="form-control" 
+            placeholder="Filtrer par vendeur" 
+            value={vendorFilter} 
+            onChange={(e) => setVendorFilter(e.target.value)}
+            style={{ width: '200px' }}
+          />
+          <select
+            className="form-select"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            style={{ width: 'auto' }}
+          >
+            <option value="">Toutes les catégories</option>
+            <option value="Chaussures">Chaussures</option>
+            <option value="Vêtements">Vêtements</option>
+            <option value="Électronique">Électronique</option>
+            <option value="Accessoires">Accessoires</option>
+            <option value="Montres">Montres</option>
+          </select>
           <button className="btn btn-outline-primary" onClick={loadAnalytics}>
             <BiRefresh className="me-2" />
             Actualiser
           </button>
-          <button className="btn btn-primary">
+          <button 
+            className="btn btn-primary"
+            onClick={() => {
+              const rows = analytics.sales.map(day => ({
+                date: day.date,
+                revenue: day.revenue,
+                orders: day.orders
+              }));
+              exportToCsv('analytics_sales.csv', rows);
+            }}
+          >
             <BiDownload className="me-2" />
             Exporter
           </button>
@@ -249,6 +350,141 @@ export default function AdminAnalytics() {
                 {getGrowthIcon(analytics.overview.customersGrowth)}
                 {analytics.overview.customersGrowth > 0 ? '+' : ''}{analytics.overview.customersGrowth}%
               </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Graphiques */}
+      <div className="row g-4 mb-4">
+        <div className="col-lg-8">
+          <div className="card border-0 shadow-sm">
+            <div className="card-header bg-white border-0">
+              <h5 className="mb-0">Évolution des revenus (30 derniers jours)</h5>
+            </div>
+            <div className="card-body">
+              {analytics.revenueChart && analytics.revenueChart.labels ? (
+                <Line 
+                  data={analytics.revenueChart} 
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        display: true
+                      }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        ticks: {
+                          callback: function(value) {
+                            return '€' + value.toLocaleString();
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
+              ) : (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Chargement...</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-4">
+          <div className="card border-0 shadow-sm">
+            <div className="card-header bg-white border-0">
+              <h5 className="mb-0">Répartition par catégorie</h5>
+            </div>
+            <div className="card-body">
+              {analytics.categoryChart && analytics.categoryChart.labels ? (
+                <Doughnut 
+                  data={analytics.categoryChart} 
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        position: 'bottom'
+                      }
+                    }
+                  }}
+                />
+              ) : (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Chargement...</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="row g-4 mb-4">
+        <div className="col-lg-6">
+          <div className="card border-0 shadow-sm">
+            <div className="card-header bg-white border-0">
+              <h5 className="mb-0">Commandes par jour</h5>
+            </div>
+            <div className="card-body">
+              {analytics.salesChart && analytics.salesChart.labels ? (
+                <Bar 
+                  data={analytics.salesChart} 
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        display: false
+                      }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true
+                      }
+                    }
+                  }}
+                />
+              ) : (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Chargement...</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-6">
+          <div className="card border-0 shadow-sm">
+            <div className="card-header bg-white border-0">
+              <h5 className="mb-0">Performance par catégorie</h5>
+            </div>
+            <div className="card-body">
+              {analytics.categories.map((category, index) => (
+                <div key={index} className="mb-3">
+                  <div className="d-flex justify-content-between align-items-center mb-1">
+                    <span className="fw-medium">{category.name}</span>
+                    <span className="text-muted">{formatCurrency(category.revenue)}</span>
+                  </div>
+                  <div className="progress" style={{ height: '8px' }}>
+                    <div 
+                      className="progress-bar" 
+                      role="progressbar" 
+                      style={{ 
+                        width: `${(category.revenue / Math.max(...analytics.categories.map(c => c.revenue))) * 100}%` 
+                      }}
+                    ></div>
+                  </div>
+                  <small className="text-muted">
+                    {category.orders} commandes • {category.products} produits
+                  </small>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAudit } from '../contexts/AuditContext';
 import { 
   BiUser, 
   BiPackage, 
@@ -34,10 +35,21 @@ export default function AdminDashboard() {
 
   const [recentActivity, setRecentActivity] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [user, setUser] = useState(null);
+  const { addAuditEntry } = useAudit();
 
   useEffect(() => {
     loadDashboardData();
+    loadUser();
   }, []);
+
+  const loadUser = () => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  };
+
 
   const loadDashboardData = () => {
     // Simuler des données de test
@@ -76,7 +88,9 @@ export default function AdminDashboard() {
     { title: 'Gérer les paiements', icon: BiCreditCard, link: '/admin/payments', color: 'secondary' },
     { title: 'Analytics', icon: BiBarChart, link: '/admin/analytics', color: 'dark' },
     { title: 'Support client', icon: BiSupport, link: '/admin/support', color: 'danger' },
-    { title: 'Configuration', icon: BiCog, link: '/admin/settings', color: 'light' }
+    { title: 'Configuration', icon: BiCog, link: '/admin/settings', color: 'light' },
+    // Afficher "Gestion utilisateurs" seulement si l'utilisateur est superadmin
+    ...(user?.roles?.includes('superadmin') ? [{ title: 'Gestion utilisateurs', icon: BiUser, link: '/admin/users', color: 'primary' }] : [])
   ];
 
   return (
@@ -277,7 +291,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .action-card {
           transition: transform 0.2s ease-in-out;
         }

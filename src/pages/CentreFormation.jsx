@@ -313,7 +313,7 @@ const CentreFormation = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.8rem', color: '#666' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                           <BiTime />
-                          {course.duration}
+                          {typeof course.duration === 'string' ? course.duration : JSON.stringify(course.duration)}
                         </span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                           <BiUser />
