@@ -1,5 +1,5 @@
 // src/components/MainContent.jsx
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -8,23 +8,18 @@ import "animate.css";
 import { Link } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 
-const banners = [
-  {
-    image: "/assets/images/banner1.jpg",
-    title: "kitchen_essentials",
-    subtitle: "under_50",
-  },
-  {
-    image: "/assets/images/banner2.jpg",
-    title: "sneakers_collection",
-    subtitle: "spring_new_2025",
-  },
-  {
-    image: "/assets/images/banner3.jpg",
-    title: "special_offers",
-    subtitle: "up_to_40_off",
-  },
+// Fallback bannière si l’API ne répond pas
+const defaultBanners = [
+  { image: "/assets/images/banner1.jpg", title: "kitchen_essentials", subtitle: "under_50", i18n: true },
+  { image: "/assets/images/banner2.jpg", title: "sneakers_collection", subtitle: "spring_new_2025", i18n: true },
+  { image: "/assets/images/banner3.jpg", title: "special_offers", subtitle: "up_to_40_off", i18n: true },
 ];
+
+function filenameToTitle(pathOrAlt) {
+  const base = (pathOrAlt || "").split("/").pop() || pathOrAlt || "";
+  const noExt = base.replace(/\.(jpg|jpeg|png|webp)$/i, "");
+  return noExt.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+}
 
 // Titres pour chaque bloc (utiliser des clés universelles)
 const blocs = [
@@ -367,7 +362,114 @@ export default function MainContent() {
   const { t } = useLanguage();
   const sliderRef = useRef(null);
   const [hoveredBrand, setHoveredBrand] = useState(null);
-  
+  const [banners, setBanners] = useState(defaultBanners);
+  const [produitsChaussures, setProduitsChaussures] = useState(allProducts.filter(p => p.category === 'chaussures').slice(0, 4));
+
+  useEffect(() => {
+    let aborted = false;
+    async function fetchCarousel() {
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const res = await fetch(`${baseUrl}/api/carousel?limit=10`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (aborted) return;
+        const items = Array.isArray(data.items) ? data.items : [];
+        if (items.length > 0) {
+          setBanners(items.map((it) => ({
+            image: it.path,
+            title: filenameToTitle(it.alt || it.path),
+            subtitle: "",
+            alt: it.alt || filenameToTitle(it.path),
+            i18n: false,
+          })));
+        }
+      } catch (e) {
+        // garder les defaults en fallback
+        console.warn('Carousel API fallback:', e.message);
+      }
+    }
+    fetchCarousel();
+    return () => { aborted = true; };
+  }, []);
+
+  // Charger des images aléatoires pour le bloc chaussures (homme + femme + enfant)
+  useEffect(() => {
+    let aborted = false;
+    async function fetchImages() {
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        
+        // Récupérer l'image homme
+        const hommeRes = await fetch(`${baseUrl}/api/homme/random`);
+        if (!hommeRes.ok) throw new Error(`HTTP ${hommeRes.status}`);
+        const hommeData = await hommeRes.json();
+        
+        if (aborted) return;
+        
+        // Récupérer l'image enfant
+        const enfantRes = await fetch(`${baseUrl}/api/enfant/random`);
+        if (!enfantRes.ok) throw new Error(`HTTP ${enfantRes.status}`);
+        const enfantData = await enfantRes.json();
+        
+        if (aborted) return;
+        
+        // Images femme disponibles (sélection aléatoire)
+        const femmeImages = [
+          '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg',
+          '/chaussures/femme/Gucci/Designer High Heel Sandals _ Block Heel Sandals   _ GUCCI® International.jpeg',
+          '/chaussures/femme/Jonak/Chaussures Femme tendance _ Jonak.jpeg',
+          '/chaussures/femme/Mango/Mango Strappy Sandals - Nude.jpeg',
+          '/chaussures/femme/Minelli/Minelli Escarpins - Noir.jpeg',
+          '/chaussures/femme/PradaBeige/Prada Ankle Strap Platform Sandals - Beige.jpeg',
+          '/chaussures/femme/Zaranoire/Zara Classic Heels - Noir.jpeg'
+        ];
+        
+        const randomFemmeImage = femmeImages[Math.floor(Math.random() * femmeImages.length)];
+        
+        // Créer trois produits : homme, femme et enfant
+        setProduitsChaussures([
+          {
+            id: 'homme-random',
+            image: hommeData.path,
+            nom: hommeData.model || 'Chaussure tendance',
+            prix: 'Prix sur demande',
+            category: 'chaussures',
+            subcategory: 'homme',
+            brand: hommeData.brand || '',
+            color: hommeData.color || ''
+          },
+          {
+            id: 'femme-random',
+            image: randomFemmeImage,
+            nom: 'La Femme',
+            prix: 'Prix sur demande',
+            category: 'chaussures',
+            subcategory: 'femme',
+            brand: 'Collection Femme',
+            color: ''
+          },
+          {
+            id: 'enfant-random',
+            image: enfantData.path,
+            nom: 'Homme-Enfant',
+            prix: 'Prix sur demande',
+            category: 'chaussures',
+            subcategory: 'enfant',
+            brand: enfantData.brand || '',
+            color: enfantData.color || ''
+          }
+        ]);
+      } catch (e) {
+        // Fallback sur les produits par défaut
+        console.warn('Images API fallback:', e.message);
+        setProduitsChaussures(allProducts.filter(p => p.category === 'chaussures').slice(0, 3));
+      }
+    }
+    fetchImages();
+    return () => { aborted = true; };
+  }, []);
+
   // Les états pour les sous-catégories ont été supprimés car les boutons ont été retirés
 
   const settings = {
@@ -433,23 +535,38 @@ export default function MainContent() {
                   minHeight: 320,
                   height: "40vw",
                   maxHeight: 420,
-                  background: `url(${banner.image}) center/cover no-repeat`,
                   position: "relative",
                   width: "100%",
-                  backgroundBlendMode: "darken",
-                  backgroundColor: "rgba(30,30,30,0.7)",
                   display: "flex",
                   margin: 0,
                   padding: 0,
                   border: "none",
+                  backgroundColor: "#0b1f2a",
                 }}
                 role="tabpanel"
-                aria-label={`Slide ${idx + 1}: ${t(banner.title)}`}
+                aria-label={`Slide ${idx + 1}: ${banner.title}`}
                 tabIndex={-1}
               >
+                <img
+                  src={banner.image}
+                  alt={banner.alt || banner.title}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    filter: "brightness(0.75)",
+                  }}
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+
                 <div
                   className="text-center animate__animated animate__fadeIn"
                   style={{
+                    position: "relative",
+                    zIndex: 1,
                     background: "rgba(0,0,0,0.35)",
                     borderRadius: 16,
                     padding: "2rem 1.5rem",
@@ -461,22 +578,20 @@ export default function MainContent() {
                     className="fw-bold mb-3"
                     style={{
                       color: "#fff",
-                      fontSize: "clamp(2rem, 5vw, 3.5rem)",
+                      fontSize: "clamp(1.5rem, 5vw, 3rem)",
                       textShadow: "0 2px 8px rgba(0,0,0,0.25)",
                     }}
                   >
-                    {t(banner.title)}
+                    {banner.i18n ? t(banner.title) : banner.title}
                   </h1>
-                  <p
-                    className="lead mb-0"
-                    style={{
-                      color: "#fff",
-                      fontSize: "clamp(1.1rem, 2.5vw, 2rem)",
-                      textShadow: "0 1px 4px rgba(0,0,0,0.18)",
-                    }}
-                  >
-                    {t(banner.subtitle)}
-                  </p>
+                  {Boolean(banner.subtitle) && (
+                    <p
+                      className="lead mb-0"
+                      style={{ color: "#f3f4f6", textShadow: "0 1px 4px rgba(0,0,0,0.25)" }}
+                    >
+                      {banner.i18n ? t(banner.subtitle) : banner.subtitle}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -526,7 +641,7 @@ export default function MainContent() {
             
             <div className="row g-3">
               {filteredProducts.map((prod, pidx) => (
-                <div className="col-6 d-flex flex-column align-items-center" key={pidx}>
+                <div className="col-4 d-flex flex-column align-items-center" key={pidx}>
                   <Link to={`/product/${prod.id}`} state={{ fromHome: true }} style={{ textDecoration: "none", color: "inherit" }}>
                     <div
                       className="bg-light d-flex align-items-center justify-content-center mb-2"
@@ -554,8 +669,10 @@ export default function MainContent() {
 
                     </div>
                     <div className="text-center" style={{ fontSize: 15 }}>
-                      <div>{t(prod.nom) || prod.nom}</div>
-                      <div className="text-secondary" style={{ fontSize: 14 }}>{prod.prix}</div>
+                      <div>
+                        {prod.subcategory === 'femme' ? 'La Femme' : 
+                         prod.subcategory === 'enfant' ? 'Homme-Enfant' : 'Homme'}
+                      </div>
                     </div>
                   </Link>
                 </div>

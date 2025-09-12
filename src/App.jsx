@@ -46,7 +46,10 @@ import GestionProduits from './pages/GestionProduits';
 import CentreCommandes from './pages/CentreCommandes';
 import OnboardingVendeur from './pages/OnboardingVendeur';
 import BoutiqueVendeur from './pages/BoutiqueVendeur';
+import ProductDetailVendor from './pages/ProductDetailVendor';
 import ListeBoutiques from './pages/ListeBoutiques';
+import VendorShopPage from './pages/VendorShopPage';
+import VendorShopConfig from './pages/VendorShopConfig';
 import { CommandesProvider } from "./contexts/CommandesContext";
 import { ProductsProvider } from "./contexts/ProductsContext";
 import ConnexionVendeur from './pages/ConnexionVendeur';
@@ -79,14 +82,23 @@ import AdminSupport from './pages/AdminSupport';
 import AdminSettings from './pages/AdminSettings';
 import AdminAudit from './pages/AdminAudit';
 import AdminUsers from './pages/AdminUsers';
+import AdminInventory from './pages/AdminInventory';
+import AdminPromotions from './pages/AdminPromotions';
+import AdminAdvancedAnalytics from './pages/AdminAdvancedAnalytics';
+import AdminLogistics from './pages/AdminLogistics';
+import AdminAIRecommendations from './pages/AdminAIRecommendations';
 import MessagerieVendeur from './pages/MessagerieVendeur';
 import GestionAvisVendeur from './pages/GestionAvisVendeur';
 import OutilsPromotionVendeur from './pages/OutilsPromotionVendeur';
 import GestionRetoursVendeur from './pages/GestionRetoursVendeur';
 import GestionPaiementsVendeur from './pages/GestionPaiementsVendeur';
+import VendeurStatutDemande from './pages/VendeurStatutDemande.jsx';
+import SetVendorPassword from './pages/SetVendorPassword.jsx';
 import GlobalSearchOverlay from './components/GlobalSearchOverlay';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { RealtimeProvider } from './contexts/RealtimeContext';
+import { NotificationSystemProvider } from './contexts/NotificationSystemContext';
+import VendeurBoutique from './pages/VendeurBoutique';
 
 
 export default function App() {
@@ -108,6 +120,7 @@ export default function App() {
                             <PromotionsProvider>
                               <ReturnsProvider>
                                 <PaymentsProvider>
+                                  <NotificationSystemProvider>
               <Router>
                 <Header />
                 <Routes>
@@ -115,6 +128,7 @@ export default function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/catalogue" element={<Catalogue />} />
                   <Route path="/product/:productId" element={<ProductDetail />} />
+                  <Route path="/produit/:productId" element={<ProductDetailVendor />} />
                   <Route path="/offres-du-jour" element={<OffreDuJour />} />
                   <Route path="/offres-urgentes" element={<OffresUrgentes />} />
                   <Route path="/nouveautes" element={<Nouveautes />} />
@@ -129,17 +143,40 @@ export default function App() {
                   <Route path="/comparaison" element={<Comparaison />} />
                   <Route path="/avis" element={<Avis />} />
                   <Route path="/vendeur" element={<Vendeur />} />
+                  {/* Configuration boutique (protégée) */}
+                  <Route path="/vendeur/boutique" element={
+                    <VendorProtectedRoute>
+                      <VendeurBoutique />
+                    </VendorProtectedRoute>
+                  } />
+                  {/* Boutique publique par identifiant vendeur */}
                   <Route path="/vendeur/:vendeurId" element={<BoutiqueVendeur />} />
+                  {/* Routes boutique publique vendeur */}
+                  <Route path="/vendor/:vendorId" element={<VendorShopPage />} />
+                  <Route path="/vendor/:vendorId/products" element={<VendorShopPage />} />
+                  <Route path="/vendor/:vendorId/about" element={<VendorShopPage />} />
+                  <Route path="/vendor/:vendorId/contact" element={<VendorShopPage />} />
+                  <Route path="/vendor/:vendorId/reviews" element={<VendorShopPage />} />
+                  <Route path="/vendor/:vendorId/promotions" element={<VendorShopPage />} />
+                  <Route path="/vendor/:vendorId/returns" element={<VendorShopPage />} />
+                  <Route path="/vendor/:vendorId/shipping" element={<VendorShopPage />} />
+                  <Route path="/vendor/:vendorId/policies" element={<VendorShopPage />} />
                   <Route path="/support-vendeur" element={<SupportVendeur />} />
                   <Route path="/conditions-vente" element={<ConditionsVente />} />
                   <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
                   <Route path="/boutiques" element={<ListeBoutiques />} />
                   <Route path="/connexion-vendeur" element={<ConnexionVendeur />} />
+                  <Route path="/vendeur/definir-mot-de-passe" element={<SetVendorPassword />} />
                 <Route path="/connexion-admin" element={<ConnexionAdmin />} />
                   <Route path="/vendeur/retours" element={
                     <VendorProtectedRoute>
                       <RetoursVendeur />
                     </VendorProtectedRoute>
+                  } />
+                  <Route path="/vendeur/statut-demande" element={
+                    <ProtectedRoute>
+                      <VendeurStatutDemande />
+                    </ProtectedRoute>
                   } />
                   <Route path="/vendeur/echanges" element={
                     <VendorProtectedRoute>
@@ -219,82 +256,17 @@ export default function App() {
                     </ProtectedRoute>
                   } />
                   
-                  {/* Nouvelles routes vendeur - PROTÉGÉES */}
+                  {/* Route principale vendeur - Dashboard centralisé */}
                   <Route path="/vendeur/dashboard" element={
                     <VendorProtectedRoute>
                       <DashboardVendeur />
                     </VendorProtectedRoute>
                   } />
-                  <Route path="/vendeur/configuration" element={
-                    <VendorProtectedRoute>
-                      <ConfigurationCompte />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/formation" element={
-                    <VendorProtectedRoute>
-                      <CentreFormation />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/produits" element={
-                    <VendorProtectedRoute>
-                      <GestionProduits />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/commandes" element={
-                    <VendorProtectedRoute>
-                      <GestionCommandesVendeur />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/produits/ajouter" element={
-                    <VendorProtectedRoute>
-                      <GestionProduits />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/stocks" element={
-                    <VendorProtectedRoute>
-                      <GestionProduits />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/analytics" element={
-                    <VendorProtectedRoute>
-                      <AnalyticsVendeur />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/parametres" element={
-                    <VendorProtectedRoute>
-                      <ConfigurationCompte />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/messagerie" element={
-                    <VendorProtectedRoute>
-                      <MessagerieVendeur />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/avis" element={
-                    <VendorProtectedRoute>
-                      <GestionAvisVendeur />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/promotions" element={
-                    <VendorProtectedRoute>
-                      <OutilsPromotionVendeur />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/retours" element={
-                    <VendorProtectedRoute>
-                      <GestionRetoursVendeur />
-                    </VendorProtectedRoute>
-                  } />
-                  <Route path="/vendeur/paiements" element={
-                    <VendorProtectedRoute>
-                      <GestionPaiementsVendeur />
-                    </VendorProtectedRoute>
-                  } />
                   
-                  {/* Route d'onboarding vendeur */}
-                  <Route path="/vendeur/onboarding" element={
+                  {/* Redirection vers le dashboard pour toutes les autres routes vendeur */}
+                  <Route path="/vendeur/*" element={
                     <VendorProtectedRoute>
-                      <OnboardingVendeur />
+                      <DashboardVendeur />
                     </VendorProtectedRoute>
                   } />
                   
@@ -356,16 +328,41 @@ export default function App() {
                     <AdminUsers />
                   </AdminProtectedRoute>
                 } />
+                <Route path="/admin/inventory" element={
+                  <AdminProtectedRoute>
+                    <AdminInventory />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/promotions" element={
+                  <AdminProtectedRoute>
+                    <AdminPromotions />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/advanced-analytics" element={
+                  <AdminProtectedRoute>
+                    <AdminAdvancedAnalytics />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/logistics" element={
+                  <AdminProtectedRoute>
+                    <AdminLogistics />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/ai-recommendations" element={
+                  <AdminProtectedRoute>
+                    <AdminAIRecommendations />
+                  </AdminProtectedRoute>
+                } />
                 </Routes>
-                <GlobalSearchOverlay />
               </Router>
-                                </PaymentsProvider>
-                              </ReturnsProvider>
-                            </PromotionsProvider>
-                          </ReviewsProvider>
-                        </MessagingProvider>
-                      </CurrencyProvider>
-                    </AuditProvider>
+                                  </NotificationSystemProvider>
+            </PaymentsProvider>
+          </ReturnsProvider>
+        </PromotionsProvider>
+      </ReviewsProvider>
+    </MessagingProvider>
+  </CurrencyProvider>
+</AuditProvider>
                   </VendorProvider>
                 </ProductsProvider>
               </CommandesProvider>

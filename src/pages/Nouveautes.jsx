@@ -156,6 +156,7 @@ const Nouveautes = () => {
 
   // Fonction pour naviguer vers la page détail du produit
   const handleProductClick = (productId) => {
+    console.log('🚀 Clic sur produit Nouveautés:', productId);
     navigate(`/product/${productId}`);
   };
 
@@ -233,7 +234,12 @@ const Nouveautes = () => {
               {featuredProducts.length > 0 ? (
                 featuredProducts.map(product => (
                   <div key={product.id} className="col-md-4 mb-3">
-                    <div className="card h-100 border-0 shadow-sm product-card" onClick={() => handleProductClick(product.id)}>
+                    <div className="card h-100 border-0 shadow-sm product-card" onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🖱️ Clic détecté sur produit featured:', product.name, product.id);
+                        handleProductClick(product.id);
+                      }}>
                       <div className="position-relative">
                         <img 
                           src={product.image || product.images?.[0] || '/assets/placeholder.png'} 
@@ -408,7 +414,12 @@ const Nouveautes = () => {
                     <div key={product.id} className="col-6 col-md-3 col-lg-2">
                       <div 
                         className="card h-100 border-0 shadow-sm product-card" 
-                        onClick={() => handleProductClick(product.id)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('🖱️ Clic détecté sur produit grid:', product.name, product.id);
+                          handleProductClick(product.id);
+                        }}
                       >
                         <div className="position-relative">
                           <img 
@@ -632,7 +643,22 @@ const Nouveautes = () => {
                   <div key={product.id} className={viewMode === 'list' ? 'col-12' : 'col-md-6 col-lg-4'}>
                     <div 
                       className={`card h-100 border-0 shadow-sm product-card ${viewMode === 'list' ? 'flex-row' : ''}`} 
-                      onClick={() => handleProductClick(product.id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🖱️ Clic détecté sur produit Nouveautés:', product.name, product.id);
+                        handleProductClick(product.id);
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.transform = 'translateY(-2px)';
+                        e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                        e.target.style.borderColor = '#007bff';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = 'none';
+                        e.target.style.borderColor = 'transparent';
+                      }}
                     >
                       <div className={viewMode === 'list' ? 'col-4' : ''}>
                         <img 

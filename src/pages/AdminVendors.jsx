@@ -7,7 +7,7 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { exportToCsv } from '../utils/csvExport';
 
 export default function AdminVendors() {
-  const { vendors, updateVendor, addVendorNotification, rateVendor, suspendVendor, unsuspendVendor, getVendorHistory, bulkApproveVendors, bulkRejectVendors } = useVendor();
+  const { vendors, updateVendor, addVendorNotification, rateVendor, suspendVendor, unsuspendVendor, getVendorHistory, bulkApproveVendors, bulkRejectVendors, updateVendorVerificationStep, purgeSimulatedVendors } = useVendor();
   const { user, updateUser } = useAuth();
   const { addAuditEntry } = useAudit();
   const { selectedCurrency, changeCurrency, format } = useCurrency();
@@ -16,8 +16,35 @@ export default function AdminVendors() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selected, setSelected] = useState({});
   const [historyVendorId, setHistoryVendorId] = useState(null);
+  const [viewVendorId, setViewVendorId] = useState(null);
   const [suspendReason, setSuspendReason] = useState('Non conformité');
   const [suspendUntil, setSuspendUntil] = useState('');
+  const [needsInfoMessage, setNeedsInfoMessage] = useState('Merci de fournir un document plus lisible.');
+
+  const stepLabel = (s) => ({ kyc: 'KYC', bank: 'Bancaire', tax: 'Fiscal', compliance: 'Conformité' }[s] || s);
+
+  const askNeedsInfo = (vendor, step) => {
+    const msg = window.prompt('Message pour la demande de complément', needsInfoMessage);
+    if (msg !== null) {
+      if (msg.trim() !== '') setNeedsInfoMessage(msg);
+      updateVendorVerificationStep(vendor.id, step, 'needs_more_info', msg || needsInfoMessage);
+      addVendorNotification(vendor.id, {
+        type: 'status',
+        title: `Demande de complément - ${stepLabel(step)}`,
+        message: msg || needsInfoMessage
+      });
+    }
+  };
+
+  const askReject = (vendor, step) => {
+    const reason = window.prompt('Raison du refus (visible par le vendeur)', 'Document invalide / informations non conformes');
+    updateVendorVerificationStep(vendor.id, step, 'rejected', reason || 'Non conforme');
+    addVendorNotification(vendor.id, {
+      type: 'status',
+      title: `Refus - ${stepLabel(step)}`,
+      message: reason || 'Non conforme'
+    });
+  };
 
   const vendorList = useMemo(() => Object.values(vendors || {}), [vendors]);
   const filtered = useMemo(() => {
@@ -35,8 +62,24 @@ export default function AdminVendors() {
   const pending = vendorList.filter(v => (v.status || 'pending') === 'pending');
   const approved = vendorList.filter(v => v.status === 'approved');
   const rejected = vendorList.filter(v => v.status === 'rejected');
+  const active = vendorList.filter(v => !v.status); // Vendeurs sans statut défini (anciens vendeurs)
+
+
+  const isVendorReady = (v) => {
+    const ver = v.verification || {};
+    return (
+      (ver.kyc?.status === 'approved') &&
+      (ver.bank?.status === 'approved') &&
+      (ver.tax?.status === 'approved') &&
+      (ver.compliance?.status === 'approved')
+    );
+  };
 
   const approve = (v) => {
+    if (!isVendorReady(v)) {
+      alert('Impossible d\'approuver: toutes les étapes (KYC, Bancaire, Fiscal, Conformité) doivent être Validées.');
+      return;
+    }
     updateVendor(v.id, { status: 'approved', isVerified: true });
     addVendorNotification(v.id, {
       type: 'status',
@@ -104,8 +147,18 @@ export default function AdminVendors() {
   const bulkApprove = () => {
     const ids = Object.entries(selected).filter(([, val]) => val).map(([k]) => k);
     if (ids.length === 0) return;
-    bulkApproveVendors(ids);
-    ids.forEach(id => addAuditEntry('vendor.approve.bulk', { type: 'vendor', id }));
+    const readyIds = ids.filter(id => {
+      const v = vendors[id];
+      return v && isVendorReady(v);
+    });
+    const notReadyIds = ids.filter(id => !readyIds.includes(id));
+    if (readyIds.length > 0) {
+      bulkApproveVendors(readyIds);
+      readyIds.forEach(id => addAuditEntry('vendor.approve.bulk', { type: 'vendor', id }));
+    }
+    if (notReadyIds.length > 0) {
+      alert(`Certains vendeurs n'ont pas toutes les étapes validées: ${notReadyIds.join(', ')}`);
+    }
     clearSelection();
   };
 
@@ -131,6 +184,12 @@ export default function AdminVendors() {
     exportToCsv('vendors.csv', data);
   };
 
+  const StepBadge = ({ value }) => {
+    const label = value === 'approved' || value === 'validated' ? 'Validé' : value === 'rejected' ? 'Refusé' : value === 'needs_more_info' ? 'À compléter' : 'En cours';
+    const cls = value === 'approved' || value === 'validated' ? 'success' : value === 'rejected' ? 'danger' : value === 'needs_more_info' ? 'warning text-dark' : 'secondary';
+    return <span className={`badge bg-${cls}`}>{label}</span>;
+  };
+
   const Section = ({ title, items, color }) => (
     <div className="card mb-4">
       <div className={`card-header text-white bg-${color}`}>
@@ -148,6 +207,10 @@ export default function AdminVendors() {
                 <th>Nom</th>
                 <th>Email</th>
                 <th>Entreprise</th>
+                <th>KYC</th>
+                <th>Bancaire</th>
+                <th>Fiscal</th>
+                <th>Conformité</th>
                 <th>Statut</th>
                 <th>Commandes</th>
                 <th>Ventes</th>
@@ -166,6 +229,51 @@ export default function AdminVendors() {
                   <td>{v.informations?.email}</td>
                   <td>{v.informations?.entreprise?.nom}</td>
                   <td>
+                    <div className="d-flex align-items-center gap-2">
+                      <StepBadge value={v.verification?.kyc?.status || 'pending'} />
+                      <div className="btn-group btn-group-sm">
+                        <button className="btn btn-outline-success" title="Valider" onClick={() => updateVendorVerificationStep(v.id, 'kyc', 'approved')}>OK</button>
+                        <button className="btn btn-outline-danger" title="Refuser" onClick={() => askReject(v, 'kyc')}>No</button>
+                        <button className="btn btn-outline-warning" title="À compléter" onClick={() => askNeedsInfo(v, 'kyc')}>Info</button>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="d-flex align-items-center gap-2">
+                      <StepBadge value={v.verification?.bank?.status || 'pending'} />
+                      <div className="btn-group btn-group-sm">
+                        <button className="btn btn-outline-success" onClick={() => updateVendorVerificationStep(v.id, 'bank', 'approved')}>OK</button>
+                        <button className="btn btn-outline-danger" onClick={() => askReject(v, 'bank')}>No</button>
+                        <button className="btn btn-outline-warning" onClick={() => askNeedsInfo(v, 'bank')}>Info</button>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="d-flex align-items-center gap-2">
+                      <StepBadge value={v.verification?.tax?.status || 'pending'} />
+                      <div className="btn-group btn-group-sm">
+                        <button className="btn btn-outline-success" onClick={() => updateVendorVerificationStep(v.id, 'tax', 'approved')}>OK</button>
+                        <button className="btn btn-outline-danger" onClick={() => askReject(v, 'tax')}>No</button>
+                        <button className="btn btn-outline-warning" onClick={() => askNeedsInfo(v, 'tax')}>Info</button>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="d-flex align-items-center gap-2">
+                      <div className="d-flex align-items-center gap-1">
+                        <StepBadge value={v.verification?.compliance?.status || 'pending'} />
+                        {v.verification?.compliance?.notes && (
+                          <span className="badge bg-info" title="Notes conformité disponibles">Notes</span>
+                        )}
+                      </div>
+                      <div className="btn-group btn-group-sm">
+                        <button className="btn btn-outline-success" onClick={() => updateVendorVerificationStep(v.id, 'compliance', 'approved')}>OK</button>
+                        <button className="btn btn-outline-danger" onClick={() => askReject(v, 'compliance')}>No</button>
+                        <button className="btn btn-outline-warning" onClick={() => askNeedsInfo(v, 'compliance')}>Info</button>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
                     {v.status === 'approved' && <span className="badge bg-success">Approuvé</span>}
                     {v.status === 'pending' && <span className="badge bg-secondary">En attente</span>}
                     {v.status === 'rejected' && <span className="badge bg-danger">Refusé</span>}
@@ -182,9 +290,10 @@ export default function AdminVendors() {
                     </div>
                   </td>
                   <td>
+                    <button className="btn btn-sm btn-outline-info me-2" onClick={() => setViewVendorId(v.id)}>Voir dossier</button>
                     {v.status === 'pending' && (
                       <>
-                        <button className="btn btn-sm btn-success me-2" onClick={() => approve(v)}>Approuver</button>
+                        <button className="btn btn-sm btn-success me-2" onClick={() => approve(v)} disabled={!isVendorReady(v)} title={!isVendorReady(v) ? 'Toutes les étapes doivent être Validées' : undefined}>Approuver</button>
                         <button className="btn btn-sm btn-outline-danger" onClick={() => reject(v)}>Refuser</button>
                       </>
                     )}
@@ -229,6 +338,7 @@ export default function AdminVendors() {
             <option value="GNF">GNF</option>
           </select>
           <button className="btn btn-outline-secondary" onClick={exportCsv}><BiDownload className="me-2"/>Exporter CSV</button>
+          <button className="btn btn-outline-warning" onClick={purgeSimulatedVendors} title="Supprimer vendeurs test (VD-TEST-*)">Purger tests</button>
         </div>
       </div>
 
@@ -260,6 +370,10 @@ export default function AdminVendors() {
               <label className="form-label">Jusqu'au</label>
               <input type="date" className="form-control" value={suspendUntil} onChange={e=>setSuspendUntil(e.target.value)} />
             </div>
+            <div className="col-md-4">
+              <label className="form-label">Message pour « À compléter »</label>
+              <input className="form-control" placeholder="Ex: Document illisible, merci de renvoyer" value={needsInfoMessage} onChange={e=>setNeedsInfoMessage(e.target.value)} />
+            </div>
           </div>
           <div className="d-flex gap-2 mt-3">
             <button className="btn btn-success" onClick={bulkApprove}><BiCheckCircle className="me-2"/>Approuver sélection</button>
@@ -269,9 +383,10 @@ export default function AdminVendors() {
       </div>
 
       <Section title={`Résultats (${filtered.length})`} items={filtered} color="primary" />
-      <Section title="En attente" items={pending} color="warning" />
-      <Section title="Approuvés" items={approved} color="success" />
-      <Section title="Refusés" items={rejected} color="danger" />
+      <Section title={`En attente (${pending.length})`} items={pending} color="warning" />
+      <Section title={`Approuvés (${approved.length})`} items={approved} color="success" />
+      <Section title={`Refusés (${rejected.length})`} items={rejected} color="danger" />
+      <Section title={`Actifs (${active.length})`} items={active} color="info" />
 
       {historyVendorId && (
         <div className="modal fade show" style={{ display: 'block', background: 'rgba(0,0,0,0.5)' }}>
@@ -323,6 +438,144 @@ export default function AdminVendors() {
           </div>
         </div>
       )}
+
+      {viewVendorId && (() => {
+        const v = vendors[viewVendorId];
+        if (!v) return null;
+        const docs = v.documents || {};
+        const payout = v.payout || {};
+        const openPreview = (obj) => {
+          if (!obj?.dataUrl) return alert('Aperçu indisponible');
+          const win = window.open();
+          if (!win) return alert('Pop-up bloquée');
+          const isImage = /^image\//.test(obj.type || '');
+          if (isImage) {
+            win.document.write(`<img src="${obj.dataUrl}" style="max-width:100%;height:auto;" />`);
+          } else {
+            win.document.write(`<embed src="${obj.dataUrl}" type="${obj.type || 'application/pdf'}" width="100%" height="100%" />`);
+          }
+        };
+        const docItem = (label, obj) => (
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            <span>{label}</span>
+            {obj ? (
+              <span className="small">
+                <span className="text-success">{obj.name || 'fourni'}</span>
+                {obj.type ? ` • ${obj.type}` : ''}
+                {obj.size ? ` • ${(obj.size/1024).toFixed(1)} Ko` : ''}
+                {obj.dataUrl && (
+                  <button className="btn btn-sm btn-outline-primary ms-2" onClick={() => openPreview(obj)}>Ouvrir</button>
+                )}
+              </span>
+            ) : (
+              <span className="text-danger small">manquant</span>
+            )}
+          </li>
+        );
+        let complianceNotes = '';
+        return (
+          <div className="modal fade show" style={{ display: 'block', background: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal-dialog modal-lg">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Dossier vendeur {v.id}</h5>
+                  <button type="button" className="btn-close" onClick={() => setViewVendorId(null)} />
+                </div>
+                <div className="modal-body">
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <h6 className="fw-bold">Identité</h6>
+                      <div className="small text-muted">
+                        <div><strong>Nom</strong>: {v.informations?.prenom} {v.informations?.nom}</div>
+                        <div><strong>Email</strong>: {v.informations?.email || '—'}</div>
+                        <div><strong>Téléphone</strong>: {v.informations?.telephone || '—'}</div>
+                        <div><strong>Date de naissance</strong>: {v.informations?.dateNaissance ? new Date(v.informations.dateNaissance).toLocaleDateString() : '—'}</div>
+                        <div><strong>Adresse</strong>: {v.informations?.adresse ? `${v.informations.adresse}, ` : ''}{v.informations?.codePostal} {v.informations?.ville}{v.informations?.pays ? `, ${v.informations.pays}` : ''}</div>
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <h6 className="fw-bold">Entreprise</h6>
+                      <div className="small text-muted">
+                        <div><strong>Nom</strong>: {v.informations?.entreprise?.nom || '—'}</div>
+                        <div><strong>SIRET/RC</strong>: {v.informations?.entreprise?.siret || '—'}</div>
+                        <div><strong>Pays immatriculation</strong>: {v.informations?.entreprise?.paysImmatriculation || '—'}</div>
+                        <div><strong>Adresse</strong>: {v.informations?.entreprise?.adresse || '—'}</div>
+                        <div><strong>Numéro fiscal (TVA/NIU)</strong>: {v.informations?.numeroTaxe || '—'}</div>
+                      </div>
+                    </div>
+                    <div className="col-12">
+                      <h6 className="fw-bold">Boutique</h6>
+                      <div className="small text-muted">
+                        Nom: {v.nomBoutique || v.informations?.entreprise?.nom || '—'} | Mode: {v.fulfillmentMode}
+                      </div>
+                    </div>
+                    <div className="col-12">
+                      <h6 className="fw-bold">Documents fournis</h6>
+                      <ul className="list-group">
+                        {docItem("Pièce d'identité", docs.pieceIdentite)}
+                        {docItem('Registre de commerce', docs.registreCommerce)}
+                        {docItem('Justificatif d\'adresse', docs.justificatifAdresse)}
+                        {docItem('Portfolio', docs.portfolio)}
+                        {docItem('Accord fournisseur', docs.accordFournisseur)}
+                        {docItem('Liste produits (FBP)', docs.listeProduits)}
+                      </ul>
+                    </div>
+                    <div className="col-12 mt-3">
+                      <h6 className="fw-bold">Coordonnées bancaires (versement)</h6>
+                      <div className="small text-muted">
+                        <div><strong>Titulaire</strong>: {payout.titulaireCompte || '—'}</div>
+                        <div><strong>IBAN/RIB</strong>: {payout.iban ? `${String(payout.iban).slice(0,4)}••••${String(payout.iban).slice(-4)}` : '—'}</div>
+                        <div><strong>BIC</strong>: {payout.bic || '—'}</div>
+                        <div><strong>Banque</strong>: {payout.banqueNom || '—'}{payout.banquePays ? `, ${payout.banquePays}` : ''}</div>
+                        <div className="mt-2"><strong>Justificatif RIB</strong>:
+                          {payout.justificatifRib ? (
+                            <button className="btn btn-sm btn-outline-primary ms-2" onClick={() => openPreview(payout.justificatifRib)}>Ouvrir</button>
+                          ) : (
+                            <span className="text-danger ms-2">manquant</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-12 mt-3">
+                      <h6 className="fw-bold">Mobile Money</h6>
+                      <div className="small text-muted">
+                        <div><strong>Numéro</strong>: {payout?.mobileMoney?.numero || '—'}</div>
+                        <div><strong>Opérateur</strong>: {payout?.mobileMoney?.operateur || '—'}</div>
+                        <div className="mt-2"><strong>Justificatif</strong>:
+                          {payout?.mobileMoney?.justificatif ? (
+                            <button className="btn btn-sm btn-outline-primary ms-2" onClick={() => openPreview(payout.mobileMoney.justificatif)}>Ouvrir</button>
+                          ) : (
+                            <span className="text-muted ms-2">(optionnel)</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-12 mt-3">
+                      <h6 className="fw-bold">Checklist Conformité</h6>
+                      <ul className="small text-muted">
+                        <li>Infos boutique exactes et non trompeuses</li>
+                        <li>Produits autorisés, pas de marques sans droit</li>
+                        <li>Documents lisibles et à jour</li>
+                        <li>KYC, Bancaire, Fiscal validés</li>
+                      </ul>
+                      <label className="form-label">Notes internes</label>
+                      <textarea className="form-control" rows={3} placeholder="Observations, restrictions, conditions..." onChange={(e)=>{ complianceNotes = e.target.value; }} defaultValue={v.verification?.compliance?.notes || ''}></textarea>
+                      <div className="mt-2">
+                        <button className="btn btn-outline-secondary" onClick={()=> updateVendorVerificationStep(v.id, 'compliance', v.verification?.compliance?.status || 'pending', complianceNotes)}>
+                          Enregistrer notes conformité
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-secondary" onClick={() => setViewVendorId(null)}>Fermer</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

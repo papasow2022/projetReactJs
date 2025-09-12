@@ -14,7 +14,7 @@ const Chaussures = () => {
       const saved = localStorage.getItem('chaussuresActiveFilters');
       if (saved) {
         const parsed = JSON.parse(saved);
-        const safeGenre = Array.isArray(parsed.genre) && parsed.genre.length > 0 ? parsed.genre : ['homme'];
+        const safeGenre = Array.isArray(parsed.genre) ? parsed.genre : [];
         return {
           genre: safeGenre,
           marques: Array.isArray(parsed.marques) ? parsed.marques : [],
@@ -23,15 +23,19 @@ const Chaussures = () => {
       }
     } catch (e) {}
     return {
-      genre: ['homme'],
+      genre: [],
       marques: [],
       prixMax: 1000000
     };
   });
 
-  const { products: contextProducts, loading } = useProducts();
+  const { products: contextProducts, approvedProducts, loading } = useProducts();
   
-  const allProducts = contextProducts.filter(p => p.category === 'Chaussures');
+  const sourceProducts = (approvedProducts && approvedProducts.length > 0) ? approvedProducts : contextProducts;
+  const allProducts = sourceProducts.filter(p => {
+    const cat = (p.category || '').toString().toLowerCase();
+    return cat.includes('chaussure');
+  });
 
   useEffect(() => {
     try {
@@ -185,6 +189,63 @@ const Chaussures = () => {
 
   const femmeImages = buildFemmeImagesMeta(femmeImagePaths);
 
+  // Catalogue HOMME basé sur public/chaussures/homme/**
+  const hommeImagePaths = [
+    '/chaussures/homme/Balanciaga/Blanc/balenciaga-defender-blanc.jpg',
+    '/chaussures/homme/Balanciaga/Blanc/balenciaga-speed-blanc.jpg',
+    '/chaussures/homme/Balanciaga/Blanc/balenciaga-track-blanc.jpg',
+    '/chaussures/homme/Balanciaga/Noire/balenciaga-defender-noire.jpg',
+    '/chaussures/homme/Balanciaga/Noire/balenciaga-speed-noire.jpg',
+    '/chaussures/homme/Balanciaga/Noire/balenciaga-track-noire.jpg',
+    '/chaussures/homme/Balanciaga/Vertolive/balenciaga-defender-vertolive.jpg',
+    '/chaussures/homme/Balanciaga/Vertolive/balenciaga-speed-vertolive.jpg',
+    '/chaussures/homme/Balanciaga/Vertolive/balenciaga-track-vertolive.jpg',
+    '/chaussures/homme/Gucci/Blanc/gucci-ace-blanc.jpg',
+    '/chaussures/homme/Gucci/Blanc/gucci-rhyton-blanc.jpg',
+    '/chaussures/homme/Gucci/Blanc/gucci-screener-blanc.jpg',
+    '/chaussures/homme/Gucci/Guccinoire/gucci-ace-guccinoire.jpg',
+    '/chaussures/homme/Gucci/Guccinoire/gucci-rhyton-guccinoire.jpg',
+    '/chaussures/homme/Gucci/Guccinoire/gucci-screener-guccinoire.jpg',
+    '/chaussures/homme/Gucci/Guccirose/gucci-ace-guccirose.jpg',
+    '/chaussures/homme/Gucci/Guccirose/gucci-rhyton-guccirose.jpg',
+    '/chaussures/homme/Gucci/Guccirose/gucci-screener-guccirose.jpg',
+    '/chaussures/homme/Nike/blanc/nike-air-jordan-1-blanc.jpg',
+    '/chaussures/homme/Nike/blanc/nike-air-max-270-blanc.jpg',
+    '/chaussures/homme/Nike/blanc/nike-dunk-low-blanc.jpg',
+    '/chaussures/homme/Nike/noire/nike-air-jordan-1-noir.jpg',
+    '/chaussures/homme/Nike/noire/nike-air-max-270-noir.jpg',
+    '/chaussures/homme/Nike/noire/nike-dunk-low-noir.jpg',
+    '/chaussures/homme/Nike/vertolive/nike-air-jordan-1-vertolive.jpg',
+    '/chaussures/homme/Nike/vertolive/nike-air-max-270-vertolive.jpg',
+    '/chaussures/homme/Nike/vertolive/nike-dunk-low-vertolive.jpg',
+    '/chaussures/homme/Puma/Blanc/puma-basket-classic-blanc.jpg',
+    '/chaussures/homme/Puma/Blanc/puma-cali-sport-blanc.jpg',
+    '/chaussures/homme/Puma/Blanc/puma-future-rider-blanc.jpg',
+    '/chaussures/homme/Puma/Noir/puma-cali-sport-noire.jpg',
+    '/chaussures/homme/Puma/Noir/puma-future-rider-noire.jpg',
+    '/chaussures/homme/Puma/Noir/puma-rs-x-noire.jpg',
+    '/chaussures/homme/Puma/Vertolive/puma-basket-classic-vertolive.jpg',
+    '/chaussures/homme/Puma/Vertolive/puma-cali-sport-vertolive.jpg',
+    '/chaussures/homme/Puma/Vertolive/puma-future-rider-vertolive.jpg',
+  ];
+
+  const buildHommeImagesMeta = (paths) => {
+    return paths.map((p) => {
+      const parts = p.split('/');
+      const brandFolder = parts[3] || '';
+      const fileWithExt = parts[5] || parts[4] || '';
+      const fileName = fileWithExt.replace(/\.[^/.]+$/, '');
+      return { src: p, brand: brandFolder, fileName };
+    });
+  };
+
+  const hommeImages = buildHommeImagesMeta(hommeImagePaths);
+
+  const handleHommeClick = (imagePath) => {
+    console.log('🚀 Clic sur produit homme:', imagePath);
+    navigate(`/product/synthetic-homme?image=${encodeURIComponent(imagePath)}`);
+  };
+
   // Mapping des images Christian Louboutin vers leurs produits spécifiques
   const christianLouboutinImageMapping = {
             '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg': 'cl-escarpins-noir-001',
@@ -198,8 +259,21 @@ const Chaussures = () => {
   // Fonction pour trouver le produit exact correspondant à une image
   const findProductByImage = (imagePath) => {
     const productId = christianLouboutinImageMapping[imagePath];
+    console.log('🔍 Recherche du produit pour l\'image:', imagePath);
+    console.log('🆔 ID recherché:', productId);
+    console.log('📦 allProducts disponibles:', allProducts.length);
+    console.log('📦 contextProducts disponibles:', contextProducts.length);
+    
     if (productId) {
-      return contextProducts.find(p => p.id === productId);
+      // Chercher d'abord dans contextProducts (qui contient les produits Christian Louboutin)
+      let product = contextProducts.find(p => p.id === productId);
+      console.log('🔍 Produit trouvé dans contextProducts:', product ? product.name : 'Aucun');
+      
+      if (!product) {
+        product = allProducts.find(p => p.id === productId);
+        console.log('🔍 Produit trouvé dans allProducts:', product ? product.name : 'Aucun');
+      }
+      return product;
     }
     return null;
   };
@@ -211,9 +285,12 @@ const Chaussures = () => {
       console.log('🎯 Produit trouvé pour image:', imagePath);
       console.log('📦 Produit:', product.name);
       console.log('🆔 ID du produit:', product.id);
+      console.log('🏷️ Subcategory:', product.subcategory);
       navigate(`/product/${product.id}?image=${encodeURIComponent(imagePath)}`);
     } else {
-      console.error('❌ Aucun produit trouvé pour l\'image:', imagePath);
+      console.log('⚠️ Produit non trouvé pour l\'image:', imagePath);
+      // Utiliser le produit de fallback par défaut
+      navigate(`/product/cl-escarpins-noir-001?image=${encodeURIComponent(imagePath)}`);
     }
   };
 
@@ -263,6 +340,7 @@ const Chaussures = () => {
   };
 
   const handleProductClick = (product) => {
+    console.log('🚀 Clic sur produit:', product.name, product.id);
     // Naviguer vers la page de détail du produit
     navigate(`/product/${product.id}`);
   };
@@ -272,6 +350,13 @@ const Chaussures = () => {
       ...prev,
       // Sélection unique: toujours remplacer par l'option choisie
       genre: [genre]
+    }));
+  };
+
+  const handleGenreAll = () => {
+    setActiveFilters(prev => ({
+      ...prev,
+      genre: []
     }));
   };
 
@@ -310,10 +395,45 @@ const Chaussures = () => {
     return true;
   });
 
+  // Jeu de données à afficher: pour Homme, on utilise le catalogue d'images public
+  const displayProducts = activeFilters.genre[0] === 'homme'
+    ? hommeImages
+        .filter(img => {
+          if (activeFilters.marques.length === 0) return true;
+          return activeFilters.marques.some(selectedBrand => {
+            // Mapping des marques pour correspondre aux dossiers d'images
+            const brandMapping = {
+              'Balenciaga': 'Balanciaga',
+              'Gucci': 'Gucci', 
+              'Nike': 'Nike',
+              'Puma': 'Puma'
+            };
+            const mappedBrand = brandMapping[selectedBrand] || selectedBrand;
+            return img.brand.toLowerCase() === mappedBrand.toLowerCase();
+          });
+        })
+        .map(img => ({
+          id: img.src,
+          name: img.fileName,
+          image: img.src,
+          brand: img.brand,
+          price: 0
+        }))
+    : filteredProducts;
+
+  // Si aucun produit avec une marque filtrée, on supprime la marque pour afficher les résultats
+  useEffect(() => {
+    if (allProducts.length > 0 && filteredProducts.length === 0 && activeFilters.marques.length > 0) {
+      setActiveFilters(prev => ({ ...prev, marques: [] }));
+    }
+  }, [allProducts.length, filteredProducts.length, activeFilters.marques.length]);
+
   // Debug: Afficher les produits filtrés
   console.log('Produits filtrés:', filteredProducts.length);
   console.log('Filtres actifs:', activeFilters);
   console.log('Tous les produits:', allProducts.length);
+
+  const isAllSelected = activeFilters.genre.length === 0; 
 
   // Obtenir les images de la sous-catégorie sélectionnée
   const getSubcategoryImages = (subcategoryId) => {
@@ -388,21 +508,34 @@ const Chaussures = () => {
               <h6 style={{ fontSize: '1rem', marginBottom: '15px', color: '#232f3e' }}>
                 Genre
               </h6>
-                             {subcategories.map(subcat => (
-                 <div key={subcat.id} className="form-check mb-2">
-                   <input
-                     className="form-check-input"
-                     type="checkbox"
-                     id={`filter-${subcat.id}`}
-                     checked={activeFilters.genre.includes(subcat.id)}
-                     onChange={() => handleGenreFilter(subcat.id)}
-                     style={{ accentColor: '#febd69' }}
-                   />
-                   <label className="form-check-label" htmlFor={`filter-${subcat.id}`} style={{ fontSize: '0.9rem' }}>
-                     {subcat.label}
-                   </label>
-                 </div>
-               ))}
+              <div className="form-check mb-2">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id={`filter-tout`}
+                  checked={activeFilters.genre.length === 0}
+                  onChange={handleGenreAll}
+                  style={{ accentColor: '#febd69' }}
+                />
+                <label className="form-check-label" htmlFor={`filter-tout`} style={{ fontSize: '0.9rem' }}>
+                  Tout
+                </label>
+              </div>
+              {subcategories.map(subcat => (
+                <div key={subcat.id} className="form-check mb-2">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id={`filter-${subcat.id}`}
+                    checked={activeFilters.genre.includes(subcat.id)}
+                    onChange={() => handleGenreFilter(subcat.id)}
+                    style={{ accentColor: '#febd69' }}
+                  />
+                  <label className="form-check-label" htmlFor={`filter-${subcat.id}`} style={{ fontSize: '0.9rem' }}>
+                    {subcat.label}
+                  </label>
+                </div>
+              ))}
             </div>
 
             {/* Filtre par marque */}
@@ -454,7 +587,7 @@ const Chaussures = () => {
            {/* Contenu principal */}
            <div className="col-md-9" style={{ padding: '20px' }}>
                           {/* Filtres actifs */}
-             {(activeFilters.genre.length > 0 || activeFilters.marques.length > 0 || activeFilters.prixMax < 1000000) && (
+             {(isAllSelected || activeFilters.genre.length > 0 || activeFilters.marques.length > 0 || activeFilters.prixMax < 1000000) && (
                 <div className="active-filters mb-3" style={{
                   backgroundColor: '#f0f8ff',
                   padding: '12px 16px',
@@ -464,7 +597,7 @@ const Chaussures = () => {
                   <div className="d-flex align-items-center justify-content-between mb-2">
                     <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#0066cc' }}>🔍 Filtres actifs :</span>
                     <button 
-                      onClick={() => setActiveFilters({ genre: ['homme'], marques: [], prixMax: 1000000 })}
+                      onClick={() => setActiveFilters({ genre: [], marques: [], prixMax: 1000000 })}
                       style={{
                         backgroundColor: 'transparent',
                         border: '1px solid #0066cc',
@@ -488,6 +621,21 @@ const Chaussures = () => {
                     </button>
                   </div>
                   <div className="d-flex flex-wrap gap-2">
+                    {isAllSelected && (
+                      <span style={{
+                        backgroundColor: '#e6f3ff',
+                        color: '#0066cc',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.8rem',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        Tout
+                      </span>
+                    )}
                     {activeFilters.genre.map(genre => (
                       <span key={genre} style={{
                         backgroundColor: '#e6f3ff',
@@ -576,23 +724,24 @@ const Chaussures = () => {
             </div>
 
                                       {/* Contenu conditionnel selon les filtres */}
-             {activeFilters.genre.length > 0 || activeFilters.marques.length > 0 ? (
+             {isAllSelected || activeFilters.genre.length > 0 || activeFilters.marques.length > 0 ? (
                // Page filtrée - affichage spécifique selon les filtres
                <div className="filtered-page">
                  {/* En-tête de la page filtrée */}
                  <div className="filtered-header mb-4">
                    <h2 style={{ fontSize: '1.8rem', color: '#232f3e', marginBottom: '15px' }}>
-                     {activeFilters.genre.length > 0 && activeFilters.marques.length > 0 
-                       ? `Chaussures ${subcategories.find(s => s.id === activeFilters.genre[0])?.label} ${activeFilters.marques[0]}`
-                       : activeFilters.genre.length > 0 
-                         ? `Chaussures ${subcategories.find(s => s.id === activeFilters.genre[0])?.label}`
-                         : `Chaussures ${activeFilters.marques[0]}`
-                     }
+                    {isAllSelected && activeFilters.marques.length === 0 ? 'Toutes les chaussures' : (
+                      activeFilters.genre.length > 0 && activeFilters.marques.length > 0 
+                      ? `Chaussures ${subcategories.find(s => s.id === activeFilters.genre[0])?.label} ${activeFilters.marques[0]}`
+                      : activeFilters.genre.length > 0 
+                        ? `Chaussures ${subcategories.find(s => s.id === activeFilters.genre[0])?.label}`
+                        : `Chaussures ${activeFilters.marques[0]}`
+                    )}
                    </h2>
                    {/* Compteur affiché uniquement pour la liste produits; la galerie Femme n'utilise pas le compteur */}
                    {!(activeFilters.genre[0] === 'femme') && (
                      <p style={{ fontSize: '1rem', color: '#666', marginBottom: '20px' }}>
-                       {filteredProducts.length} produits trouvés
+                       {activeFilters.genre[0] === 'homme' ? displayProducts.length : filteredProducts.length} produits trouvés
                      </p>
                    )}
                  </div>
@@ -920,18 +1069,27 @@ const Chaussures = () => {
                    </div>
                  ) : (
                    // Sinon, afficher la grille de produits filtrés classique
-                   <div className="filtered-products-grid">
-                     {filteredProducts.length === 0 ? (
-                       <div className="text-center py-5" style={{ color: '#666' }}>
-                         <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: 8 }}>Aucun produit trouvé</div>
-                         <div style={{ fontSize: '0.95rem' }}>Aucun produit ne correspond à cette sélection.</div>
-                       </div>
-                     ) : (
-                      <div className="row g-4">
-                        {filteredProducts.map(product => (
+                  <div className="filtered-products-grid">
+                    {(activeFilters.genre[0] === 'homme' ? displayProducts.length === 0 : filteredProducts.length === 0) ? (
+                      <div className="text-center py-5" style={{ color: '#666' }}>
+                        <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: 8 }}>Aucun produit trouvé</div>
+                        <div style={{ fontSize: '0.95rem' }}>Aucun produit ne correspond à cette sélection.</div>
+                      </div>
+                    ) : (
+                     <div className="row g-4">
+                       {(activeFilters.genre[0] === 'homme' ? displayProducts : filteredProducts).map(product => (
                           <div key={product.id} className="col-md-6 col-lg-4">
                             <div className="product-card" 
-                              onClick={() => handleProductClick(product)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('🖱️ Clic détecté sur produit:', product.name || product.id);
+                                if (activeFilters.genre[0] === 'homme') {
+                                  handleHommeClick(product.image);
+                                } else {
+                                  handleProductClick(product);
+                                }
+                              }}
                               style={{
                               backgroundColor: 'white',
                               border: '1px solid #e9ecef',
@@ -944,10 +1102,12 @@ const Chaussures = () => {
                             onMouseEnter={(e) => {
                               e.target.style.transform = 'translateY(-2px)';
                               e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                              e.target.style.borderColor = '#007bff';
                             }}
                             onMouseLeave={(e) => {
                               e.target.style.transform = 'translateY(0)';
                               e.target.style.boxShadow = 'none';
+                              e.target.style.borderColor = '#e9ecef';
                             }}>
                               <div className="text-center mb-3">
                                 <img 

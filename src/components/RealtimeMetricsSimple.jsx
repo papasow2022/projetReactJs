@@ -7,12 +7,15 @@ const RealtimeMetricsSimple = ({ compact = false }) => {
       padding: compact ? '0.5rem' : '1rem', 
       backgroundColor: '#f8f9fa', 
       borderRadius: '8px',
-      border: '1px solid #dee2e6'
+      border: '1px solid #dee2e6',
+      width: '100%',
+      boxSizing: 'border-box',
+      overflow: 'hidden'
     }}>
       <h4 style={{ margin: 0, fontSize: compact ? '0.9rem' : '1.1rem' }}>
         Métriques Temps Réel
       </h4>
-      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: compact ? '0.5rem' : '1rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
         <div>
           <small style={{ color: '#666' }}>Commandes</small>
           <div style={{ fontWeight: 'bold', color: '#28a745' }}>24</div>

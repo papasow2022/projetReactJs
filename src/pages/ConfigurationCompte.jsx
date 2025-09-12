@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth.jsx';
+import { useVendor } from '../contexts/VendorContext';
 import { 
   BiArrowBack, 
   BiEdit, 
@@ -14,14 +16,18 @@ import {
 } from 'react-icons/bi';
 
 const ConfigurationCompte = () => {
+  const { user } = useAuth();
+  const { updateVendor, addVendorNotification } = useVendor();
   const [activeTab, setActiveTab] = useState('bancaire');
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     // Informations bancaires
+    payoutMethod: 'bank', // 'bank' | 'mobile'
     banque: 'Société Générale',
     iban: 'FR76 3000 1000 0000 0000 0000 000',
     bic: 'SOGEFRPP',
     titulaire: 'Jean Dupont',
+    justificatifRib: null,
     
     // Informations fiscales
     siret: '123 456 789 00012',
@@ -46,8 +52,52 @@ const ConfigurationCompte = () => {
     emailCommandes: true,
     emailStocks: true,
     emailEvaluations: true,
-    smsUrgent: false
+    smsUrgent: false,
+
+    // Mobile Money
+    mmNumero: '',
+    mmOperateur: '',
+    mmJustificatif: null
   });
+
+  // Charger les données réelles du vendeur pour préremplir
+  React.useEffect(() => {
+    try {
+      const vendorId = user?.vendorId;
+      if (!vendorId) return;
+      const vendors = JSON.parse(localStorage.getItem('vendors') || '{}');
+      const v = vendors[vendorId];
+      if (!v) return;
+      const infos = v.informations || {};
+      const ent = infos.entreprise || {};
+      const payout = v.payout || {};
+
+      setFormData(prev => ({
+        ...prev,
+        // Bancaire / Mobile
+        payoutMethod: payout.method || (payout.mobileMoney ? 'mobile' : 'bank'),
+        banque: payout.banqueNom || prev.banque,
+        iban: payout.iban || prev.iban,
+        bic: payout.bic || prev.bic,
+        titulaire: payout.titulaireCompte || prev.titulaire,
+        justificatifRib: payout.justificatifRib || null,
+        mmNumero: payout.mobileMoney?.numero || '',
+        mmOperateur: payout.mobileMoney?.operateur || '',
+        mmJustificatif: payout.mobileMoney?.justificatif || null,
+        // Fiscal
+        siret: ent.siret || prev.siret,
+        tva: infos.numeroTaxe || prev.tva,
+        regimeFiscal: ent.regimeFiscal || prev.regimeFiscal,
+        // Contact
+        email: infos.email || prev.email,
+        telephone: infos.telephone || prev.telephone,
+        adresse: infos.adresse || prev.adresse,
+        ville: infos.ville || prev.ville,
+        codePostal: infos.codePostal || prev.codePostal,
+        pays: infos.pays || prev.pays
+      }));
+    } catch (_) {}
+  }, [user]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -56,10 +106,110 @@ const ConfigurationCompte = () => {
     }));
   };
 
+  const handleFileChange = async (field, file) => {
+    if (!file) {
+      setFormData(prev => ({ ...prev, [field]: null }));
+      return;
+    }
+    const maxBytes = 5 * 1024 * 1024;
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (file.size > maxBytes || (file.type && !allowed.includes(file.type))) {
+      alert('Fichier invalide (PDF/JPG/PNG, max 5MB).');
+      return;
+    }
+    try {
+      const reader = new FileReader();
+      const dataUrl = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      setFormData(prev => ({ ...prev, [field]: { name: file.name, type: file.type, size: file.size, dataUrl } }));
+    } catch (_) {
+      setFormData(prev => ({ ...prev, [field]: { name: file.name, type: file.type, size: file.size } }));
+    }
+  };
+
   const handleSave = () => {
     setIsEditing(false);
-    // Ici on pourrait ajouter une API call pour sauvegarder
-    alert('Configuration sauvegardée avec succès !');
+    try {
+      const vendorId = user?.vendorId;
+      if (vendorId) {
+        const vendors = JSON.parse(localStorage.getItem('vendors') || '{}');
+        const current = vendors[vendorId] || {};
+        const newPayout = formData.payoutMethod === 'bank' ? {
+          method: 'bank',
+          titulaireCompte: formData.titulaire,
+          iban: formData.iban,
+          bic: formData.bic,
+          banqueNom: formData.banque,
+          banquePays: current?.payout?.banquePays || 'Guinée',
+          justificatifRib: formData.justificatifRib || current?.payout?.justificatifRib || null,
+          mobileMoney: null
+        } : {
+          method: 'mobile',
+          titulaireCompte: formData.titulaire || current?.payout?.titulaireCompte || '',
+          iban: '',
+          bic: '',
+          banqueNom: '',
+          banquePays: current?.payout?.banquePays || '',
+          justificatifRib: null,
+          mobileMoney: {
+            numero: formData.mmNumero,
+            operateur: formData.mmOperateur,
+            justificatif: formData.mmJustificatif || current?.payout?.mobileMoney?.justificatif || null
+          }
+        };
+
+        const updatedVerification = {
+          ...(current.verification || {}),
+          bank: {
+            status: 'needs_more_info',
+            updatedAt: new Date().toISOString(),
+            actor: user?.email || 'vendeur',
+            notes: 'Changement des coordonnées via Paramètres de la boutique'
+          },
+          tax: {
+            status: 'needs_more_info',
+            updatedAt: new Date().toISOString(),
+            actor: user?.email || 'vendeur',
+            notes: 'Mise à jour des informations fiscales via Paramètres de la boutique'
+          }
+        };
+
+        const updatedInformations = {
+          ...(current.informations || {}),
+          email: formData.email || current.informations?.email,
+          telephone: formData.telephone || current.informations?.telephone,
+          adresse: formData.adresse || current.informations?.adresse,
+          ville: formData.ville || current.informations?.ville,
+          codePostal: formData.codePostal || current.informations?.codePostal,
+          pays: formData.pays || current.informations?.pays,
+          numeroTaxe: formData.tva || current.informations?.numeroTaxe,
+          entreprise: {
+            ...(current.informations?.entreprise || {}),
+            siret: formData.siret || current.informations?.entreprise?.siret,
+            regimeFiscal: formData.regimeFiscal || current.informations?.entreprise?.regimeFiscal,
+            nom: current.informations?.entreprise?.nom || ''
+          }
+        };
+
+        updateVendor(vendorId, { payout: newPayout, verification: updatedVerification, informations: updatedInformations });
+        addVendorNotification(vendorId, {
+          type: 'status',
+          title: 'Mise à jour des coordonnées de versement',
+          message: 'Vos nouvelles coordonnées ont été soumises. En attente de revalidation.'
+        });
+        addVendorNotification(vendorId, {
+          type: 'status',
+          title: 'Mise à jour des informations fiscales',
+          message: 'Vos informations fiscales ont été mises à jour. En attente de revalidation.'
+        });
+      }
+      alert('Configuration sauvegardée. En attente de revalidation Bancaire.');
+    } catch (_) {
+      alert('Erreur lors de la sauvegarde.');
+    }
   };
 
   const tabs = [
@@ -81,10 +231,10 @@ const ConfigurationCompte = () => {
             </Link>
             <div>
               <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: '600', color: '#232f3e' }}>
-                Configuration du compte
+                Paramètres de la boutique
               </h1>
               <p style={{ margin: '0.5rem 0 0 0', color: '#666', fontSize: '0.9rem' }}>
-                Gérez vos paramètres de compte vendeur
+                Logo, bannières, politiques, livraison et notifications
               </p>
             </div>
           </div>
@@ -197,83 +347,126 @@ const ConfigurationCompte = () => {
 
           {/* Informations bancaires */}
           {activeTab === 'bancaire' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                  Nom de la banque
-                </label>
-                <input
-                  type="text"
-                  value={formData.banque}
-                  onChange={(e) => handleInputChange('banque', e.target.value)}
-                  disabled={!isEditing}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    backgroundColor: isEditing ? 'white' : '#f8f9fa'
-                  }}
-                />
+            <>
+              <div style={{ marginBottom: '1rem' }}>
+                <label className="form-label" style={{ fontWeight: 600 }}>Mode de versement</label>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="radio" name="payoutMethod" checked={formData.payoutMethod === 'bank'} onChange={() => isEditing && handleInputChange('payoutMethod', 'bank')} />
+                    Virement bancaire
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="radio" name="payoutMethod" checked={formData.payoutMethod === 'mobile'} onChange={() => isEditing && handleInputChange('payoutMethod', 'mobile')} />
+                    Mobile Money
+                  </label>
+                </div>
+                <small className="text-muted">Tout changement de mode peut nécessiter une revalidation par l'admin.</small>
               </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                  IBAN
-                </label>
-                <input
-                  type="text"
-                  value={formData.iban}
-                  onChange={(e) => handleInputChange('iban', e.target.value)}
-                  disabled={!isEditing}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    backgroundColor: isEditing ? 'white' : '#f8f9fa'
-                  }}
-                />
-              </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                  BIC/SWIFT
-                </label>
-                <input
-                  type="text"
-                  value={formData.bic}
-                  onChange={(e) => handleInputChange('bic', e.target.value)}
-                  disabled={!isEditing}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    backgroundColor: isEditing ? 'white' : '#f8f9fa'
-                  }}
-                />
-              </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                  Titulaire du compte
-                </label>
-                <input
-                  type="text"
-                  value={formData.titulaire}
-                  onChange={(e) => handleInputChange('titulaire', e.target.value)}
-                  disabled={!isEditing}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    backgroundColor: isEditing ? 'white' : '#f8f9fa'
-                  }}
-                />
-              </div>
-            </div>
+
+              {formData.payoutMethod === 'bank' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                      Nom de la banque
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.banque}
+                      onChange={(e) => handleInputChange('banque', e.target.value)}
+                      disabled={!isEditing}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        backgroundColor: isEditing ? 'white' : '#f8f9fa'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                      IBAN / RIB
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.iban}
+                      onChange={(e) => handleInputChange('iban', e.target.value)}
+                      disabled={!isEditing}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        backgroundColor: isEditing ? 'white' : '#f8f9fa'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                      BIC/SWIFT
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.bic}
+                      onChange={(e) => handleInputChange('bic', e.target.value)}
+                      disabled={!isEditing}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        backgroundColor: isEditing ? 'white' : '#f8f9fa'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                      Titulaire du compte
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.titulaire}
+                      onChange={(e) => handleInputChange('titulaire', e.target.value)}
+                      disabled={!isEditing}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        backgroundColor: isEditing ? 'white' : '#f8f9fa'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Justificatif (RIB/attestation)</label>
+                    <input type="file" disabled={!isEditing} onChange={(e)=> handleFileChange('justificatifRib', e.target.files && e.target.files[0])} />
+                    {formData.justificatifRib?.name && <small className="text-muted" style={{ display:'block' }}>{formData.justificatifRib.name}</small>}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Numéro Mobile Money</label>
+                    <input type="text" value={formData.mmNumero} onChange={(e)=> handleInputChange('mmNumero', e.target.value)} disabled={!isEditing} style={{ width:'100%', padding:'0.75rem', border:'1px solid #ddd', borderRadius:4, backgroundColor: isEditing ? 'white' : '#f8f9fa' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Opérateur</label>
+                    <select value={formData.mmOperateur} onChange={(e)=> handleInputChange('mmOperateur', e.target.value)} disabled={!isEditing} style={{ width:'100%', padding:'0.75rem', border:'1px solid #ddd', borderRadius:4, backgroundColor: isEditing ? 'white' : '#f8f9fa' }}>
+                      <option value="">Sélectionner</option>
+                      <option value="Orange Money">Orange Money</option>
+                      <option value="MTN Mobile Money">MTN Mobile Money</option>
+                      <option value="Moov">Moov</option>
+                      <option value="Wave">Wave</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Justificatif Mobile Money</label>
+                    <input type="file" disabled={!isEditing} onChange={(e)=> handleFileChange('mmJustificatif', e.target.files && e.target.files[0])} />
+                    {formData.mmJustificatif?.name && <small className="text-muted" style={{ display:'block' }}>{formData.mmJustificatif.name}</small>}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Informations fiscales */}

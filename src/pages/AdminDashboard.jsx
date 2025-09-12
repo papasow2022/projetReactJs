@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAudit } from '../contexts/AuditContext';
+import { useProducts } from '../contexts/ProductsContext';
+import { useVendor } from '../contexts/VendorContext';
 import { 
   BiUser, 
   BiPackage, 
@@ -16,10 +18,15 @@ import {
   BiXCircle,
   BiInfoCircle,
   BiCalendar,
-  BiDollar
+  BiDollar,
+  BiGift,
+  BiBrain,
+  BiTime
 } from 'react-icons/bi';
 
 export default function AdminDashboard() {
+  const { allProducts } = useProducts();
+  const { vendors, lastUpdate } = useVendor();
   const [stats, setStats] = useState({
     totalVendors: 0,
     activeVendors: 0,
@@ -36,12 +43,62 @@ export default function AdminDashboard() {
   const [recentActivity, setRecentActivity] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [user, setUser] = useState(null);
-  const { addAuditEntry } = useAudit();
+  const { addAuditEntry, entries } = useAudit();
+
+  useEffect(() => {
+    loadUser();
+  }, []);
 
   useEffect(() => {
     loadDashboardData();
-    loadUser();
-  }, []);
+  }, [entries, vendors, allProducts]);
+
+  // Mettre à jour les statistiques dynamiquement depuis les contextes
+  useEffect(() => {
+    // Statistiques des produits
+    const totalProducts = Array.isArray(allProducts) ? allProducts.length : 0;
+    const pendingProducts = Array.isArray(allProducts) ? allProducts.filter(p => p.status === 'pending').length : 0;
+    
+    // Statistiques des vendeurs
+    const vendorList = Object.values(vendors || {});
+    const totalVendors = vendorList.length;
+    const activeVendors = vendorList.filter(v => v.status === 'approved' || !v.status).length; // Inclure les vendeurs sans statut
+    const pendingVendors = vendorList.filter(v => v.status === 'pending').length;
+    
+    
+    // Statistiques des commandes (depuis localStorage)
+    const allOrders = [];
+    try {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      users.forEach(user => {
+        const userOrders = JSON.parse(localStorage.getItem(`commandes_${user.email}`) || '[]');
+        allOrders.push(...userOrders);
+      });
+    } catch (e) {
+      console.error('Erreur chargement commandes:', e);
+    }
+    
+    const totalOrders = allOrders.length;
+    const totalRevenue = allOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+    
+    setStats(prev => ({ 
+      ...prev, 
+      totalVendors,
+      activeVendors,
+      pendingVendors,
+      totalProducts, 
+      pendingProducts,
+      totalOrders,
+      totalRevenue
+    }));
+    
+    // Mettre à jour les notifications
+    setNotifications(prev => [
+      { id: 1, message: `${pendingVendors} vendeurs en attente de validation`, type: pendingVendors > 0 ? 'warning' : 'info', time: 'Maintenant' },
+      { id: 2, message: `${pendingProducts} produits en attente de modération`, type: pendingProducts > 0 ? 'warning' : 'info', time: 'Maintenant' },
+      { id: 3, message: `${totalOrders} commandes totales`, type: 'info', time: 'Maintenant' }
+    ]);
+  }, [allProducts, vendors]);
 
   const loadUser = () => {
     const storedUser = localStorage.getItem('user');
@@ -52,41 +109,39 @@ export default function AdminDashboard() {
 
 
   const loadDashboardData = () => {
-    // Simuler des données de test
-    setStats({
-      totalVendors: 45,
-      activeVendors: 38,
-      pendingVendors: 7,
-      totalProducts: 1250,
-      pendingProducts: 23,
-      totalOrders: 3420,
-      totalRevenue: 125450.75,
-      totalReviews: 2890,
-      pendingReviews: 12,
-      totalCommissions: 18767.61
+    // Charger l'activité récente depuis l'audit
+    const recentAuditEntries = entries.slice(0, 5).map(entry => {
+      const timeAgo = new Date(entry.createdAt);
+      const now = new Date();
+      const diffHours = Math.floor((now - timeAgo) / (1000 * 60 * 60));
+      const timeStr = diffHours < 1 ? 'Maintenant' : `${diffHours}h`;
+      
+      return {
+        type: entry.subject?.type || 'system',
+        message: typeof entry.details === 'object' && entry.details !== null 
+          ? `${entry.details.productName || 'Produit'} - ${entry.details.vendor || 'Vendeur'}` 
+          : entry.details || 'Action système',
+        time: timeStr,
+        status: entry.action.includes('approve') ? 'success' : 
+                entry.action.includes('reject') ? 'warning' : 'info'
+      };
     });
-
-    setRecentActivity([
-      { type: 'vendor', message: 'Nouveau vendeur en attente de validation', time: '2h', status: 'pending' },
-      { type: 'product', message: 'Produit signalé par un utilisateur', time: '4h', status: 'warning' },
-      { type: 'order', message: 'Commande importante reçue', time: '6h', status: 'success' },
-      { type: 'review', message: 'Avis inapproprié signalé', time: '8h', status: 'warning' }
-    ]);
-
-    setNotifications([
-      { id: 1, message: '7 vendeurs en attente de validation', type: 'warning', time: '2h' },
-      { id: 2, message: '23 produits en attente de modération', type: 'info', time: '4h' },
-      { id: 3, message: '12 avis en attente de modération', type: 'info', time: '6h' }
-    ]);
+    
+    setRecentActivity(recentAuditEntries);
   };
 
   const quickActions = [
-    { title: 'Gérer les vendeurs', icon: BiUser, link: '/admin/vendors', color: 'primary', count: stats.pendingVendors },
+    { title: 'Gérer les vendeurs', icon: BiUser, link: '/admin/vendors', color: 'primary', count: stats.totalVendors },
     { title: 'Modérer les produits', icon: BiPackage, link: '/admin/products', color: 'warning', count: stats.pendingProducts },
     { title: 'Gérer les commandes', icon: BiShoppingBag, link: '/admin/orders', color: 'success' },
     { title: 'Modérer les avis', icon: BiStar, link: '/admin/reviews', color: 'info', count: stats.pendingReviews },
     { title: 'Gérer les paiements', icon: BiCreditCard, link: '/admin/payments', color: 'secondary' },
     { title: 'Analytics', icon: BiBarChart, link: '/admin/analytics', color: 'dark' },
+    { title: 'Analytics Avancés', icon: BiBarChart, link: '/admin/advanced-analytics', color: 'dark' },
+    { title: 'Gestion Inventaire', icon: BiPackage, link: '/admin/inventory', color: 'info' },
+    { title: 'Promotions & Coupons', icon: BiGift, link: '/admin/promotions', color: 'success' },
+    { title: 'Gestion Logistique', icon: BiPackage, link: '/admin/logistics', color: 'info' },
+    { title: 'IA & Recommandations', icon: BiBrain, link: '/admin/ai-recommendations', color: 'primary' },
     { title: 'Support client', icon: BiSupport, link: '/admin/support', color: 'danger' },
     { title: 'Configuration', icon: BiCog, link: '/admin/settings', color: 'light' },
     // Afficher "Gestion utilisateurs" seulement si l'utilisateur est superadmin
@@ -110,6 +165,12 @@ export default function AdminDashboard() {
             <BiTrendingUp className="me-2" />
             Rapport quotidien
           </button>
+          {lastUpdate && (
+            <small className="text-muted d-flex align-items-center">
+              <BiTime className="me-1" />
+              Dernière MAJ: {lastUpdate.toLocaleTimeString()}
+            </small>
+          )}
         </div>
       </div>
 
@@ -220,7 +281,7 @@ export default function AdminDashboard() {
                           </div>
                           <h6 className="card-title mt-3 mb-2">{action.title}</h6>
                           <p className="card-text text-muted small mb-0">
-                            {action.count ? `${action.count} en attente` : 'Gérer et surveiller'}
+                            {action.count ? (action.title === 'Gérer les vendeurs' ? `${action.count} vendeurs` : `${action.count} en attente`) : 'Gérer et surveiller'}
                           </p>
                         </div>
                       </div>

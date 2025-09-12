@@ -1,9 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Création du contexte
 const ProductsContext = createContext();
 
-// Hook personnalisé pour utiliser le contexte
 export const useProducts = () => {
   const context = useContext(ProductsContext);
   if (!context) {
@@ -12,101 +10,180 @@ export const useProducts = () => {
   return context;
 };
 
-// Provider du contexte
 export const ProductsProvider = ({ children }) => {
   const [allProducts, setAllProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [channel] = useState(() => {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try { return new BroadcastChannel('products_channel'); } catch { return null; }
+    }
+    return null;
+  });
 
   useEffect(() => {
     loadAllProducts();
   }, []);
 
-  const loadAllProducts = () => {
-    try {
-      // Récupérer les produits existants
-      const vendorsProducts = JSON.parse(localStorage.getItem('vendorsProducts') || '{}');
-      const allProductsArray = [];
+  // Ecouter les changements depuis d'autres onglets/pages et recharger automatiquement
+  useEffect(() => {
+    function onStorage(e) {
+      if (e.key === 'vendorsProducts') {
+        loadAllProducts();
+      }
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', onStorage);
+    }
+    let onMessage;
+    if (channel) {
+      onMessage = (e) => {
+        if (e?.data === 'vendorsProducts_updated') {
+          loadAllProducts();
+        }
+      };
+      channel.addEventListener('message', onMessage);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', onStorage);
+      }
+      if (channel && onMessage) {
+        channel.removeEventListener('message', onMessage);
+      }
+    };
+  }, [channel]);
 
-      // Convertir l'objet en tableau
-      Object.values(vendorsProducts).forEach(vendorProducts => {
+  const loadAllProducts = async () => {
+    setLoading(true);
+    try {
+      // 1) Produits backend (via API)
+      let backendProducts = [];
+      try {
+        const res = await fetch('/api/products');
+        if (res.ok) {
+          backendProducts = await res.json();
+        }
+      } catch {}
+
+      // 2) Récupérer les produits existants des vendeurs (local fallback)
+      const vendorsProductsLocal = JSON.parse(localStorage.getItem('vendorsProducts') || '{}');
+      const vendorLocalArray = [];
+      Object.values(vendorsProductsLocal).forEach(vendorProducts => {
         if (Array.isArray(vendorProducts)) {
-          allProductsArray.push(...vendorProducts);
+          vendorLocalArray.push(...vendorProducts);
         }
       });
 
-      // Nouveaux produits de chaussures ajoutés depuis Chaussures.jsx pour la cohérence
-      const mockProducts = [
-        { id: 'nike-air-jordan-1-blanc', name: 'Nike Air Jordan 1', brand: 'Nike', price: 200000, rating: 4.8, reviewCount: 312, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Nike/blanc/nike-air-jordan-1-blanc.jpg', slug: 'nike-air-jordan-1-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 200000, discount: 0, description: 'Découvrez la paire de Nike Air Jordan 1, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style basket.' },
-        { id: 'nike-air-max-270-blanc', name: 'Nike Air Max 270', brand: 'Nike', price: 250000, rating: 4.5, reviewCount: 89, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Nike/blanc/nike-air-max-270-blanc.jpg', slug: 'nike-air-max-270-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 250000, discount: 0, description: 'Découvrez la paire de Nike Air Max 270, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style running.' },
-        { id: 'nike-dunk-low-blanc', name: 'Nike Dunk Low', brand: 'Nike', price: 180000, rating: 4.4, reviewCount: 98, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Nike/blanc/nike-dunk-low-blanc.jpg', slug: 'nike-dunk-low-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 180000, discount: 0, description: 'Découvrez la paire de Nike Dunk Low, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style basket.' },
-        { id: 'nike-zoom-fly-4-blanc', name: 'Nike Zoom Fly 4', brand: 'Nike', price: 220000, rating: 4.3, reviewCount: 67, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Nike/blanc/nike-zoom-fly-4-blanc.jpg', slug: 'nike-zoom-fly-4-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 220000, discount: 0, description: 'Découvrez la paire de Nike Zoom Fly 4, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style running.' },
-        { id: 'nike-air-jordan-1-noire', name: 'Nike Air Jordan 1 Noire', brand: 'Nike', price: 200000, rating: 4.8, reviewCount: 312, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Nike/noire/nike-air-jordan-1-noir.jpg', slug: 'nike-air-jordan-1-noire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 200000, discount: 0, description: 'Découvrez la paire de Nike Air Jordan 1 Noire, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style basket.' },
-        { id: 'nike-air-max-270-noire', name: 'Nike Air Max 270 Noire', brand: 'Nike', price: 250000, rating: 4.5, reviewCount: 89, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Nike/noire/nike-air-max-270-noir.jpg', slug: 'nike-air-max-270-noire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 250000, discount: 0, description: 'Découvrez la paire de Nike Air Max 270 Noire, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style running.' },
-        { id: 'nike-dunk-low-noire', name: 'Nike Dunk Low Noire', brand: 'Nike', price: 180000, rating: 4.4, reviewCount: 98, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Nike/noire/nike-dunk-low-noir.jpg', slug: 'nike-dunk-low-noire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 180000, discount: 0, description: 'Découvrez la paire de Nike Dunk Low Noire, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style basket.' },
-        { id: 'nike-zoom-fly-4-noire', name: 'Nike Zoom Fly 4 Noire', brand: 'Nike', price: 220000, rating: 4.3, reviewCount: 67, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Nike/noire/nike-zoom-fly-4-noir.jpg', slug: 'nike-zoom-fly-4-noire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 220000, discount: 0, description: 'Découvrez la paire de Nike Zoom Fly 4 Noire, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style running.' },
-        { id: 'nike-air-jordan-1-vertolive', name: 'Nike Air Jordan 1 Vertolive', brand: 'Nike', price: 200000, rating: 4.8, reviewCount: 312, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Nike/vertolive/nike-air-jordan-1-vertolive.jpg', slug: 'nike-air-jordan-1-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 200000, discount: 0, description: 'Découvrez la paire de Nike Air Jordan 1 Vertolive, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style basket.' },
-        { id: 'nike-air-max-270-vertolive', name: 'Nike Air Max 270 Vertolive', brand: 'Nike', price: 250000, rating: 4.5, reviewCount: 89, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Nike/vertolive/nike-air-max-270-vertolive.jpg', slug: 'nike-air-max-270-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 250000, discount: 0, description: 'Découvrez la paire de Nike Air Max 270 Vertolive, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style running.' },
-        { id: 'nike-dunk-low-vertolive', name: 'Nike Dunk Low Vertolive', brand: 'Nike', price: 180000, rating: 4.4, reviewCount: 98, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Nike/vertolive/nike-dunk-low-vertolive.jpg', slug: 'nike-dunk-low-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 180000, discount: 0, description: 'Découvrez la paire de Nike Dunk Low Vertolive, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style basket.' },
-        { id: 'nike-zoom-fly-4-vertolive', name: 'Nike Zoom Fly 4 Vertolive', brand: 'Nike', price: 220000, rating: 4.3, reviewCount: 67, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Nike/vertolive/nike-zoom-fly-4-vertolive.jpg', slug: 'nike-zoom-fly-4-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'nike-store', name: 'Nike Store', rating: 4.8, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 220000, discount: 0, description: 'Découvrez la paire de Nike Zoom Fly 4 Vertolive, une chaussure de qualité supérieure de la marque Nike. Idéale pour le homme et le style running.' },
-        { id: 'balenciaga-defender-blanc', name: 'Balenciaga Defender', brand: 'Balenciaga', price: 450000, rating: 4.9, reviewCount: 156, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Balanciaga/Blanc/balenciaga-defender-blanc.jpg', slug: 'balenciaga-defender-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 450000, discount: 0, description: 'Découvrez la paire de Balenciaga Defender, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style basket.' },
-        { id: 'balenciaga-speed-blanc', name: 'Balenciaga Speed', brand: 'Balenciaga', price: 480000, rating: 4.7, reviewCount: 89, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Balanciaga/Blanc/balenciaga-speed-blanc.jpg', slug: 'balenciaga-speed-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 480000, discount: 0, description: 'Découvrez la paire de Balenciaga Speed, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style running.' },
-        { id: 'balenciaga-track-blanc', name: 'Balenciaga Track', brand: 'Balenciaga', price: 520000, rating: 4.8, reviewCount: 234, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Balanciaga/Blanc/balenciaga-track-blanc.jpg', slug: 'balenciaga-track-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 520000, discount: 0, description: 'Découvrez la paire de Balenciaga Track, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style basket.' },
-        { id: 'balenciaga-triple-s-blanc', name: 'Balenciaga Triple S', brand: 'Balenciaga', price: 550000, rating: 4.9, reviewCount: 178, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Balanciaga/Blanc/balenciaga-triple-s-blanc.jpg', slug: 'balenciaga-triple-s-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 550000, discount: 0, description: 'Découvrez la paire de Balenciaga Triple S, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style basket.' },
-        { id: 'balenciaga-triple-s-noire', name: 'Balenciaga Triple S Noire', brand: 'Balenciaga', price: 550000, rating: 4.9, reviewCount: 178, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Balanciaga/Noire/balenciaga-triple-s-noire.jpg', slug: 'balenciaga-triple-s-noire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 550000, discount: 0, description: 'Découvrez la paire de Balenciaga Triple S Noire, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style basket.' },
-        { id: 'balenciaga-track-noire', name: 'Balenciaga Track Noire', brand: 'Balenciaga', price: 520000, rating: 4.8, reviewCount: 234, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Balanciaga/Noire/balenciaga-track-noire.jpg', slug: 'balenciaga-track-noire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 520000, discount: 0, description: 'Découvrez la paire de Balenciaga Track Noire, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style basket.' },
-        { id: 'balenciaga-speed-noire', name: 'Balenciaga Speed Noire', brand: 'Balenciaga', price: 480000, rating: 4.7, reviewCount: 89, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Balanciaga/Noire/balenciaga-speed-noire.jpg', slug: 'balenciaga-speed-noire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 480000, discount: 0, description: 'Découvrez la paire de Balenciaga Speed Noire, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style running.' },
-        { id: 'balenciaga-defender-noire', name: 'Balenciaga Defender Noire', brand: 'Balenciaga', price: 450000, rating: 4.9, reviewCount: 156, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Balanciaga/Noire/balenciaga-defender-noire.jpg', slug: 'balenciaga-defender-noire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 450000, discount: 0, description: 'Découvrez la paire de Balenciaga Defender Noire, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style basket.' },
-        { id: 'balenciaga-triple-s-vertolive', name: 'Balenciaga Triple S Vertolive', brand: 'Balenciaga', price: 550000, rating: 4.9, reviewCount: 178, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Balanciaga/Vertolive/balenciaga-triple-s-vertolive.jpg', slug: 'balenciaga-triple-s-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 550000, discount: 0, description: 'Découvrez la paire de Balenciaga Triple S Vertolive, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style basket.' },
-        { id: 'balenciaga-track-vertolive', name: 'Balenciaga Track Vertolive', brand: 'Balenciaga', price: 520000, rating: 4.8, reviewCount: 234, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Balanciaga/Vertolive/balenciaga-track-vertolive.jpg', slug: 'balenciaga-track-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 520000, discount: 0, description: 'Découvrez la paire de Balenciaga Track Vertolive, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style basket.' },
-        { id: 'balenciaga-speed-vertolive', name: 'Balenciaga Speed Vertolive', brand: 'Balenciaga', price: 480000, rating: 4.7, reviewCount: 89, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Balanciaga/Vertolive/balenciaga-speed-vertolive.jpg', slug: 'balenciaga-speed-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 480000, discount: 0, description: 'Découvrez la paire de Balenciaga Speed Vertolive, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style running.' },
-        { id: 'balenciaga-defender-vertolive', name: 'Balenciaga Defender Vertolive', brand: 'Balenciaga', price: 450000, rating: 4.9, reviewCount: 156, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Balanciaga/Vertolive/balenciaga-defender-vertolive.jpg', slug: 'balenciaga-defender-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'balenciaga-store', name: 'Balenciaga Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 450000, discount: 0, description: 'Découvrez la paire de Balenciaga Defender Vertolive, une chaussure de qualité supérieure de la marque Balenciaga. Idéale pour le homme et le style basket.' },
-        { id: 'puma-rs-x-blanc', name: 'Puma RS-X', brand: 'Puma', price: 180000, rating: 4.6, reviewCount: 145, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Puma/Blanc/puma-rs-x-blanc.jpg', slug: 'puma-rs-x-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 180000, discount: 0, description: 'Découvrez la paire de Puma RS-X, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style basket.' },
-        { id: 'puma-cali-sport-blanc', name: 'Puma Cali Sport', brand: 'Puma', price: 160000, rating: 4.4, reviewCount: 98, category: 'Chaussures', subcategory: 'homme', specificType: 'casual', image: '/chaussures/homme/Puma/Blanc/puma-cali-sport-blanc.jpg', slug: 'puma-cali-sport-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 160000, discount: 0, description: 'Découvrez la paire de Puma Cali Sport, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style casual.' },
-        { id: 'puma-future-rider-blanc', name: 'Puma Future Rider', brand: 'Puma', price: 170000, rating: 4.5, reviewCount: 112, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Puma/Blanc/puma-future-rider-blanc.jpg', slug: 'puma-future-rider-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 170000, discount: 0, description: 'Découvrez la paire de Puma Future Rider, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style running.' },
-        { id: 'puma-suede-classic-blanc', name: 'Puma Suede Classic', brand: 'Puma', price: 150000, rating: 4.3, reviewCount: 89, category: 'Chaussures', subcategory: 'homme', specificType: 'casual', image: '/chaussures/homme/Puma/Blanc/puma-suede-classic-blanc.jpg', slug: 'puma-suede-classic-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 150000, discount: 0, description: 'Découvrez la paire de Puma Suede Classic, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style casual.' },
-        { id: 'puma-rs-x-noir', name: 'Puma RS-X Noir', brand: 'Puma', price: 180000, rating: 4.6, reviewCount: 145, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Puma/Noir/puma-rs-x-noire.jpg', slug: 'puma-rs-x-noir', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 180000, discount: 0, description: 'Découvrez la paire de Puma RS-X Noir, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style basket.' },
-        { id: 'puma-cali-sport-noir', name: 'Puma Cali Sport Noir', brand: 'Puma', price: 160000, rating: 4.4, reviewCount: 98, category: 'Chaussures', subcategory: 'homme', specificType: 'casual', image: '/chaussures/homme/Puma/Noir/puma-cali-sport-noire.jpg', slug: 'puma-cali-sport-noir', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 160000, discount: 0, description: 'Découvrez la paire de Puma Cali Sport Noir, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style casual.' },
-        { id: 'puma-future-rider-noir', name: 'Puma Future Rider Noir', brand: 'Puma', price: 170000, rating: 4.5, reviewCount: 112, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Puma/Noir/puma-future-rider-noire.jpg', slug: 'puma-future-rider-noir', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 170000, discount: 0, description: 'Découvrez la paire de Puma Future Rider Noir, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style running.' },
-        { id: 'puma-suede-classic-noir', name: 'Puma Suede Classic Noir', brand: 'Puma', price: 150000, rating: 4.3, reviewCount: 89, category: 'Chaussures', subcategory: 'homme', specificType: 'casual', image: '/chaussures/homme/Puma/Noir/puma-suede-classic-noire.jpg', slug: 'puma-suede-classic-noir', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 150000, discount: 0, description: 'Découvrez la paire de Puma Suede Classic Noir, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style casual.' },
-        { id: 'puma-rs-x-vertolive', name: 'Puma RS-X Vertolive', brand: 'Puma', price: 180000, rating: 4.6, reviewCount: 145, category: 'Chaussures', subcategory: 'homme', specificType: 'basket', image: '/chaussures/homme/Puma/Vertolive/puma-rs-x-vertolive.jpg', slug: 'puma-rs-x-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 180000, discount: 0, description: 'Découvrez la paire de Puma RS-X Vertolive, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style basket.' },
-        { id: 'puma-cali-sport-vertolive', name: 'Puma Cali Sport Vertolive', brand: 'Puma', price: 160000, rating: 4.4, reviewCount: 98, category: 'Chaussures', subcategory: 'homme', specificType: 'casual', image: '/chaussures/homme/Puma/Vertolive/puma-cali-sport-vertolive.jpg', slug: 'puma-cali-sport-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 160000, discount: 0, description: 'Découvrez la paire de Puma Cali Sport Vertolive, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style casual.' },
-        { id: 'puma-future-rider-vertolive', name: 'Puma Future Rider Vertolive', brand: 'Puma', price: 170000, rating: 4.5, reviewCount: 112, category: 'Chaussures', subcategory: 'homme', specificType: 'running', image: '/chaussures/homme/Puma/Vertolive/puma-future-rider-vertolive.jpg', slug: 'puma-future-rider-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 170000, discount: 0, description: 'Découvrez la paire de Puma Future Rider Vertolive, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style running.' },
-        { id: 'puma-suede-classic-vertolive', name: 'Puma Suede Classic Vertolive', brand: 'Puma', price: 150000, rating: 4.3, reviewCount: 89, category: 'Chaussures', subcategory: 'homme', specificType: 'casual', image: '/chaussures/homme/Puma/Vertolive/puma-suede-classic-vertolive.jpg', slug: 'puma-suede-classic-vertolive', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'puma-store', name: 'Puma Store', rating: 4.6, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 150000, discount: 0, description: 'Découvrez la paire de Puma Suede Classic Vertolive, une chaussure de qualité supérieure de la marque Puma. Idéale pour le homme et le style casual.' },
-        { id: 'gucci-ace-blanc', name: 'Gucci Ace', brand: 'Gucci', price: 650000, rating: 4.9, reviewCount: 234, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Blanc/gucci-ace-blanc.jpg', slug: 'gucci-ace-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 650000, discount: 0, description: 'Découvrez la paire de Gucci Ace, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-        { id: 'gucci-rhyton-blanc', name: 'Gucci Rhyton', brand: 'Gucci', price: 720000, rating: 4.8, reviewCount: 189, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Blanc/gucci-rhyton-blanc.jpg', slug: 'gucci-rhyton-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 720000, discount: 0, description: 'Découvrez la paire de Gucci Rhyton, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-        { id: 'gucci-screener-blanc', name: 'Gucci Screener', brand: 'Gucci', price: 680000, rating: 4.7, reviewCount: 156, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Blanc/gucci-screener-blanc.jpg', slug: 'gucci-screener-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 680000, discount: 0, description: 'Découvrez la paire de Gucci Screener, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-        { id: 'gucci-tennis-blanc', name: 'Gucci Tennis', brand: 'Gucci', price: 590000, rating: 4.6, reviewCount: 98, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Blanc/gucci-tennis-blanc.jpg', slug: 'gucci-tennis-blanc', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 590000, discount: 0, description: 'Découvrez la paire de Gucci Tennis, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-        { id: 'gucci-ace-guccinoire', name: 'Gucci Ace Guccinoire', brand: 'Gucci', price: 650000, rating: 4.9, reviewCount: 234, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Guccinoire/gucci-ace-guccinoire.jpg', slug: 'gucci-ace-guccinoire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 650000, discount: 0, description: 'Découvrez la paire de Gucci Ace Guccinoire, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-        { id: 'gucci-rhyton-guccinoire', name: 'Gucci Rhyton Guccinoire', brand: 'Gucci', price: 720000, rating: 4.8, reviewCount: 189, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Guccinoire/gucci-rhyton-guccinoire.jpg', slug: 'gucci-rhyton-guccinoire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 720000, discount: 0, description: 'Découvrez la paire de Gucci Rhyton Guccinoire, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-        { id: 'gucci-screener-guccinoire', name: 'Gucci Screener Guccinoire', brand: 'Gucci', price: 680000, rating: 4.7, reviewCount: 156, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Guccinoire/gucci-screener-guccinoire.jpg', slug: 'gucci-screener-guccinoire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 680000, discount: 0, description: 'Découvrez la paire de Gucci Screener Guccinoire, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-        { id: 'gucci-tennis-guccinoire', name: 'Gucci Tennis Guccinoire', brand: 'Gucci', price: 590000, rating: 4.6, reviewCount: 98, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Guccinoire/gucci-tennis-guccinoire.jpg', slug: 'gucci-tennis-guccinoire', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 590000, discount: 0, description: 'Découvrez la paire de Gucci Tennis Guccinoire, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-        { id: 'gucci-ace-guccirose', name: 'Gucci Ace Guccirose', brand: 'Gucci', price: 650000, rating: 4.9, reviewCount: 234, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Guccirose/gucci-ace-guccirose.jpg', slug: 'gucci-ace-guccirose', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 650000, discount: 0, description: 'Découvrez la paire de Gucci Ace Guccirose, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-        { id: 'gucci-rhyton-guccirose', name: 'Gucci Rhyton Guccirose', brand: 'Gucci', price: 720000, rating: 4.8, reviewCount: 189, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Guccirose/gucci-rhyton-guccirose.jpg', slug: 'gucci-rhyton-guccirose', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 720000, discount: 0, description: 'Découvrez la paire de Gucci Rhyton Guccirose, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-        { id: 'gucci-screener-guccirose', name: 'Gucci Screener Guccirose', brand: 'Gucci', price: 680000, rating: 4.7, reviewCount: 156, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Guccirose/gucci-screener-guccirose.jpg', slug: 'gucci-screener-guccirose', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 680000, discount: 0, description: 'Découvrez la paire de Gucci Screener Guccirose, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-        { id: 'gucci-tennis-guccirose', name: 'Gucci Tennis Guccirose', brand: 'Gucci', price: 590000, rating: 4.6, reviewCount: 98, category: 'Chaussures', subcategory: 'homme', specificType: 'luxe', image: '/chaussures/homme/Gucci/Guccirose/gucci-tennis-guccirose.jpg', slug: 'gucci-tennis-guccirose', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: true, isNew: true, originalPrice: 590000, discount: 0, description: 'Découvrez la paire de Gucci Tennis Guccirose, une chaussure de qualité supérieure de la marque Gucci. Idéale pour le homme et le style luxe.' },
-
-        // Produits FEMME (utilise les images existantes sous public/chaussures/femme)
-        { id: 'zara-ankle-strap-heels-noir', name: 'Zara Ankle Strap Heels', brand: 'Zara', price: 220000, rating: 4.5, reviewCount: 120, category: 'Chaussures', subcategory: 'femme', specificType: 'talons', image: '/chaussures/femme/Zaranoire/Zara Ankle Strap Heels - Noir.jpeg', slug: 'zara-ankle-strap-heels-noir', availability: 'En stock', deliveryDate: 'Livraison rapide', seller: { id: 'zara-store', name: 'Zara Store', rating: 4.6, isVerified: true }, isPrime: true, promo: false, isNew: true, originalPrice: 220000, discount: 0, description: 'Talons élégants Zara pour femmes, parfaits pour les occasions.' },
-        { id: 'zara-classic-heels-noir', name: 'Zara Classic Heels', brand: 'Zara', price: 210000, rating: 4.4, reviewCount: 95, category: 'Chaussures', subcategory: 'femme', specificType: 'talons', image: '/chaussures/femme/Zaranoire/Zara Classic Heels - Noir.jpeg', slug: 'zara-classic-heels-noir', availability: 'En stock', deliveryDate: 'Livraison rapide', seller: { id: 'zara-store', name: 'Zara Store', rating: 4.6, isVerified: true }, isPrime: true, promo: false, isNew: false, originalPrice: 210000, discount: 0, description: 'Escarpins classiques Zara, confortables et stylés.' },
-        { id: 'minelli-escarpins-noir', name: 'Minelli Escarpins', brand: 'Minelli', price: 260000, rating: 4.6, reviewCount: 130, category: 'Chaussures', subcategory: 'femme', specificType: 'talons', image: '/chaussures/femme/Minelli/Minelli Escarpins - Noir.jpeg', slug: 'minelli-escarpins-noir', availability: 'En stock', deliveryDate: 'Livraison rapide', seller: { id: 'minelli-store', name: 'Minelli Store', rating: 4.7, isVerified: true }, isPrime: true, promo: true, isNew: false, originalPrice: 280000, discount: 20000, description: 'Escarpins Minelli au design épuré et chic.' },
-        { id: 'minelli-tulin-bottines-noir', name: 'Minelli Tulin Bottines', brand: 'Minelli', price: 240000, rating: 4.3, reviewCount: 88, category: 'Chaussures', subcategory: 'femme', specificType: 'bottines', image: '/chaussures/femme/Minelli/Minelli Tulin Bottines Talon - Noir.jpeg', slug: 'minelli-tulin-bottines-noir', availability: 'En stock', deliveryDate: 'Livraison rapide', seller: { id: 'minelli-store', name: 'Minelli Store', rating: 4.7, isVerified: true }, isPrime: true, promo: false, isNew: true, originalPrice: 240000, discount: 0, description: 'Bottines Minelli Tulin, talon confortable.' },
-        { id: 'mango-strappy-sandals-nude', name: 'Mango Strappy Sandals', brand: 'Mango', price: 190000, rating: 4.2, reviewCount: 76, category: 'Chaussures', subcategory: 'femme', specificType: 'sandales', image: '/chaussures/femme/Mango/Mango Strappy Sandals - Nude.jpeg', slug: 'mango-strappy-sandals-nude', availability: 'En stock', deliveryDate: 'Livraison rapide', seller: { id: 'mango-store', name: 'Mango Store', rating: 4.5, isVerified: true }, isPrime: true, promo: false, isNew: true, originalPrice: 190000, discount: 0, description: 'Sandales à brides Mango, look estival.' },
-        { id: 'jonak-bottines-western-marron', name: 'Jonak Bottines Western', brand: 'Jonak', price: 230000, rating: 4.4, reviewCount: 101, category: 'Chaussures', subcategory: 'femme', specificType: 'bottines', image: '/chaussures/femme/Jonak/Jonak Bottines Western Cuir Basama - Marron.jpeg', slug: 'jonak-bottines-western-marron', availability: 'En stock', deliveryDate: 'Livraison rapide', seller: { id: 'jonak-store', name: 'Jonak Store', rating: 4.5, isVerified: false }, isPrime: true, promo: false, isNew: false, originalPrice: 230000, discount: 0, description: 'Bottines western Jonak en cuir, tendance.' },
-        { id: 'prada-leather-platform-beige', name: 'Prada Leather Platform', brand: 'Prada', price: 820000, rating: 4.9, reviewCount: 210, category: 'Chaussures', subcategory: 'femme', specificType: 'luxe', image: '/chaussures/femme/PradaBeige/Prada Leather Platform Sandals - Beige.jpeg', slug: 'prada-leather-platform-beige', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'prada-store', name: 'Prada Store', rating: 4.9, isVerified: true }, isPrime: true, promo: false, isNew: true, originalPrice: 820000, discount: 0, description: 'Sandales plateformes en cuir Prada, haute couture.' },
-        { id: 'gucci-leather-sandals-noir', name: 'Gucci Leather Sandals', brand: 'Gucci', price: 700000, rating: 4.8, reviewCount: 175, category: 'Chaussures', subcategory: 'femme', specificType: 'luxe', image: '/chaussures/femme/Gucci/Gucci Leather Sandals - Noir.jpeg', slug: 'gucci-leather-sandals-noir', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'gucci-store', name: 'Gucci Store', rating: 4.9, isVerified: true }, isPrime: true, promo: false, isNew: false, originalPrice: 700000, discount: 0, description: 'Sandales en cuir Gucci, élégance intemporelle.' },
-        
-        // Christian Louboutin - Chaque produit a son propre identifiant unique basé sur l'image
-        { id: 'cl-escarpins-noir-001', name: 'Christian Louboutin Escarpins', brand: 'Christian Louboutin', price: 1250000, rating: 5.0, reviewCount: 280, category: 'Chaussures', subcategory: 'femme', specificType: 'luxe', image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg', imageId: 'cl-escarpins-noir-001', slug: 'christian-louboutin-escarpins-noir', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'louboutin-store', name: 'Louboutin Store', rating: 5.0, isVerified: true }, isPrime: true, promo: false, isNew: true, originalPrice: 1250000, discount: 0, description: 'Escarpins Christian Louboutin, design exclusif et élégant.' },
-        { id: 'cl-heels-classic-002', name: 'Christian Louboutin Heels - Classic', brand: 'Christian Louboutin', price: 1200000, rating: 5.0, reviewCount: 320, category: 'Chaussures', subcategory: 'femme', specificType: 'luxe', image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg', imageId: 'cl-heels-classic-002', slug: 'christian-louboutin-heels-classic', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'louboutin-store', name: 'Louboutin Store', rating: 5.0, isVerified: true }, isPrime: true, promo: false, isNew: true, originalPrice: 1200000, discount: 0, description: 'Escarpins Christian Louboutin, icône du luxe.' },
-        { id: 'cl-heels-collection-speciale-003', name: 'Christian Louboutin Heels - Collection Speciale', brand: 'Christian Louboutin', price: 1180000, rating: 4.9, reviewCount: 195, category: 'Chaussures', subcategory: 'femme', specificType: 'luxe', image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg', imageId: 'cl-heels-collection-speciale-003', slug: 'christian-louboutin-heels-collection-speciale', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'louboutin-store', name: 'Louboutin Store', rating: 5.0, isVerified: true }, isPrime: true, promo: false, isNew: false, originalPrice: 1180000, discount: 0, description: 'Heels Christian Louboutin, collection spéciale en édition limitée.' },
-        { id: 'cl-heels-edition-limitee-004', name: 'Christian Louboutin Heels - Edition Limitee', brand: 'Christian Louboutin', price: 1220000, rating: 4.8, reviewCount: 165, category: 'Chaussures', subcategory: 'femme', specificType: 'luxe', image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg', imageId: 'cl-heels-edition-limitee-004', slug: 'christian-louboutin-heels-edition-limitee', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'louboutin-store', name: 'Louboutin Store', rating: 5.0, isVerified: true }, isPrime: true, promo: false, isNew: true, originalPrice: 1220000, discount: 0, description: 'Heels Christian Louboutin, édition limitée avec détails exclusifs.' },
-        { id: 'cl-heels-design-exclusif-005', name: 'Christian Louboutin Heels - Design Exclusif', brand: 'Christian Louboutin', price: 1190000, rating: 4.9, reviewCount: 210, category: 'Chaussures', subcategory: 'femme', specificType: 'luxe', image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg', imageId: 'cl-heels-design-exclusif-005', slug: 'christian-louboutin-heels-design-exclusif', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'louboutin-store', name: 'Louboutin Store', rating: 5.0, isVerified: true }, isPrime: true, promo: false, isNew: false, originalPrice: 1190000, discount: 0, description: 'Heels Christian Louboutin, design exclusif et raffiné.' },
-        { id: 'cl-heels-collection-premium-006', name: 'Christian Louboutin Heels - Collection Premium', brand: 'Christian Louboutin', price: 1210000, rating: 4.8, reviewCount: 180, category: 'Chaussures', subcategory: 'femme', specificType: 'luxe', image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg', imageId: 'cl-heels-collection-premium-006', slug: 'christian-louboutin-heels-collection-premium', availability: 'En stock', deliveryDate: 'Livraison gratuite demain', seller: { id: 'louboutin-store', name: 'Louboutin Store', rating: 5.0, isVerified: true }, isPrime: true, promo: false, isNew: false, originalPrice: 1210000, discount: 0, description: 'Heels Christian Louboutin, collection premium avec finitions luxueuses.' }
+      // 3) Ajouter les produits Christian Louboutin (garantir présence initiale)
+      const christianLouboutinProducts = [
+        {
+          id: 'cl-escarpins-noir-001',
+          name: 'Christian Louboutin Escarpins',
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Escarpins.jpeg',
+          price: 1250000,
+          brand: 'Christian Louboutin',
+          category: 'Chaussures',
+          subcategory: 'femme',
+          status: 'approved',
+          visible: true,
+          rating: 4.8,
+          reviewCount: 12,
+          vendor: 'Boutique',
+          vendorId: 'christian-louboutin',
+          stock: 3,
+          description: 'Escarpins Christian Louboutin en cuir noir avec semelle rouge signature.'
+        },
+        {
+          id: 'cl-heels-classic-002',
+          name: 'Christian Louboutin Heels - Classic',
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Classic.jpeg',
+          price: 1200000,
+          brand: 'Christian Louboutin',
+          category: 'Chaussures',
+          subcategory: 'femme',
+          status: 'approved',
+          visible: true,
+          rating: 4.7,
+          reviewCount: 8,
+          vendor: 'Boutique',
+          vendorId: 'christian-louboutin',
+          stock: 2,
+          description: 'Talons hauts Christian Louboutin classiques en cuir noir.'
+        },
+        {
+          id: 'cl-heels-collection-speciale-003',
+          name: 'Christian Louboutin Heels - Collection Spéciale',
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Speciale.jpeg',
+          price: 1180000,
+          brand: 'Christian Louboutin',
+          category: 'Chaussures',
+          subcategory: 'femme',
+          status: 'approved',
+          visible: true,
+          rating: 4.6,
+          reviewCount: 5,
+          vendor: 'Boutique',
+          vendorId: 'christian-louboutin',
+          stock: 1,
+          description: 'Collection spéciale Christian Louboutin avec détails exclusifs.'
+        },
+        {
+          id: 'cl-heels-edition-limitee-004',
+          name: 'Christian Louboutin Heels - Édition Limitée',
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Edition Limitee.jpeg',
+          price: 1220000,
+          brand: 'Christian Louboutin',
+          category: 'Chaussures',
+          subcategory: 'femme',
+          status: 'approved',
+          visible: true,
+          rating: 4.9,
+          reviewCount: 3,
+          vendor: 'Boutique',
+          vendorId: 'christian-louboutin',
+          stock: 1,
+          description: 'Édition limitée Christian Louboutin avec finitions exceptionnelles.'
+        },
+        {
+          id: 'cl-heels-design-exclusif-005',
+          name: 'Christian Louboutin Heels - Design Exclusif',
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Design Exclusif.jpeg',
+          price: 1190000,
+          brand: 'Christian Louboutin',
+          category: 'Chaussures',
+          subcategory: 'femme',
+          status: 'approved',
+          visible: true,
+          rating: 4.5,
+          reviewCount: 7,
+          vendor: 'Boutique',
+          vendorId: 'christian-louboutin',
+          stock: 2,
+          description: 'Design exclusif Christian Louboutin avec motifs uniques.'
+        },
+        {
+          id: 'cl-heels-collection-premium-006',
+          name: 'Christian Louboutin Heels - Collection Premium',
+          image: '/chaussures/femme/CritianlouboutinNoire/Christian Louboutin Heels - Collection Premium.jpeg',
+          price: 1210000,
+          brand: 'Christian Louboutin',
+          category: 'Chaussures',
+          subcategory: 'femme',
+          status: 'approved',
+          visible: true,
+          rating: 4.8,
+          reviewCount: 4,
+          vendor: 'Boutique',
+          vendorId: 'christian-louboutin',
+          stock: 1,
+          description: 'Collection premium Christian Louboutin avec matériaux de luxe.'
+        }
       ];
 
-      // Fusionner les produits existants avec les produits mockés
-      setAllProducts([...allProductsArray, ...mockProducts]);
-      setLoading(false);
+      // 4) Fusionner (backend d'abord), puis local, puis seed CL
+      const merged = [...backendProducts, ...vendorLocalArray, ...christianLouboutinProducts];
+
+      setAllProducts(merged);
     } catch (error) {
       console.error('Erreur lors du chargement des produits:', error);
       setAllProducts([]);
@@ -115,40 +192,88 @@ export const ProductsProvider = ({ children }) => {
     }
   };
 
-  // Fonction pour ajouter un nouveau produit
-  const addProduct = (product, vendorId) => {
+  // Sauvegarde résiliente pour éviter le quota exceeded
+  const trySaveVendorsProducts = (vendorsProducts) => {
+    const save = (obj) => localStorage.setItem('vendorsProducts', JSON.stringify(obj));
+    const sanitize = (obj, aggressive = false) => {
+      const out = {};
+      Object.keys(obj).forEach(vId => {
+        const list = Array.isArray(obj[vId]) ? obj[vId] : [];
+        let trimmed = list.map(p => {
+          const np = { ...p };
+          if (typeof np.image === 'string' && np.image.startsWith('data:')) {
+            if (aggressive || np.image.length > 50000) np.image = null;
+          }
+          if (typeof np.description === 'string') {
+            np.description = np.description.slice(0, aggressive ? 300 : 1000);
+          }
+          // Eviter des champs volumineux non essentiels
+          if (np.images && Array.isArray(np.images)) {
+            np.images = np.images.slice(0, aggressive ? 1 : 4);
+          }
+          return np;
+        });
+        if (aggressive && trimmed.length > 500) trimmed = trimmed.slice(-500);
+        out[vId] = trimmed;
+      });
+      return out;
+    };
+    try {
+      save(vendorsProducts);
+      return { success: true };
+    } catch (e1) {
+      try {
+        const light = sanitize(vendorsProducts, false);
+        save(light);
+        return { success: true, sanitized: true };
+      } catch (e2) {
+        try {
+          const lighter = sanitize(vendorsProducts, true);
+          save(lighter);
+          return { success: true, sanitized: true, aggressive: true };
+        } catch (e3) {
+          console.error('Quota localStorage dépassé pour vendorsProducts:', e3);
+          return { success: false, error: 'quota_exceeded' };
+        }
+      }
+    }
+  };
+
+  const addProduct = async (product, vendorId) => {
+    // Essayer d'abord l'API backend
+    try {
+      const resp = await fetch(`/api/vendors/${vendorId}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product),
+      });
+      if (resp.ok) {
+        if (channel) channel.postMessage('vendorsProducts_updated');
+        await loadAllProducts();
+        return { success: true };
+      }
+    } catch {}
+
+    // Fallback localStorage si backend indisponible
     try {
       const vendorsProducts = JSON.parse(localStorage.getItem('vendorsProducts') || '{}');
-      
-      if (!vendorsProducts[vendorId]) {
-        vendorsProducts[vendorId] = [];
-      }
-
-      // Générer un slug propre à partir du nom si non fourni
-      const generateSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
-      // Ajouter l'ID du vendeur au produit
-      const productWithVendor = {
+      if (!vendorsProducts[vendorId]) vendorsProducts[vendorId] = [];
+      const enrichedProduct = {
+        status: 'pending',
+        rating: 0,
+        sales: 0,
+        submittedAt: new Date().toISOString(),
+        vendorId: vendorId,
+        vendor: product.sellerName || product.vendor || 'Vendeur',
         ...product,
-        seller: {
-          id: vendorId,
-          name: product.sellerName || 'Vendeur',
-          rating: 5.0,
-          isVerified: false
-        },
-        // Champs SEO par défaut si non fournis
-        seoKeywords: product.seoKeywords || [],
-        seoTitle: product.seoTitle || product.name,
-        seoDescription: product.seoDescription || product.description || '',
-        slug: product.slug || generateSlug(product.name)
       };
-
-      vendorsProducts[vendorId].push(productWithVendor);
-      localStorage.setItem('vendorsProducts', JSON.stringify(vendorsProducts));
-      
-      // Recharger tous les produits
-      loadAllProducts();
-      
+      vendorsProducts[vendorId].push(enrichedProduct);
+      const res = trySaveVendorsProducts(vendorsProducts);
+      if (!res.success) {
+        return { success: false, error: 'Stockage local plein (quota). Réduisez la taille des images ou supprimez des anciens produits.' };
+      }
+      if (channel) channel.postMessage('vendorsProducts_updated');
+      await loadAllProducts();
       return { success: true };
     } catch (error) {
       console.error('Erreur lors de l\'ajout du produit:', error);
@@ -156,7 +281,6 @@ export const ProductsProvider = ({ children }) => {
     }
   };
 
-  // Fonction pour obtenir les produits d'un vendeur
   const getVendorProducts = (vendorId) => {
     try {
       const vendorsProducts = JSON.parse(localStorage.getItem('vendorsProducts') || '{}');
@@ -167,16 +291,14 @@ export const ProductsProvider = ({ children }) => {
     }
   };
 
-  // Fonction pour rechercher des produits avec filtres
-  const searchProducts = (query = '', filters = {}) => {
-    let filteredProducts = [...allProducts];
+  const searchProducts = (searchTerm, filters = {}) => {
+    let filteredProducts = allProducts;
 
-    // Recherche par nom/brand
-    if (query) {
-      const searchTerm = query.toLowerCase();
+    // Recherche textuelle
+    if (searchTerm) {
       filteredProducts = filteredProducts.filter(product =>
-        product.name.toLowerCase().includes(searchTerm) ||
-        (product.brand && product.brand.toLowerCase().includes(searchTerm)) ||
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (product.description && product.description.toLowerCase().includes(searchTerm))
       );
     }
@@ -204,14 +326,108 @@ export const ProductsProvider = ({ children }) => {
     return filteredProducts;
   };
 
+  // Utilitaire pour mettre à jour un produit côté storage vendeurs
+  const mutateVendorProduct = (productId, mutateFn) => {
+    const vendorsProducts = JSON.parse(localStorage.getItem('vendorsProducts') || '{}');
+    let found = false;
+    Object.keys(vendorsProducts).forEach((vid) => {
+      const list = vendorsProducts[vid] || [];
+      const idx = list.findIndex(p => p.id === productId);
+      if (idx !== -1) {
+        const current = list[idx];
+        const updated = mutateFn(current, vid);
+        if (updated === null) {
+          // suppression
+          list.splice(idx, 1);
+        } else {
+          list[idx] = { ...current, ...updated };
+        }
+        vendorsProducts[vid] = list;
+        found = true;
+      }
+    });
+    const res = trySaveVendorsProducts(vendorsProducts);
+    if (channel) channel.postMessage('vendorsProducts_updated');
+    return found;
+  };
+
+  const updateProductStatus = (productId, newStatus) => {
+    try {
+      const ok = mutateVendorProduct(productId, (current) => {
+        if (newStatus === 'approved') {
+          const slugBase = (current.slug || `${(current.name || 'produit').toString().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`);
+          const slug = `${slugBase}-${current.id}`;
+          const publishedAt = current.publishedAt || new Date().toISOString();
+          // isNew pendant 30 jours
+          const isNew = true;
+          return { status: 'approved', publishedAt, visible: true, slug, isNew };
+        }
+        if (newStatus === 'rejected') {
+          return { status: 'rejected', visible: false };
+        }
+        return { status: newStatus };
+      });
+      if (!ok) return { success: false, error: 'Produit introuvable' };
+      loadAllProducts();
+      return { success: true };
+    } catch (e) {
+      console.error('Erreur updateProductStatus:', e);
+      return { success: false, error: e.message };
+    }
+  };
+
+  const deleteProduct = (productId) => {
+    try {
+      const ok = mutateVendorProduct(productId, () => null);
+      if (!ok) return { success: false, error: 'Produit introuvable' };
+      loadAllProducts();
+      return { success: true };
+    } catch (e) {
+      console.error('Erreur deleteProduct:', e);
+      return { success: false, error: e.message };
+    }
+  };
+
+  const clearVendorProducts = (vendorId) => {
+    try {
+      const vendorsProducts = JSON.parse(localStorage.getItem('vendorsProducts') || '{}');
+      if (vendorsProducts[vendorId]) {
+        vendorsProducts[vendorId] = [];
+        const res = trySaveVendorsProducts(vendorsProducts);
+        if (!res.success) return { success: false, error: 'quota_exceeded' };
+        if (channel) channel.postMessage('vendorsProducts_updated');
+        loadAllProducts();
+      }
+      return { success: true };
+    } catch (e) {
+      console.error('Erreur clearVendorProducts:', e);
+      return { success: false, error: e.message };
+    }
+  };
+
+  const getAllProducts = () => {
+    return allProducts;
+  };
+
   const value = {
     products: allProducts,
     allProducts, // Ajout de allProducts directement
+    approvedProducts: allProducts.filter(p => p.status === 'approved' && (p.visible ?? true)),
+    newProducts: allProducts.filter(p => p.status === 'approved' && (p.visible ?? true) && (() => {
+      const publishedAt = p.publishedAt ? new Date(p.publishedAt) : null;
+      if (!publishedAt) return false;
+      const days = (Date.now() - publishedAt.getTime()) / (1000*60*60*24);
+      return days <= 30;
+    })()),
     loading,
     addProduct,
     getVendorProducts,
     searchProducts,
-    loadAllProducts
+    loadAllProducts,
+    updateProductStatus,
+    deleteProduct,
+    clearVendorProducts,
+    getAllProducts
   };
 
   return (

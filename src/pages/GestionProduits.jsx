@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from "../contexts/LanguageContext";
 import { 
@@ -19,10 +19,11 @@ import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useProducts } from '../contexts/ProductsContext';
+import ImageUpload from '../components/ImageUpload';
 
 const GestionProduits = () => {
   const { user } = useAuth();
-  const { getVendorProducts, addProduct } = useProducts();
+  const { getVendorProducts, addProduct, allProducts, clearVendorProducts } = useProducts();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('tous');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -32,13 +33,22 @@ const GestionProduits = () => {
   const [crop, setCrop] = useState({ aspect: 1 });
   const [croppedImage, setCroppedImage] = useState(null);
 
-  // Charger les produits du vendeur
-  useEffect(() => {
-    if (user?.vendorId) {
-      const vendorProducts = getVendorProducts(user.vendorId);
-      setProducts(vendorProducts);
+  // VendorId stable même si user.vendorId est absent (dev/demo)
+  const effectiveVendorId = useMemo(() => {
+    if (user?.vendorId) return user.vendorId;
+    let devId = localStorage.getItem('devVendorId');
+    if (!devId) {
+      devId = `dev-vendor-${Date.now()}`;
+      localStorage.setItem('devVendorId', devId);
     }
-  }, [user, getVendorProducts]);
+    return devId;
+  }, [user]);
+
+  // Charger et tenir à jour les produits du vendeur à partir de la source live du contexte
+  useEffect(() => {
+    const vendorProducts = (allProducts || []).filter(p => p.vendorId === effectiveVendorId);
+    setProducts(vendorProducts);
+  }, [effectiveVendorId, allProducts]);
 
 
 
@@ -48,7 +58,7 @@ const GestionProduits = () => {
     price: '',
     stock: '',
     description: '',
-    image: '👟',
+    images: [], // Tableau d'images au lieu d'un emoji
     // Champs SEO
     seoKeywords: '',
     seoTitle: '',
@@ -83,32 +93,99 @@ const GestionProduits = () => {
   const handleAddProduct = () => {
     if (newProduct.name && newProduct.category && newProduct.price && newProduct.stock) {
       const product = {
-        id: Date.now(), // ID unique
+        id: Date.now(),
         ...newProduct,
+        // Utiliser la première image comme image principale, ou un placeholder
+        image: newProduct.images.length > 0 ? newProduct.images[0].url : '👟',
+        images: newProduct.images, // Garder toutes les images
         price: parseFloat(newProduct.price),
         stock: parseInt(newProduct.stock),
-        status: 'active',
-        rating: 0,
-        sales: 0,
         sellerName: user?.prenom ? `${user.prenom} ${user.nom || ''}`.trim() : 'Vendeur papasow',
-        // Conversion des mots-clés SEO en tableau
-        seoKeywords: newProduct.seoKeywords.split(',').map(k => k.trim()).filter(Boolean)
+        vendorId: effectiveVendorId,
+        seoKeywords: Array.isArray(newProduct.seoKeywords) 
+          ? newProduct.seoKeywords 
+          : (newProduct.seoKeywords || '').split(',').map(k => k.trim()).filter(Boolean)
       };
 
       // Ajouter le produit via le contexte
-      const result = addProduct(product, user?.vendorId);
+      const result = addProduct(product, effectiveVendorId);
       
       if (result.success) {
         // Recharger les produits
-        const vendorProducts = getVendorProducts(user?.vendorId);
+        const vendorProducts = getVendorProducts(effectiveVendorId);
         setProducts(vendorProducts);
         
-        setNewProduct({ name: '', category: '', price: '', stock: '', description: '', image: '👟', seoKeywords: '', seoTitle: '', seoDescription: '', slug: '' });
+        setNewProduct({ name: '', category: '', price: '', stock: '', description: '', images: [], seoKeywords: '', seoTitle: '', seoDescription: '', slug: '' });
+        setImagePreview(null);
+        setCroppedImage(null);
+        setCrop({ aspect: 1 });
         setShowAddModal(false);
-        alert('Produit ajouté avec succès ! Il sera visible dans le catalogue papasow.');
+        alert('Produit ajouté avec succès ! Il est en attente de validation par notre équipe.');
       } else {
         alert('Erreur lors de l\'ajout du produit : ' + result.error);
       }
+    }
+  };
+
+  const handleUpdateProduct = () => {
+    console.log('🔧 handleUpdateProduct appelé');
+    console.log('editingProduct:', editingProduct);
+    console.log('imagePreview:', imagePreview);
+    console.log('croppedImage:', croppedImage);
+    
+    console.log('🔍 Vérification des conditions:');
+    console.log('editingProduct existe:', !!editingProduct);
+    console.log('name:', editingProduct?.name, 'type:', typeof editingProduct?.name);
+    console.log('category:', editingProduct?.category, 'type:', typeof editingProduct?.category);
+    console.log('price:', editingProduct?.price, 'type:', typeof editingProduct?.price);
+    console.log('stock:', editingProduct?.stock, 'type:', typeof editingProduct?.stock);
+    
+    if (editingProduct && editingProduct.name && editingProduct.category && editingProduct.price && editingProduct.stock) {
+      console.log('✅ Conditions remplies, création du produit mis à jour...');
+      
+      const updatedProduct = {
+        ...editingProduct,
+        // Utiliser la première image comme image principale, ou garder l'image existante
+        image: editingProduct.images && editingProduct.images.length > 0 
+          ? editingProduct.images[0].url 
+          : editingProduct.image,
+        price: parseFloat(editingProduct.price),
+        stock: parseInt(editingProduct.stock),
+        // Conversion des mots-clés SEO en tableau
+        seoKeywords: Array.isArray(editingProduct.seoKeywords) 
+          ? editingProduct.seoKeywords 
+          : (editingProduct.seoKeywords || '').split(',').map(k => k.trim()).filter(Boolean)
+      };
+      
+      console.log('✅ Produit mis à jour créé:', updatedProduct);
+      console.log('🖼️ Image dans le produit mis à jour:', updatedProduct.image);
+      console.log('🖼️ Image originale:', editingProduct.image);
+
+      // Mettre à jour le produit dans la liste locale
+      console.log('🔄 Mise à jour de la liste des produits...');
+      const updatedProducts = products.map(p => 
+        p.id === editingProduct.id ? updatedProduct : p
+      );
+      console.log('📝 Nouvelle liste des produits:', updatedProducts);
+      setProducts(updatedProducts);
+      
+      // Réinitialiser les états
+      console.log('🧹 Réinitialisation des états...');
+      setEditingProduct(null);
+      setImagePreview(null);
+      setCroppedImage(null);
+      setCrop({ aspect: 1 });
+      setShowAddModal(false);
+      console.log('🎉 Modification terminée avec succès !');
+      alert('Produit modifié avec succès !');
+    } else {
+      console.log('❌ Condition non remplie pour la modification');
+      console.log('editingProduct existe:', !!editingProduct);
+      console.log('name:', editingProduct?.name);
+      console.log('category:', editingProduct?.category);
+      console.log('price:', editingProduct?.price);
+      console.log('stock:', editingProduct?.stock);
+      alert('Veuillez remplir tous les champs obligatoires (nom, catégorie, prix, stock)');
     }
   };
 
@@ -254,6 +331,28 @@ const GestionProduits = () => {
               <BiPlus />
               Ajouter un produit
             </button>
+            {process.env.NODE_ENV !== 'production' && (
+              <button
+                onClick={() => {
+                  if (window.confirm('Réinitialiser tous MES produits ? (Dev uniquement)')) {
+                    const res = clearVendorProducts(effectiveVendorId);
+                    if (!res.success) alert("Echec réinitialisation: " + (res.error || 'inconnu'));
+                  }
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+                title="Dev: purge mes produits"
+              >
+                Réinitialiser mes produits (dev)
+              </button>
+            )}
             
             <div style={{ flex: 1, position: 'relative' }}>
               <BiSearch style={{ 
@@ -339,16 +438,28 @@ const GestionProduits = () => {
                     <td style={{ padding: '1rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{ 
-                          fontSize: '2rem', 
                           width: '50px', 
                           height: '50px', 
                           display: 'flex', 
                           alignItems: 'center', 
                           justifyContent: 'center',
                           backgroundColor: '#f8f9fa',
-                          borderRadius: '6px'
+                          borderRadius: '6px',
+                          overflow: 'hidden'
                         }}>
-                          {product.image}
+                          {product.image && (product.image.startsWith('data:') || product.image.startsWith('http')) ? (
+                            <img 
+                              src={product.image} 
+                              alt={product.name}
+                              style={{ 
+                                width: '100%', 
+                                height: '100%', 
+                                objectFit: 'cover' 
+                              }}
+                            />
+                          ) : (
+                            <span style={{ fontSize: '2rem' }}>{product.image || '👟'}</span>
+                          )}
                         </div>
                         <div>
                           <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>
@@ -403,7 +514,12 @@ const GestionProduits = () => {
                     <td style={{ padding: '1rem' }}>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button
-                          onClick={() => setEditingProduct(product)}
+                          onClick={() => {
+                  setEditingProduct(product);
+                  setShowAddModal(true);
+                  // Pré-remplir l'image existante
+                  setImagePreview(product.image);
+                }}
                           style={{
                             padding: '0.5rem',
                             backgroundColor: '#007bff',
@@ -483,24 +599,31 @@ const GestionProduits = () => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {/* Image upload et preview */}
-              <label>Image du produit</label>
-              <input type="file" accept="image/*" onChange={e => {
-                const file = e.target.files[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onload = ev => setImagePreview(ev.target.result);
-                  reader.readAsDataURL(file);
-                }
-              }} />
-              {imagePreview && (
-                <div style={{ marginBottom: 10 }}>
-                  <ReactCrop src={imagePreview} crop={crop} onChange={setCrop} onComplete={c => setCroppedImage(c)} />
-                </div>
-              )}
+              {/* Upload d'images avec le nouveau composant */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                  Images du produit *
+                </label>
+                <ImageUpload
+                  onImageChange={(images) => {
+                    if (editingProduct) {
+                      setEditingProduct({...editingProduct, images: images});
+                    } else {
+                      setNewProduct({...newProduct, images: images});
+                    }
+                  }}
+                  currentImage={editingProduct ? editingProduct.images : newProduct.images}
+                  maxImages={6}
+                  aspectRatio={1}
+                  showPreview={true}
+                />
+                <p style={{ fontSize: '12px', color: '#666', marginTop: '0.5rem' }}>
+                  La première image sera utilisée comme image principale. Maximum 6 images.
+                </p>
+              </div>
               {/* Suggestion automatique de titre */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="text" placeholder="Nom du produit" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} style={{ flex: 1 }} />
+                <input type="text" placeholder="Nom du produit" value={newProduct.name || ''} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} style={{ flex: 1 }} />
                 <button type="button" onClick={suggestTitle} style={{ background: '#eee', border: 'none', borderRadius: 4, padding: '0.5rem 1rem', cursor: 'pointer' }}>Suggérer</button>
               </div>
 
@@ -509,7 +632,7 @@ const GestionProduits = () => {
                   Catégorie *
                 </label>
                 <select
-                  value={editingProduct ? editingProduct.category : newProduct.category}
+                  value={editingProduct ? (editingProduct.category || '') : (newProduct.category || '')}
                   onChange={(e) => editingProduct ? 
                     setEditingProduct({...editingProduct, category: e.target.value}) :
                     setNewProduct({...newProduct, category: e.target.value})
@@ -536,7 +659,7 @@ const GestionProduits = () => {
                   <input
                     type="number"
                     step="0.01"
-                    value={editingProduct ? editingProduct.price : newProduct.price}
+                    value={editingProduct ? (editingProduct.price || '') : (newProduct.price || '')}
                     onChange={(e) => editingProduct ? 
                       setEditingProduct({...editingProduct, price: e.target.value}) :
                       setNewProduct({...newProduct, price: e.target.value})
@@ -556,7 +679,7 @@ const GestionProduits = () => {
                   </label>
                   <input
                     type="number"
-                    value={editingProduct ? editingProduct.stock : newProduct.stock}
+                    value={editingProduct ? (editingProduct.stock || '') : (newProduct.stock || '')}
                     onChange={(e) => editingProduct ? 
                       setEditingProduct({...editingProduct, stock: e.target.value}) :
                       setNewProduct({...newProduct, stock: e.target.value})
@@ -576,7 +699,7 @@ const GestionProduits = () => {
                   Description
                 </label>
                 <textarea
-                  value={editingProduct ? editingProduct.description : newProduct.description}
+                  value={editingProduct ? (editingProduct.description || '') : (newProduct.description || '')}
                   onChange={(e) => editingProduct ? 
                     setEditingProduct({...editingProduct, description: e.target.value}) :
                     setNewProduct({...newProduct, description: e.target.value})
@@ -599,7 +722,7 @@ const GestionProduits = () => {
                 </label>
                 <input
                   type="text"
-                  value={editingProduct ? editingProduct.seoKeywords : newProduct.seoKeywords}
+                  value={editingProduct ? (editingProduct.seoKeywords || '') : (newProduct.seoKeywords || '')}
                   onChange={(e) => editingProduct ? 
                     setEditingProduct({...editingProduct, seoKeywords: e.target.value}) :
                     setNewProduct({...newProduct, seoKeywords: e.target.value})
@@ -619,7 +742,7 @@ const GestionProduits = () => {
                 </label>
                 <input
                   type="text"
-                  value={editingProduct ? editingProduct.seoTitle : newProduct.seoTitle}
+                  value={editingProduct ? (editingProduct.seoTitle || '') : (newProduct.seoTitle || '')}
                   onChange={(e) => editingProduct ? 
                     setEditingProduct({...editingProduct, seoTitle: e.target.value}) :
                     setNewProduct({...newProduct, seoTitle: e.target.value})
@@ -638,7 +761,7 @@ const GestionProduits = () => {
                   Description SEO (meta description)
                 </label>
                 <textarea
-                  value={editingProduct ? editingProduct.seoDescription : newProduct.seoDescription}
+                  value={editingProduct ? (editingProduct.seoDescription || '') : (newProduct.seoDescription || '')}
                   onChange={(e) => editingProduct ? 
                     setEditingProduct({...editingProduct, seoDescription: e.target.value}) :
                     setNewProduct({...newProduct, seoDescription: e.target.value})
@@ -660,7 +783,7 @@ const GestionProduits = () => {
                 </label>
                 <input
                   type="text"
-                  value={editingProduct ? editingProduct.slug : newProduct.slug}
+                  value={editingProduct ? (editingProduct.slug || '') : (newProduct.slug || '')}
                   onChange={(e) => editingProduct ? 
                     setEditingProduct({...editingProduct, slug: e.target.value}) :
                     setNewProduct({...newProduct, slug: e.target.value})
@@ -693,7 +816,7 @@ const GestionProduits = () => {
                   Annuler
                 </button>
                 <button
-                  onClick={handleAddProduct}
+                  onClick={editingProduct ? handleUpdateProduct : handleAddProduct}
                   style={{
                     padding: '0.75rem 1.5rem',
                     backgroundColor: '#28a745',

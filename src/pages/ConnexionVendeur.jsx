@@ -1,50 +1,46 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
-import { useVendor } from '../contexts/VendorContext';
 import { useLanguage } from "../contexts/LanguageContext";
-import { BiUser, BiLock, BiStore, BiShield } from 'react-icons/bi';
+import { BiUser, BiStore } from 'react-icons/bi';
 
 const ConnexionVendeur = () => {
   const navigate = useNavigate();
-  const { setUser, login } = useAuth();
-  const { createTestVendor } = useVendor();
+  const { setUser } = useAuth();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      setError('Veuillez remplir tous les champs.');
+    if (!email) {
+      setError('Veuillez saisir votre adresse e-mail.');
       return;
     }
 
     try {
-      // Utiliser la fonction login de useAuth pour vérifier les identifiants
-      const result = await login(email, password);
-      
-      if (result.success) {
-        const userData = result.user;
-        
-        // Créer un vendeur de test validé
-        const testVendor = createTestVendor(email);
-        
-        const vendorData = {
-          ...userData,
-          isVendor: true,
-          isVendorValidated: true,
-          vendorStatus: 'active',
-          vendorId: testVendor.id,
-          isAdmin: false,
-          roles: []
-        };
-        setUser(vendorData);
-        localStorage.setItem('user', JSON.stringify(vendorData));
+      const vendors = JSON.parse(localStorage.getItem('vendors') || '{}');
+      const vendor = Object.values(vendors).find(v => (v?.informations?.email || '').toLowerCase() === email.toLowerCase());
+      if (!vendor) {
+        setError("Aucun vendeur n'est associé à cet email. Veuillez vérifier l'adresse.");
+        return;
+      }
+      const baseUser = {
+        email: email,
+        isVendor: true,
+        isVendorValidated: vendor.status === 'approved',
+        vendorStatus: vendor.status || 'pending',
+        vendorId: vendor.id,
+        isAdmin: false,
+        roles: []
+      };
+      setUser(baseUser);
+      localStorage.setItem('user', JSON.stringify(baseUser));
+
+      if (baseUser.isVendorValidated) {
         navigate('/vendeur/dashboard');
       } else {
-        setError(result.error || 'Identifiants incorrects');
+        navigate('/vendeur/statut-demande');
       }
     } catch (error) {
       setError('Erreur de connexion');
@@ -66,16 +62,8 @@ const ConnexionVendeur = () => {
             <input type="email" className="form-control" value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
         </div>
-        <div className="mb-3">
-          <label className="form-label">Mot de passe</label>
-          <div className="input-group">
-            <span className="input-group-text"><BiLock /></span>
-            <input type="password" className="form-control" value={password} onChange={e => setPassword(e.target.value)} required />
-          </div>
-        </div>
-        <button type="submit" className="btn btn-primary w-100 fw-bold">Se connecter</button>
+        <button type="submit" className="btn btn-primary w-100 fw-bold">Continuer</button>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
-          <a href="#" style={{ fontSize: 14 }}>Mot de passe oublié ?</a>
           <a href="/" style={{ fontSize: 14 }}>Retour à l'accueil</a>
         </div>
       </form>

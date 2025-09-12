@@ -6,6 +6,8 @@ import { useCommandes } from '../contexts/CommandesContext';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useNavigate } from 'react-router-dom';
+import { redeemGiftCard } from '../utils/giftCards';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const defaultPaiements = [
   {
@@ -23,6 +25,7 @@ const Paiement = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { cartItems, clearCart } = useCart();
+  const { selectedCurrency, getCurrencySymbol } = useCurrency();
   const [paiements, setPaiements] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
@@ -57,6 +60,11 @@ const Paiement = () => {
   const [commandeId, setCommandeId] = useState(null);
   const { commandes, setCommandes, saveUserCommandes } = useCommandes();
   const [produitsCommande, setProduitsCommande] = useState([]);
+  
+  // États pour carte cadeau
+  const [giftCardCode, setGiftCardCode] = useState('');
+  const [giftCardAmount, setGiftCardAmount] = useState(0);
+  const [giftCardError, setGiftCardError] = useState('');
 
   // Charger les adresses sauvegardées de l'utilisateur
   useEffect(() => {
@@ -277,7 +285,8 @@ const Paiement = () => {
 
   const getTotal = () => {
     const items = buyNowItems.length > 0 ? buyNowItems : cartItems;
-    return items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    return Math.max(0, subtotal - giftCardAmount);
   };
 
   const getLivraisonEstimee = () => {
@@ -416,7 +425,7 @@ const Paiement = () => {
           ) : (
             <div>
               <p><b>Panier classique</b></p>
-              {console.log('Affichage panier - cartItems:', cartItems)}
+              {/* Console log removed - use browser dev tools instead */}
               {cartItems.length === 0 ? (
                 <div>
                   <div>Votre panier est vide.</div>
@@ -674,6 +683,59 @@ const Paiement = () => {
               <option>PayPal</option>
               <option>Carte cadeau</option>
             </select>
+            
+            {/* Section carte cadeau */}
+            {modePaiement === 'Carte cadeau' && (
+              <div className="card p-3 mb-4">
+                <h5 className="mb-3">Utiliser une carte cadeau</h5>
+                <div className="row g-3">
+                  <div className="col-md-8">
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="Code de la carte cadeau (ex: ABCD-1234-EFGH-5678)"
+                      value={giftCardCode}
+                      onChange={e => setGiftCardCode(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <button 
+                      type="button"
+                      className="btn btn-outline-primary w-100"
+                      onClick={() => {
+                        if (!giftCardCode.trim()) {
+                          setGiftCardError('Veuillez saisir un code');
+                          return;
+                        }
+                        const result = redeemGiftCard(giftCardCode, getTotal());
+                        if (result.ok) {
+                          setGiftCardAmount(result.used);
+                          setGiftCardError('');
+                          setMessage(`Carte cadeau utilisée: ${result.used.toLocaleString('fr-FR')} GNF. Reste: ${result.remaining.toLocaleString('fr-FR')} GNF`);
+                        } else {
+                          if (result.reason === 'NOT_FOUND') {
+                            setGiftCardError('Code invalide');
+                          } else if (result.reason === 'INSUFFICIENT_BALANCE') {
+                            setGiftCardError(`Solde insuffisant. Carte: ${result.cardBalance.toLocaleString('fr-FR')} GNF, Total: ${result.requiredAmount.toLocaleString('fr-FR')} GNF`);
+                          } else {
+                            setGiftCardError('Solde insuffisant');
+                          }
+                          setGiftCardAmount(0);
+                        }
+                      }}
+                    >
+                      Appliquer
+                    </button>
+                  </div>
+                </div>
+                {giftCardError && <div className="text-danger mt-2">{giftCardError}</div>}
+                {giftCardAmount > 0 && (
+                  <div className="text-success mt-2">
+                    Carte cadeau appliquée: -{giftCardAmount.toLocaleString('fr-FR')} GNF
+                  </div>
+                )}
+              </div>
+            )}
             
             <button
               className="btn btn-primary btn-lg fw-bold w-100"

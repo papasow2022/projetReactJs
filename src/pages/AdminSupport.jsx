@@ -58,7 +58,14 @@ export default function AdminSupport() {
   const [newMessageNotification, setNewMessageNotification] = useState(null);
 
   useEffect(() => { 
-    initializeTestTickets(); // Initialiser les tickets de test si nécessaire
+    // Charger les vraies données depuis localStorage
+    try {
+      const storedTickets = JSON.parse(localStorage.getItem('supportTickets') || '[]');
+      setTickets(storedTickets);
+    } catch (error) {
+      console.error('Erreur lors du chargement des tickets de support:', error);
+      setTickets([]);
+    }
     loadTickets(); 
   }, []);
 

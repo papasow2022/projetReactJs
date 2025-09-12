@@ -16,8 +16,12 @@ import {
 } from 'react-icons/bi';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { exportToCsv } from '../utils/csvExport';
+import { useProducts } from '../contexts/ProductsContext';
+import { useVendor } from '../contexts/VendorContext';
 
 export default function AdminAnalytics() {
+  const { allProducts } = useProducts();
+  const { vendors } = useVendor();
   const [analytics, setAnalytics] = useState({
     overview: {},
     sales: [],
@@ -36,122 +40,174 @@ export default function AdminAnalytics() {
 
   useEffect(() => {
     loadAnalytics();
-  }, [timeRange]);
+  }, [timeRange, allProducts, vendors]);
 
   const loadAnalytics = () => {
     setLoading(true);
     
-    // Générer 30 jours de données réalistes
-    const generateSalesData = (days) => {
-      const data = [];
-      const baseDate = new Date();
-      baseDate.setDate(baseDate.getDate() - days);
+    try {
+      // Charger les vraies données
+      const vendorList = Object.values(vendors || {});
+      const productList = Array.isArray(allProducts) ? allProducts : [];
       
-      for (let i = 0; i < days; i++) {
+      // Charger toutes les commandes
+      const allOrders = [];
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      users.forEach(user => {
+        const userOrders = JSON.parse(localStorage.getItem(`commandes_${user.email}`) || '[]');
+        allOrders.push(...userOrders);
+      });
+      
+      // Calculer les statistiques réelles
+      const totalRevenue = allOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+      const totalOrders = allOrders.length;
+      const totalVendors = vendorList.length;
+      const totalProducts = productList.length;
+      const totalCustomers = users.length;
+      const averageOrderValue = totalOrders > 0 ? Math.round((totalRevenue / totalOrders) * 100) / 100 : 0;
+      
+      // Analyser les vendeurs
+      const vendorAnalytics = vendorList.map(vendor => {
+        const vendorProducts = productList.filter(p => p.vendorId === vendor.id);
+        const vendorOrders = allOrders.filter(o => o.vendorId === vendor.id);
+        const vendorRevenue = vendorOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+        
+        return {
+          name: vendor.nomEntreprise || vendor.email,
+          revenue: vendorRevenue,
+          orders: vendorOrders.length,
+          products: vendorProducts.length,
+          rating: vendor.rating || 0
+        };
+      }).sort((a, b) => b.revenue - a.revenue);
+      
+      // Analyser les produits
+      const productAnalytics = productList.map(product => {
+        const productOrders = allOrders.filter(o => 
+          o.items && o.items.some(item => item.name === product.nom)
+        );
+        const productRevenue = productOrders.reduce((sum, order) => {
+          const item = order.items.find(item => item.name === product.nom);
+          return sum + (item ? item.price * item.quantity : 0);
+        }, 0);
+        
+        return {
+          name: product.nom,
+          sales: productOrders.length,
+          revenue: productRevenue,
+          rating: product.rating || 0
+        };
+      }).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+      
+      // Analyser les catégories
+      const categoryMap = {};
+      productList.forEach(product => {
+        const category = product.categorie || 'Autres';
+        if (!categoryMap[category]) {
+          categoryMap[category] = { revenue: 0, orders: 0, products: 0 };
+        }
+        categoryMap[category].products++;
+        
+        const categoryOrders = allOrders.filter(o => 
+          o.items && o.items.some(item => item.name === product.nom)
+        );
+        categoryMap[category].orders += categoryOrders.length;
+        categoryMap[category].revenue += categoryOrders.reduce((sum, order) => {
+          const item = order.items.find(item => item.name === product.nom);
+          return sum + (item ? item.price * item.quantity : 0);
+        }, 0);
+      });
+      
+      const categoryAnalytics = Object.entries(categoryMap).map(([name, data]) => ({
+        name,
+        revenue: data.revenue,
+        orders: data.orders,
+        products: data.products
+      })).sort((a, b) => b.revenue - a.revenue);
+      
+      // Générer des données de ventes par jour (derniers 30 jours)
+      const salesData = [];
+      const baseDate = new Date();
+      baseDate.setDate(baseDate.getDate() - 30);
+      
+      for (let i = 0; i < 30; i++) {
         const date = new Date(baseDate);
         date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
         
-        // Variation réaliste des ventes (weekend plus élevé)
-        const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-        const baseRevenue = isWeekend ? 2500 : 1800;
-        const variation = (Math.random() - 0.5) * 1000;
-        const revenue = Math.max(500, baseRevenue + variation);
-        const orders = Math.floor(revenue / (30 + Math.random() * 20));
+        const dayOrders = allOrders.filter(order => {
+          const orderDate = new Date(order.createdAt || order.date);
+          return orderDate.toISOString().split('T')[0] === dateStr;
+        });
         
-        data.push({
-          date: date.toISOString().split('T')[0],
-          revenue: Math.round(revenue * 100) / 100,
-          orders: orders
+        const dayRevenue = dayOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+        
+        salesData.push({
+          date: dateStr,
+          revenue: dayRevenue,
+          orders: dayOrders.length
         });
       }
-      return data;
-    };
+      
+      const realAnalytics = {
+        overview: {
+          totalRevenue,
+          totalOrders,
+          totalVendors,
+          totalProducts,
+          totalCustomers,
+          averageOrderValue,
+          conversionRate: totalCustomers > 0 ? Math.round((totalOrders / totalCustomers) * 100) / 100 : 0,
+          revenueGrowth: 0, // À calculer avec des données historiques
+          ordersGrowth: 0,
+          vendorsGrowth: 0,
+          customersGrowth: 0
+        },
+        sales: salesData,
+        vendors: vendorAnalytics,
+        products: productAnalytics,
+        customers: [
+          { segment: 'Total clients', count: totalCustomers, percentage: 100 }
+        ],
+        categories: categoryAnalytics,
+        revenueChart: {
+          labels: salesData.map(day => new Date(day.date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })),
+          datasets: [{
+            label: 'Revenus (€)',
+            data: salesData.map(day => day.revenue),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+          }]
+        },
+        salesChart: {
+          labels: salesData.map(day => new Date(day.date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })),
+          datasets: [{
+            label: 'Commandes',
+            data: salesData.map(day => day.orders),
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }]
+        },
+        categoryChart: {
+          labels: categoryAnalytics.map(cat => cat.name),
+          datasets: [{
+            data: categoryAnalytics.map(cat => cat.revenue),
+            backgroundColor: [
+              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+              '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+            ]
+          }]
+        }
+      };
 
-    const salesData = generateSalesData(30);
-    const totalRevenue = salesData.reduce((sum, day) => sum + day.revenue, 0);
-    const totalOrders = salesData.reduce((sum, day) => sum + day.orders, 0);
-    
-    const mockAnalytics = {
-      overview: {
-        totalRevenue: totalRevenue,
-        totalOrders: totalOrders,
-        totalVendors: 45,
-        totalProducts: 1250,
-        totalCustomers: 2890,
-        averageOrderValue: Math.round((totalRevenue / totalOrders) * 100) / 100,
-        conversionRate: 3.2,
-        revenueGrowth: 12.5,
-        ordersGrowth: 8.3,
-        vendorsGrowth: 15.2,
-        customersGrowth: 18.7
-      },
-      sales: salesData,
-      vendors: [
-        { name: 'Boutique Sport', revenue: 12500.50, orders: 245, products: 45, rating: 4.8 },
-        { name: 'Mode & Style', revenue: 9870.30, orders: 189, products: 32, rating: 4.6 },
-        { name: 'Tech Store', revenue: 15670.80, orders: 156, products: 28, rating: 4.9 },
-        { name: 'Sport Plus', revenue: 7890.25, orders: 134, products: 25, rating: 4.4 },
-        { name: 'Fashion Hub', revenue: 11200.90, orders: 198, products: 38, rating: 4.7 }
-      ],
-      products: [
-        { name: 'Chaussures Nike Air Max', sales: 125, revenue: 11250.00, rating: 4.8 },
-        { name: 'Sac à dos Adidas', sales: 98, revenue: 4459.00, rating: 4.6 },
-        { name: 'Apple Watch Series 7', sales: 45, revenue: 13499.55, rating: 4.9 },
-        { name: 'Veste Nike', sales: 87, revenue: 6525.00, rating: 4.4 },
-        { name: 'Montre Apple Watch', sales: 32, revenue: 9599.68, rating: 4.7 }
-      ],
-      customers: [
-        { segment: 'Nouveaux clients', count: 450, percentage: 15.6 },
-        { segment: 'Clients récurrents', count: 1200, percentage: 41.5 },
-        { segment: 'Clients VIP', count: 180, percentage: 6.2 },
-        { segment: 'Clients inactifs', count: 1060, percentage: 36.7 }
-      ],
-      categories: [
-        { name: 'Chaussures', revenue: 45000, orders: 1200, products: 300 },
-        { name: 'Vêtements', revenue: 32000, orders: 800, products: 250 },
-        { name: 'Électronique', revenue: 28000, orders: 150, products: 100 },
-        { name: 'Accessoires', revenue: 15000, orders: 600, products: 200 },
-        { name: 'Montres', revenue: 12000, orders: 80, products: 50 }
-      ],
-      revenueChart: {
-        labels: salesData.map(day => new Date(day.date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })),
-        datasets: [{
-          label: 'Revenus (€)',
-          data: salesData.map(day => day.revenue),
-          borderColor: 'rgb(75, 192, 192)',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          tension: 0.1
-        }]
-      },
-      salesChart: {
-        labels: salesData.map(day => new Date(day.date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })),
-        datasets: [{
-          label: 'Commandes',
-          data: salesData.map(day => day.orders),
-          backgroundColor: 'rgba(54, 162, 235, 0.6)',
-          borderColor: 'rgba(54, 162, 235, 1)',
-          borderWidth: 1
-        }]
-      },
-      categoryChart: {
-        labels: ['Chaussures', 'Vêtements', 'Électronique', 'Accessoires', 'Montres'],
-        datasets: [{
-          data: [45000, 32000, 28000, 15000, 12000],
-          backgroundColor: [
-            '#FF6384',
-            '#36A2EB',
-            '#FFCE56',
-            '#4BC0C0',
-            '#9966FF'
-          ]
-        }]
-      }
-    };
-
-    setTimeout(() => {
-      setAnalytics(mockAnalytics);
+      setAnalytics(realAnalytics);
       setLoading(false);
-    }, 1000);
+    } catch (error) {
+      console.error('Erreur lors du chargement des analytics:', error);
+      setLoading(false);
+    }
   };
 
   const getGrowthIcon = (growth) => {

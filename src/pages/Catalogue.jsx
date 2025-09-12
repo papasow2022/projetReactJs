@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ProductPageAmazonLike from '../components/ProductPageAmazonLike';
 import { useProducts } from '../contexts/ProductsContext';
 import { useLanguage } from "../contexts/LanguageContext";
+import { useCart } from '../contexts/CartContext';
 import '../amazon-like.css';
 import Footer from '../components/Footer';
 
@@ -441,13 +442,7 @@ if (typeof document !== 'undefined' && !document.getElementById('catalogue-anima
 
 const Catalogue = () => {
   const [selectedSizes, setSelectedSizes] = useState([]);
-  const [cart, setCart] = useState(() => {
-    const stored = localStorage.getItem('cart');
-    return stored ? JSON.parse(stored) : [
-      { id: 1, name: 'Nike Air Max 270', price: 129.99, image: '/assets/categorie/arriver (1).png', qty: 2 },
-      { id: 6, name: 'Sac à dos Adidas', price: 39.99, image: '/assets/categorie/arriver (2).png', qty: 1 }
-    ];
-  });
+  const { cartItems: cart, addToCart, updateQuantity, removeFromCart, getCartItemCount } = useCart();
   const [favorites, setFavorites] = useState([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [compareList, setCompareList] = useState([]);
@@ -505,6 +500,7 @@ const Catalogue = () => {
   const canGoNext = false;
   
   const cartSubtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const cartItemCount = getCartItemCount();
   
   const handleToggleFavorite = (productId) => {
     setFavorites((prev) =>
@@ -526,28 +522,33 @@ const Catalogue = () => {
     setTimeout(() => setLastCompare(null), 400);
   };
   
-  const handleAddToCart = (product) => {
-    setCart((prev) => {
-      const found = prev.find((item) => item.id === product.id);
-      if (found) {
-        setPulseSubtotal(true);
-        setTimeout(() => setPulseSubtotal(false), 500);
-        return prev.map((item) => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
-      }
-      setCartFloatAnim(true);
-      setTimeout(() => setCartFloatAnim(false), 500);
-      setPulseSubtotal(true);
-      setTimeout(() => setPulseSubtotal(false), 500);
-      return [...prev, { id: product.id, name: product.name, price: product.price, image: product.image, qty: 1 }];
-    });
+  const handleAddToCart = async (product) => {
+    setCartFloatAnim(true);
+    setTimeout(() => setCartFloatAnim(false), 500);
+    setPulseSubtotal(true);
+    setTimeout(() => setPulseSubtotal(false), 500);
+    
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      qty: 1
+    };
+    
+    await addToCart(cartItem, 1);
   };
   
   const handleCartQty = (id, delta) => {
-    setCart((prev) => prev.map((item) => item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item));
+    const item = cart.find(item => item.id === id);
+    if (item) {
+      const newQuantity = Math.max(1, item.qty + delta);
+      updateQuantity(id, newQuantity);
+    }
   };
   
   const handleRemoveFromCart = (id) => {
-    setCart(cart.filter(item => item.id !== id));
+    removeFromCart(id);
   };
 
   // Fonctions pour la vue détaillée
@@ -569,7 +570,7 @@ const Catalogue = () => {
     setSelectedProduct(null);
   };
 
-  const handleAddToCartFromDetail = () => {
+  const handleAddToCartFromDetail = async () => {
     if (!selectedProduct) return;
     
     if (selectedProduct.sizes.length > 0 && !selectedSize) {
@@ -582,32 +583,17 @@ const Catalogue = () => {
       return;
     }
 
-    const existingItem = cart.find(item => 
-      item.id === selectedProduct.id && 
-      item.size === selectedSize && 
-      item.color === selectedColor
-    );
+    const cartItem = {
+      id: selectedProduct.id,
+      name: selectedProduct.name,
+      price: selectedProduct.price,
+      image: selectedProduct.images[0],
+      qty: quantity,
+      size: selectedSize,
+      color: selectedColor
+    };
 
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.id === selectedProduct.id && 
-        item.size === selectedSize && 
-        item.color === selectedColor
-          ? { ...item, qty: item.qty + quantity }
-          : item
-      ));
-    } else {
-      setCart([...cart, {
-        id: selectedProduct.id,
-        name: selectedProduct.name,
-        price: selectedProduct.price,
-        image: selectedProduct.images[0],
-        qty: quantity,
-        size: selectedSize,
-        color: selectedColor
-      }]);
-    }
-
+    await addToCart(cartItem, quantity);
     setCartFloatAnim(true);
     setTimeout(() => setCartFloatAnim(false), 1000);
   };

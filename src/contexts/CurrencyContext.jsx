@@ -14,6 +14,7 @@ export const CurrencyProvider = ({ children }) => {
   // Taux de change fixes (EUR comme base)
   const rates = {
     EUR: 1,
+    USD: 1.08,
     CFA: 655.957,
     GNF: 9500
   };
@@ -41,7 +42,24 @@ export const CurrencyProvider = ({ children }) => {
     return `${formatted} ${selectedCurrency}`;
   };
 
-  const value = { selectedCurrency, rates, changeCurrency, format };
+  const convert = (amount, fromCurrency, toCurrency) => {
+    if (!rates[fromCurrency] || !rates[toCurrency]) return 0;
+    // Convertir vers EUR puis vers la devise cible
+    const inEUR = amount / rates[fromCurrency];
+    return inEUR * rates[toCurrency];
+  };
+
+  const getCurrencySymbol = (currency) => {
+    const symbols = {
+      EUR: '€',
+      USD: '$',
+      CFA: 'F',
+      GNF: 'G'
+    };
+    return symbols[currency] || currency;
+  };
+
+  const value = { selectedCurrency, rates, changeCurrency, format, convert, getCurrencySymbol };
 
   return (
     <CurrencyContext.Provider value={value}>

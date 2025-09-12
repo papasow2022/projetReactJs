@@ -11,14 +11,14 @@ const VendorProtectedRoute = ({ children }) => {
     return <Navigate to="/connexion" state={{ from: location }} replace />;
   }
 
-  // Si l'utilisateur n'est pas un vendeur, rediriger vers l'inscription vendeur
+  // Si l'utilisateur n'est pas un vendeur, rediriger vers l'accueil
   if (!user?.isVendor) {
-    return <Navigate to="/vendeur/inscription" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  // Si le vendeur n'est pas encore validé, rediriger vers la page de confirmation
+  // Si le vendeur n'est pas encore validé, rediriger vers le centre de statut
   if (!user?.isVendorValidated) {
-    return <Navigate to="/confirmation-vendeur" state={{ from: location }} replace />;
+    return <Navigate to="/vendeur/statut-demande" state={{ from: location }} replace />;
   }
 
   // Si tout est OK, afficher le contenu protégé

@@ -3,13 +3,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../hooks/useAuth.jsx";
 import { useCart } from "../contexts/CartContext";
+import { useProducts } from "../contexts/ProductsContext";
 import { useThemeColors } from "../contexts/ThemeContext";
 import { Link } from "react-router-dom";
 import LivraisonLocation from './LivraisonLocation.jsx';
-import NotificationBell from './NotificationBell';
+import NotificationCenter from './NotificationCenter';
 import AmazonCartSidebar from './AmazonCartSidebar';
-import ThemeToggle from './ThemeToggle';
-import SmartAlerts from './SmartAlerts';
 // import 'bootstrap/dist/css/bootstrap.min.css';
 
 const LANGUAGES = [
@@ -34,6 +33,27 @@ const CATEGORY_ICONS = {
   accessoires: 'bi-bag',
   promotions: 'bi-lightning',
 };
+
+// Lien stylé utilisé dans le menu Compte & Listes
+function MenuLink({ to, children }) {
+  return (
+    <Link
+      to={to}
+      style={{
+        display: 'block',
+        padding: '8px 10px',
+        borderRadius: 6,
+        color: '#111',
+        textDecoration: 'none',
+        fontSize: 14
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = '#f7fafa'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+    >
+      {children}
+    </Link>
+  );
+}
 
 // Menu complet avec toutes les catégories basé sur la structure originale
 const FULL_MENU_CATEGORIES = [
@@ -98,6 +118,7 @@ export default function Header() {
   const { currentLanguage, changeLanguage, t } = useLanguage();
   const { user, logout } = useAuth();
   const { getCartItemCount, setShowCartSidebar } = useCart();
+  const { fetchProductsApi, allProducts } = useProducts();
   const colors = useThemeColors();
   const [langDropdown, setLangDropdown] = useState(false);
   const selectedLang = LANGUAGES.find(lang => lang.code === currentLanguage) || LANGUAGES[0];
@@ -111,6 +132,7 @@ export default function Header() {
   const [searchCatOpen, setSearchCatOpen] = useState(false);
   const searchCatBtnRef = useRef(null);
   const [showSubMenu, setShowSubMenu] = useState(null); // nouvelle variable d'état
+  const [searchQuery, setSearchQuery] = useState("");
   // Utiliser le contexte de panier pour le compteur
   const cartCount = getCartItemCount();
 
@@ -144,6 +166,7 @@ export default function Header() {
       ) {
         setAllMenuOpen(false);
         setOpenSubMenu(null);
+        setShowSubMenu(null);
       }
     }
     if (allMenuOpen) {
@@ -214,191 +237,360 @@ export default function Header() {
         <div style={{ marginRight: 16, flexShrink: 0 }}>
           <LivraisonLocation user={user} />
         </div>
-        {/* Barre de recherche large et centrée */}
-        <form style={{ flex: 1, display: 'flex', maxWidth: 700, minWidth: 250, margin: '0 24px', background: 'transparent', alignItems: 'center' }}>
-          {/* Sélecteur de catégorie stylé comme un bouton 'All' */}
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <button
-              type="button"
-              className="btn btn-light search-cat-btn"
-              style={{ border: '1px solid #ddd', background: '#f3f3f3', color: '#222', fontSize: 15, padding: '0 18px', borderRadius: '8px 0 0 8px', height: 40, outline: 'none', fontWeight: 500, borderRight: 'none', display: 'flex', alignItems: 'center', minWidth: 70, boxShadow: 'none' }}
-              onClick={() => setSearchCatOpen((v) => !v)}
-              ref={searchCatBtnRef}
-            >
-              {t(searchCategory.key) || 'All'} <span style={{ fontSize: 12, marginLeft: 6 }}>▼</span>
-            </button>
-            {searchCatOpen && (
-              <ul className="dropdown-menu show search-cat-dropdown" style={{ display: 'block', position: 'absolute', top: 40, left: 0, minWidth: 140, zIndex: 1000, background: '#fff', color: '#232f3e', border: '1px solid #ddd', borderRadius: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', padding: 0, margin: 0 }}>
-                {CATEGORIES.map(cat => (
-                  <li key={cat.key}>
-                    <button
-                      className="dropdown-item py-2 px-3"
-                      style={{ fontWeight: 500, color: '#232f3e', fontSize: 15, textAlign: 'left', width: '100%' }}
-                      onClick={() => { setSearchCategory(cat); setSearchCatOpen(false); }}
-                    >
-                      {t(cat.key)}
+        {/* Barre de recherche large et centrée (catégorie + input + bouton icône) */}
+        <form style={{ flex: 1, display: 'flex', maxWidth: 700, minWidth: 250, margin: '0 24px', background: 'transparent', alignItems: 'center' }}
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const term = (searchQuery || '').toLowerCase();
+
+            // 0) Recherche directe dans les produits chargés (priorité aux produits homme)
+            try {
+              const normalized = term.replace(/\s+/g, ' ').trim();
+              const isMen = /\bhomme\b/.test(normalized) || true; // par défaut, laisser passer pour capturer les modèles homme
+              const direct = (allProducts || []).find(p => {
+                const name = (p.name || '').toLowerCase();
+                const brand = (p.brand || '').toLowerCase();
+                const idStr = String(p.id || '').toLowerCase();
+                const okText = name.includes(normalized) || normalized.includes(name) ||
+                  normalized.includes(brand) || brand && normalized.includes(brand);
+                const okStatus = (p.status === 'approved') && (p.visible ?? true);
+                const okSub = !isMen || (p.subcategory === 'homme');
+                return okText && okStatus && okSub;
+              });
+              if (direct) {
+                const to = `/product/${direct.slug || direct.id}`;
+                window.location.href = to;
+                return;
+              }
+            } catch {}
+
+            // 1) Résolution front-only des modèles HOMME via mapping images publiques
+            const mapMenQueryToImage = (q) => {
+              const t = (q || '').toLowerCase().replace(/\s+/g, ' ').trim();
+              // Balenciaga
+              if (t.includes('balenciaga') || t.includes('balanciaga')) {
+                if (t.includes('defender') && t.includes('blanc')) return '/chaussures/homme/Balanciaga/Blanc/balenciaga-defender-blanc.jpg';
+                if (t.includes('defender') && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Balanciaga/Noire/balenciaga-defender-noire.jpg';
+                if (t.includes('defender') && t.includes('vert olive')) return '/chaussures/homme/Balanciaga/Vertolive/balenciaga-defender-vertolive.jpg';
+                if (t.includes('speed') && t.includes('blanc')) return '/chaussures/homme/Balanciaga/Blanc/balenciaga-speed-blanc.jpg';
+                if (t.includes('speed') && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Balanciaga/Noire/balenciaga-speed-noire.jpg';
+                if (t.includes('speed') && t.includes('vert olive')) return '/chaussures/homme/Balanciaga/Vertolive/balenciaga-speed-vertolive.jpg';
+                if (t.includes('track') && t.includes('blanc')) return '/chaussures/homme/Balanciaga/Blanc/balenciaga-track-blanc.jpg';
+                if (t.includes('track') && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Balanciaga/Noire/balenciaga-track-noire.jpg';
+                if (t.includes('track') && t.includes('vert olive')) return '/chaussures/homme/Balanciaga/Vertolive/balenciaga-track-vertolive.jpg';
+              }
+              // Nike
+              if (t.includes('nike')) {
+                if ((t.includes('air max 270') || t.includes('270')) && t.includes('blanc')) return '/chaussures/homme/Nike/blanc/nike-air-max-270-blanc.jpg';
+                if ((t.includes('air max 270') || t.includes('270')) && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Nike/noire/nike-air-max-270-noir.jpg';
+                if ((t.includes('air max 270') || t.includes('270')) && t.includes('vert olive')) return '/chaussures/homme/Nike/vertolive/nike-air-max-270-vertolive.jpg';
+                if (t.includes('air jordan 1') && t.includes('blanc')) return '/chaussures/homme/Nike/blanc/nike-air-jordan-1-blanc.jpg';
+                if (t.includes('air jordan 1') && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Nike/noire/nike-air-jordan-1-noir.jpg';
+                if (t.includes('air jordan 1') && t.includes('vert olive')) return '/chaussures/homme/Nike/vertolive/nike-air-jordan-1-vertolive.jpg';
+                if (t.includes('dunk low') && t.includes('blanc')) return '/chaussures/homme/Nike/blanc/nike-dunk-low-blanc.jpg';
+                if (t.includes('dunk low') && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Nike/noire/nike-dunk-low-noir.jpg';
+                if (t.includes('dunk low') && t.includes('vert olive')) return '/chaussures/homme/Nike/vertolive/nike-dunk-low-vertolive.jpg';
+              }
+              // Puma
+              if (t.includes('puma')) {
+                if (t.includes('basket classic') && t.includes('blanc')) return '/chaussures/homme/Puma/Blanc/puma-basket-classic-blanc.jpg';
+                if (t.includes('basket classic') && t.includes('vert olive')) return '/chaussures/homme/Puma/Vertolive/puma-basket-classic-vertolive.jpg';
+                if (t.includes('cali sport') && t.includes('blanc')) return '/chaussures/homme/Puma/Blanc/puma-cali-sport-blanc.jpg';
+                if (t.includes('cali sport') && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Puma/Noir/puma-cali-sport-noire.jpg';
+                if (t.includes('future rider') && t.includes('blanc')) return '/chaussures/homme/Puma/Blanc/puma-future-rider-blanc.jpg';
+                if (t.includes('future rider') && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Puma/Noir/puma-future-rider-noire.jpg';
+                if (t.includes('future rider') && t.includes('vert olive')) return '/chaussures/homme/Puma/Vertolive/puma-future-rider-vertolive.jpg';
+                if (t.includes('rs-x') && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Puma/Noir/puma-rs-x-noire.jpg';
+              }
+              // Gucci
+              if (t.includes('gucci')) {
+                if (t.includes('ace') && t.includes('blanc')) return '/chaussures/homme/Gucci/Blanc/gucci-ace-blanc.jpg';
+                if (t.includes('ace') && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Gucci/Guccinoire/gucci-ace-guccinoire.jpg';
+                if (t.includes('ace') && t.includes('rose')) return '/chaussures/homme/Gucci/Guccirose/gucci-ace-guccirose.jpg';
+                if (t.includes('rhyton') && t.includes('blanc')) return '/chaussures/homme/Gucci/Blanc/gucci-rhyton-blanc.jpg';
+                if (t.includes('rhyton') && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Gucci/Guccinoire/gucci-rhyton-guccinoire.jpg';
+                if (t.includes('rhyton') && t.includes('rose')) return '/chaussures/homme/Gucci/Guccirose/gucci-rhyton-guccirose.jpg';
+                if (t.includes('screener') && t.includes('blanc')) return '/chaussures/homme/Gucci/Blanc/gucci-screener-blanc.jpg';
+                if (t.includes('screener') && (t.includes('noir') || t.includes('noire'))) return '/chaussures/homme/Gucci/Guccinoire/gucci-screener-guccinoire.jpg';
+                if (t.includes('screener') && t.includes('rose')) return '/chaussures/homme/Gucci/Guccirose/gucci-screener-guccirose.jpg';
+              }
+              return null;
+            };
+            const imageForMen = mapMenQueryToImage(searchQuery);
+            if (imageForMen) {
+              window.location.href = `/product/synthetic-homme?image=${encodeURIComponent(imageForMen)}`;
+              return;
+            }
+            const hasBalenciaga = term.includes('balenciaga') || term.includes('balanciaga');
+            const colorMap = [
+              { tokens: ['noir', 'noire'], value: 'Noir' },
+              { tokens: ['blanc', 'blanche'], value: 'Blanc' },
+              { tokens: ['vert olive', 'vertolive', 'olive'], value: 'Vert olive' },
+            ];
+            const foundColor = colorMap.find(c => c.tokens.some(t => term.includes(t)))?.value || null;
+            if (hasBalenciaga) {
+              try {
+                const params = { brand: 'Balenciaga', subcategory: 'homme', page: 1, pageSize: 24 };
+                if (foundColor) params.color = foundColor;
+                const res = await fetchProductsApi(params);
+                const items = Array.isArray(res?.items) ? res.items : [];
+                if (foundColor && items.length > 0) {
+                  window.location.href = `/product/${items[0].slug}?color=${encodeURIComponent(foundColor)}`;
+                  return;
+                }
+                // Pas de couleur: rediriger vers la page catalogue avec filtres
+                window.location.href = `/catalogue?brand=Balenciaga&subcategory=homme${foundColor ? `&color=${encodeURIComponent(foundColor)}` : ''}`;
+                return;
+              } catch (err) {
+                console.error(err);
+              }
+            }
+            window.location.href = `/catalogue?search=${encodeURIComponent(searchQuery || '')}`;
+          }}
+        >
+          {/* Conteneur unifié pour assurer un seul contour et des coins homogènes */}
+          <div style={{ display: 'flex', flex: 1, maxWidth: '100%', border: '1px solid #d5d5d5', borderRadius: 8, overflow: 'visible', background: '#fff', position: 'relative' }}>
+            {/* Bouton catégorie à gauche (Chaussures) */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className="search-cat-btn"
+                ref={searchCatBtnRef}
+                onClick={() => setSearchCatOpen(!searchCatOpen)}
+                style={{
+                  background: '#f3f3f3',
+                  color: '#111',
+                  border: 'none',
+                  borderRight: '1px solid #d5d5d5',
+                  padding: '9px 12px',
+                  minWidth: 130,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  height: 38
+                }}
+              >
+                <span>{searchCategory.label}</span>
+                <i className="bi bi-caret-down-fill" style={{ fontSize: 10 }}></i>
+              </button>
+              {searchCatOpen && (
+                <div className="search-cat-dropdown" style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', color: '#111', border: '1px solid #d5d5d5', borderTop: 'none', borderRadius: '0 0 8px 8px', minWidth: 220, zIndex: 10000, boxShadow: '0 6px 14px rgba(0,0,0,0.12)' }}>
+                  {CATEGORIES.map(cat => (
+                    <button key={cat.key} onClick={() => { setSearchCategory(cat); setSearchCatOpen(false); }} style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: '10px 12px', cursor: 'pointer', fontSize: 14 }}>
+                      {cat.label}
                     </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Champ de recherche central */}
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={`Rechercher dans ${searchCategory.label}`}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                padding: '10px 12px',
+                border: 'none',
+                outline: 'none',
+                fontSize: 14,
+                background: '#fff',
+                color: '#111',
+                height: 38
+              }}
+            />
+
+            {/* Bouton de recherche jaune avec icône */}
+            <button type="submit" title="Rechercher" style={{ width: 44, background: '#febd69', color: '#111', border: 'none', borderLeft: '1px solid #d5d5d5', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 38 }}>
+              <i className="bi bi-search" style={{ fontSize: 16 }}></i>
+            </button>
           </div>
-          <input type="text" placeholder={`${t('searchIn')} ${t(searchCategory.key)}`} style={{ flex: 1, border: '1px solid #ddd', borderLeft: 'none', fontSize: 15, padding: '0 12px', height: 40, outline: 'none', borderRadius: '0', background: '#fff' }} />
-          <button type="submit" style={{ background: '#ffd814', border: '1.5px solid #e47911', borderLeft: 'none', borderRadius: '0 8px 8px 0', width: 48, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'none', cursor: 'pointer' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 16 16" stroke="currentColor">
-              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" fill="#232f3e" />
-            </svg>
-          </button>
         </form>
-        {/* À droite : langue, compte, retours & commandes, panier */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Sélecteur de langue */}
-          <div style={{ display: 'flex', alignItems: 'center', marginRight: 8, position: 'relative' }} ref={langBtnRef}>
+        {/* Zone de droite: Compte & Listes, Retours et Commandes, Notifications, Panier */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* Sélecteur de langue FR avec drapeau */}
+          <div style={{ position: 'relative' }}>
             <button
-              className="btn btn-link p-0 d-flex align-items-center text-white"
-              style={{ fontSize: 15, fontWeight: 500, textDecoration: 'none', outline: 'none', boxShadow: 'none' }}
-              onClick={() => setLangDropdown((v) => !v)}
+              ref={langBtnRef}
+              onClick={() => setLangDropdown(!langDropdown)}
+              style={{ background: 'none', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', padding: '4px 8px' }}
+              title={selectedLang.label}
             >
-              <span style={{ fontSize: 15, fontWeight: 500 }}>{selectedLang.code.toUpperCase()}</span>
-              <img src={selectedLang.flag} alt={selectedLang.code} style={{ width: 20, height: 14, marginLeft: 4, objectFit: 'cover', borderRadius: 2, border: '1px solid #fff' }} />
-              <span style={{ fontSize: 12, color: '#fff', marginLeft: 2, marginTop: 2 }}>▼</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span role="img" aria-label={selectedLang.label}>{selectedLang.emoji}</span>
+                <span style={{ fontWeight: 700 }}>{selectedLang.code}</span>
+              </span>
+              <i className="bi bi-caret-down-fill" style={{ fontSize: 10, color: '#ddd' }}></i>
             </button>
             {langDropdown && (
-              <ul className="dropdown-menu show" style={{ display: 'block', position: 'absolute', top: 36, left: 0, minWidth: 140, zIndex: 1000, background: '#fff', color: '#222', border: '1px solid #ddd', borderRadius: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', padding: 0, margin: 0 }}>
-                {LANGUAGES.map((lang) => (
-                  <li key={lang.code} style={{ width: '100%' }}>
-                    <button
-                      className="dropdown-item d-flex align-items-center py-2 px-3"
-                      style={{ border: 'none', background: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', fontSize: 15 }}
-                      onClick={() => handleLangClick(lang)}
-                    >
-                      <img src={lang.flag} alt={lang.code} style={{ width: 20, height: 14, marginRight: 8, objectFit: 'cover', borderRadius: 2, border: '1px solid #ddd' }} />
-                      {lang.label}
-                    </button>
-                  </li>
+              <div style={{ position: 'absolute', top: '100%', right: 0, background: '#fff', color: '#111', border: '1px solid #ddd', borderRadius: 6, minWidth: 160, zIndex: 10000 }}>
+                {LANGUAGES.map(lang => (
+                  <button key={lang.code} onClick={() => handleLangClick(lang)} style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: '8px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span role="img" aria-label={lang.label}>{lang.emoji}</span>
+                    <span>{lang.label}</span>
+                  </button>
                 ))}
-              </ul>
-            )}
-          </div>
-          {/* Compte & Listes */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginRight: 8, minWidth: 120, position: 'relative' }} ref={accountBtnRef}>
-          <button
-              className="btn btn-link p-0 text-white"
-              style={{ fontWeight: 600, fontSize: 15, textDecoration: 'underline', cursor: 'pointer', lineHeight: 1.1 }}
-              onClick={() => setAccountDropdown((v) => !v)}
-            >
-              <span style={{ fontSize: 11, color: '#ddd', fontWeight: 400, textDecoration: 'none', display: 'block', marginBottom: -2 }}>{t('hello')}</span>
-              {t('accountLists')} <span style={{ fontSize: 12, color: '#fff', marginLeft: 2 }}>▼</span>
-            </button>
-            {accountDropdown && (
-              <div ref={accountMenuRef} style={{
-                position: 'absolute', top: 38, left: 0, minWidth: 340, zIndex: 1000, background: '#fff', color: '#232f3e', border: '1px solid #ddd', borderRadius: 6, boxShadow: '0 2px 16px rgba(0,0,0,0.18)', padding: 0, margin: 0, fontSize: 15
-              }}>
-                {/* Connexion / Inscription */}
-                <div style={{ borderBottom: '1px solid #eee', padding: '16px 20px 12px 20px', background: '#f7fafc' }}>
-                  <Link to="/connexion" style={{ fontWeight: 700, color: '#232f3e', textDecoration: 'none', fontSize: 16 }}>
-                    Se connecter
-                  </Link>
-                  <div style={{ fontSize: 13, marginTop: 4 }}>
-                    Nouveau client ? <Link to="/inscription" style={{ color: '#007185', textDecoration: 'none', fontWeight: 500 }}>Commencez ici</Link>
-                  </div>
-                </div>
-                {/* Mon compte */}
-                <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Mon compte</div>
-                  <Link to="/profil" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Mon profil</Link><br/>
-                  <Link to="/adresses" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Mes adresses</Link><br/>
-                  <Link to="/paiement" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Mes moyens de paiement</Link><br/>
-                  <Link to="/securite" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Paramètres de sécurité</Link><br/>
-                  <Link to="/preferences" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Préférences de communication</Link>
-                </div>
-                {/* Mes commandes */}
-                <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Mes commandes</div>
-                  <Link to="/commandes#historique" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Historique des commandes</Link><br/>
-                  <Link to="/commandes#suivi" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Suivi des livraisons</Link><br/>
-                  <Link to="/commandes#retours" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Retours et remboursements</Link>
-                </div>
-                {/* Mes listes */}
-                <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Mes listes</div>
-                  <Link to="/listes/envies" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Listes d'envies</Link><br/>
-                  <Link to="/listes/cadeaux" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Listes cadeaux</Link><br/>
-                  <Link to="/listes/categories" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Listes par catégorie</Link><br/>
-                  <Link to="/listes/sauvegardes" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Articles sauvegardés pour plus tard</Link>
-                </div>
-                {/* Abonnements et programmes */}
-                <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Abonnements et programmes</div>
-                  <Link to="/cartes-cadeaux" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Gestion des cartes-cadeaux et crédits</Link>
-                </div>
-                {/* Mes avis */}
-                <div style={{ padding: '12px 20px', borderBottom: '1px solid #eee' }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Mes avis</div>
-                  <Link to="/avis" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>Mes évaluations et commentaires</Link>
-                </div>
-                {/* Aide et assistance */}
-                <div style={{ padding: '12px 20px' }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Aide et assistance</div>
-                  <Link to="/service-client#centre-aide" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Centre d'aide</Link><br/>
-                  <Link to="/service-client#contact" className="dropdown-item" style={{ color: '#232f3e', padding: 0, marginBottom: 4 }}>Contact service client</Link><br/>
-                  <Link to="/service-client#faq" className="dropdown-item" style={{ color: '#232f3e', padding: 0 }}>FAQ</Link>
-                </div>
               </div>
             )}
           </div>
+          {/* Compte & Listes */}
+          <div style={{ position: 'relative' }}>
+            <button
+              ref={accountBtnRef}
+              onClick={() => setAccountDropdown(!accountDropdown)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#fff',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                padding: '4px 8px'
+              }}
+            >
+              <span style={{ fontSize: 11, color: '#ddd' }}>{user ? `${t('hello')?.replace('identifiez-vous','')}${user?.prenom ? ' ' + user.prenom : ''}` : t('hello_identify')}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, textDecoration: 'underline' }}>{t('account_lists')}</span>
+            </button>
+            {accountDropdown && (
+              <div
+                ref={accountMenuRef}
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  background: '#fff',
+                  color: '#111',
+                  border: '1px solid #ddd',
+                  borderRadius: 8,
+                  minWidth: 320,
+                  zIndex: 10000,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.15)'
+                }}
+              >
+                {/* Bandeau Se connecter */}
+                {!user && (
+                  <div style={{ padding: '12px 14px', borderBottom: '1px solid #eee' }}>
+                    <div style={{ fontWeight: 700, marginBottom: 4 }}>Se connecter</div>
+                    <div style={{ fontSize: 12, color: '#565959' }}>Nouveau client ? <a href="/inscription" style={{ color: '#007185', textDecoration: 'none' }}>Commencez ici</a></div>
+                    <a href="/connexion" style={{ display: 'inline-block', marginTop: 10, background: '#ffd814', color: '#111', border: '1px solid #f2c200', borderRadius: 8, padding: '6px 10px', fontWeight: 700, textDecoration: 'none' }}>Se connecter</a>
+                  </div>
+                )}
+
+                {/* Sections */}
+                <div style={{ padding: '8px 0' }}>
+                  <div style={{ padding: '8px 14px', fontWeight: 700, color: '#111' }}>Mon compte</div>
+                  <div style={{ padding: '0 8px 8px 8px' }}>
+                    <MenuLink to="/profil">Mon profil</MenuLink>
+                    <MenuLink to="/adresses">Mes adresses</MenuLink>
+                    <MenuLink to="/paiement">Mes moyens de paiement</MenuLink>
+                    <MenuLink to="/securite">Paramètres de sécurité</MenuLink>
+                    <MenuLink to="/communications">Préférences de communication</MenuLink>
+                  </div>
+
+                  <div style={{ height: 1, background: '#f1f1f1' }}></div>
+
+                  <div style={{ padding: '8px 14px', fontWeight: 700, color: '#111' }}>Mes commandes</div>
+                  <div style={{ padding: '0 8px 8px 8px' }}>
+                    <MenuLink to="/commandes">Historique des commandes</MenuLink>
+                    <MenuLink to="/livraisons">Suivi des livraisons</MenuLink>
+                    <MenuLink to="/retours">Retours et remboursements</MenuLink>
+                  </div>
+
+                  <div style={{ height: 1, background: '#f1f1f1' }}></div>
+
+                  <div style={{ padding: '8px 14px', fontWeight: 700, color: '#111' }}>Mes listes</div>
+                  <div style={{ padding: '0 8px 8px 8px' }}>
+                    <MenuLink to="/listes/envies">Listes d'envies</MenuLink>
+                    <MenuLink to="/listes/cadeaux">Listes cadeaux</MenuLink>
+                    <MenuLink to="/listes/categories">Listes par catégorie</MenuLink>
+                    <MenuLink to="/listes/sauvegardes">Articles sauvegardés pour plus tard</MenuLink>
+                  </div>
+
+                  <div style={{ height: 1, background: '#f1f1f1' }}></div>
+
+                  <div style={{ padding: '8px 14px', fontWeight: 700, color: '#111' }}>Abonnements et programmes</div>
+                  <div style={{ padding: '0 8px 12px 8px' }}>
+                    <MenuLink to="/cartes-cadeaux/gestion">Gestion des cartes-cadeaux et crédits</MenuLink>
+                  </div>
+
+                  <div style={{ height: 1, background: '#f1f1f1' }}></div>
+
+                  <div style={{ padding: '8px 14px', fontWeight: 700, color: '#111' }}>Mes avis</div>
+                  <div style={{ padding: '0 8px 8px 8px' }}>
+                    <MenuLink to="/avis">Mes évaluations et commentaires</MenuLink>
+                  </div>
+
+                  <div style={{ height: 1, background: '#f1f1f1' }}></div>
+
+                  <div style={{ padding: '8px 14px', fontWeight: 700, color: '#111' }}>Aide et assistance</div>
+                  <div style={{ padding: '0 8px 12px 8px' }}>
+                    <MenuLink to="/aide">Centre d'aide</MenuLink>
+                    <MenuLink to="/support/contact">Contact service client</MenuLink>
+                    <MenuLink to="/faq">FAQ</MenuLink>
+                  </div>
+                </div>
+
+                {user && (
+                  <div style={{ borderTop: '1px solid #eee', padding: '10px 14px' }}>
+                    <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: '#e47911', padding: 0, cursor: 'pointer', fontWeight: 600 }}>Se déconnecter</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Retours et Commandes */}
-          <Link
-            to="/commandes"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              marginRight: 8,
-              minWidth: 100,
-              textDecoration: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            <span style={{ fontSize: 11, color: '#ddd', lineHeight: 1 }}>{t('returnsShort')}</span>
-            <span style={{ fontWeight: 600, fontSize: 15, color: '#fff', lineHeight: 1.1 }}>{t('andOrders')}</span>
+          <Link to="/commandes" style={{ textDecoration: 'none', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '4px 8px' }}>
+            <span style={{ fontSize: 11, color: '#ddd' }}>{t('returnsShort')}</span>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>{t('andOrders')}</span>
           </Link>
-          {/* Sélecteur de thème */}
-          <div style={{ marginRight: 16 }}>
-            <ThemeToggle variant="dropdown" size="sm" />
+
+          {/* Notifications (icône cloche) */}
+          <div title="Notifications" style={{ color: '#aab7b8', display: 'flex', alignItems: 'center' }}>
+            <i className="bi bi-bell" style={{ fontSize: 18 }}></i>
           </div>
-          
-          {/* Alertes intelligentes */}
-          <div style={{ marginRight: 16 }}>
-            <SmartAlerts />
-          </div>
-          
-          {/* Notifications classiques */}
-          <div style={{ marginRight: 16 }}>
-            <NotificationBell />
-          </div>
-          
+
           {/* Panier */}
           <button
             onClick={() => setShowCartSidebar(true)}
             style={{
               display: 'flex',
               alignItems: 'center',
-              position: 'relative',
-              marginRight: 0,
-              minWidth: 70,
-              textDecoration: 'none',
-              cursor: 'pointer',
+              gap: 8,
               background: 'none',
               border: 'none',
-              color: 'inherit'
+              color: '#fff',
+              cursor: 'pointer',
+              padding: '4px 6px'
             }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#fff" viewBox="0 0 16 16">
-              <path d="M0 1.5A.5.5 0 0 1 .5 1h1a.5.5 0 0 1 .485.379L2.89 5H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 14H4a.5.5 0 0 1-.491-.408L1.01 2H.5a.5.5 0 0 1-.5-.5zm3.14 4l1.25 6.5h7.22l1.25-6.5H3.14z" />
-            </svg>
-            <span style={{ position: 'absolute', top: -8, right: -2, background: '#ffd814', color: '#232f3e', borderRadius: '50%', fontSize: 13, fontWeight: 700, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{cartCount}</span>
-            <span style={{ fontWeight: 600, fontSize: 15, color: '#fff', marginLeft: 6 }}>{t('cart')}</span>
+            <div style={{ position: 'relative' }}>
+              <i className="bi bi-cart" style={{ fontSize: 20 }}></i>
+              <span style={{
+                position: 'absolute',
+                top: -8,
+                right: -10,
+                background: '#ffd814',
+                color: '#111',
+                borderRadius: '50%',
+                width: 18,
+                height: 18,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 12,
+                fontWeight: 700
+              }}>{cartCount}</span>
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 700 }}>Panier</span>
           </button>
         </div>
       </nav>
@@ -457,7 +649,7 @@ export default function Header() {
               transition: 'all 0.2s'
             }}>
               <i className="bi bi-gift-fill" style={{ fontSize: '14px', color: '#ff6b6b' }}></i>
-              Cartes-cadeaux
+              Cartes cadeau
             </Link>
           </li>
           <li style={{ display: 'flex', alignItems: 'center', height: 38 }}>
@@ -502,7 +694,7 @@ export default function Header() {
               borderRadius: '4px',
               transition: 'all 0.2s'
             }}>
-              <i className="bi bi-headset" style={{ fontSize: '14px', color: '#4ecdc4' }}></i>
+              <i className="bi bi-headset" style={{ fontSize: '14px', color: '#aab7b8' }}></i>
               Service client
             </Link>
           </li>

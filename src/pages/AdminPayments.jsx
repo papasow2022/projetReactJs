@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { exportToCsv } from '../utils/csvExport';
+import { usePayments } from '../contexts/PaymentsContext';
+import { useVendor } from '../contexts/VendorContext';
+import { useAudit } from '../contexts/AuditContext';
 import { 
   BiCreditCard,
   BiWallet,
@@ -12,6 +15,9 @@ import {
 } from 'react-icons/bi';
 
 export default function AdminPayments() {
+  const { payments, updatePaymentStatus, getVendorPayments } = usePayments();
+  const { vendors } = useVendor();
+  const { addAuditEntry } = useAudit();
   const [payouts, setPayouts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -22,16 +28,39 @@ export default function AdminPayments() {
 
   useEffect(() => {
     loadPayouts();
-  }, []);
+  }, [payments, vendors]);
 
   const loadPayouts = () => {
     setLoading(true);
-    const mock = [
-      { id: 'PAY-001', vendor: 'Boutique Sport', vendorId: 'VD-001', amount: 1250.75, status: 'completed', method: 'bank', date: '2024-01-12T10:00:00Z' },
-      { id: 'PAY-002', vendor: 'Mode & Style', vendorId: 'VD-002', amount: 980.20, status: 'processing', method: 'wallet', date: '2024-01-14T14:30:00Z' },
-      { id: 'PAY-003', vendor: 'Tech Store', vendorId: 'VD-003', amount: 1567.40, status: 'failed', method: 'bank', date: '2024-01-15T09:15:00Z' }
-    ];
-    setTimeout(() => { setPayouts(mock); setLoading(false); }, 600);
+    
+    try {
+      // Charger les paiements réels depuis le contexte
+      const allPayouts = [];
+      
+      // Récupérer les paiements de tous les vendeurs
+      Object.keys(vendors || {}).forEach(vendorId => {
+        const vendorPayments = getVendorPayments(vendorId);
+        const vendor = vendors[vendorId];
+        
+        vendorPayments.forEach(payment => {
+          allPayouts.push({
+            ...payment,
+            vendor: vendor ? (vendor.nomEntreprise || vendor.email) : 'Vendeur inconnu',
+            vendorId: vendorId
+          });
+        });
+      });
+      
+      // Trier par date (plus récents en premier)
+      allPayouts.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+      
+      setPayouts(allPayouts);
+      setLoading(false);
+    } catch (error) {
+      console.error('Erreur lors du chargement des paiements:', error);
+      setPayouts([]);
+      setLoading(false);
+    }
   };
 
   const filtered = payouts

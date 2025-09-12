@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAudit } from '../contexts/AuditContext';
+import { useVendor } from '../contexts/VendorContext';
 import { 
   BiShoppingBag, 
   BiSearch, 
@@ -15,6 +16,7 @@ import {
 } from 'react-icons/bi';
 
 export default function AdminOrders() {
+  const { vendors } = useVendor();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,7 +26,7 @@ export default function AdminOrders() {
 
   useEffect(() => {
     loadOrders();
-  }, []);
+  }, [vendors]);
 
   useEffect(() => {
     filterOrders();
@@ -32,99 +34,39 @@ export default function AdminOrders() {
 
   const loadOrders = () => {
     setLoading(true);
-    // Simuler des données de test
-    const mockOrders = [
-      {
-        id: 'ORD-2024-001',
-        customer: 'Marie Dupont',
-        customerEmail: 'marie.dupont@email.com',
-        vendor: 'Boutique Sport',
-        vendorId: 'VD-001',
-        total: 89.99,
-        status: 'pending',
-        paymentStatus: 'paid',
-        shippingStatus: 'not_shipped',
-        createdAt: '2024-01-15T10:30:00Z',
-        items: [
-          { name: 'Chaussures Nike Air Max', quantity: 1, price: 89.99 }
-        ],
-        shippingAddress: {
-          street: '123 Rue de la Paix',
-          city: 'Paris',
-          postalCode: '75001',
-          country: 'France'
-        }
-      },
-      {
-        id: 'ORD-2024-002',
-        customer: 'Jean Martin',
-        customerEmail: 'jean.martin@email.com',
-        vendor: 'Mode & Style',
-        vendorId: 'VD-002',
-        total: 124.50,
-        status: 'processing',
-        paymentStatus: 'paid',
-        shippingStatus: 'shipped',
-        createdAt: '2024-01-14T15:20:00Z',
-        items: [
-          { name: 'Sac à dos Adidas', quantity: 1, price: 45.50 },
-          { name: 'T-shirt Nike', quantity: 2, price: 39.50 }
-        ],
-        shippingAddress: {
-          street: '456 Avenue des Champs',
-          city: 'Lyon',
-          postalCode: '69001',
-          country: 'France'
-        }
-      },
-      {
-        id: 'ORD-2024-003',
-        customer: 'Sophie Bernard',
-        customerEmail: 'sophie.bernard@email.com',
-        vendor: 'Tech Store',
-        vendorId: 'VD-003',
-        total: 299.99,
-        status: 'shipped',
-        paymentStatus: 'paid',
-        shippingStatus: 'delivered',
-        createdAt: '2024-01-13T09:15:00Z',
-        items: [
-          { name: 'Apple Watch Series 7', quantity: 1, price: 299.99 }
-        ],
-        shippingAddress: {
-          street: '789 Boulevard Saint-Germain',
-          city: 'Marseille',
-          postalCode: '13001',
-          country: 'France'
-        }
-      },
-      {
-        id: 'ORD-2024-004',
-        customer: 'Pierre Durand',
-        customerEmail: 'pierre.durand@email.com',
-        vendor: 'Sport Plus',
-        vendorId: 'VD-004',
-        total: 75.00,
-        status: 'cancelled',
-        paymentStatus: 'refunded',
-        shippingStatus: 'cancelled',
-        createdAt: '2024-01-12T14:45:00Z',
-        items: [
-          { name: 'Veste Nike', quantity: 1, price: 75.00 }
-        ],
-        shippingAddress: {
-          street: '321 Rue de Rivoli',
-          city: 'Toulouse',
-          postalCode: '31000',
-          country: 'France'
-        }
-      }
-    ];
-
-    setTimeout(() => {
-      setOrders(mockOrders);
+    
+    try {
+      // Charger toutes les commandes réelles depuis localStorage
+      const allOrders = [];
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      
+      users.forEach(user => {
+        const userOrders = JSON.parse(localStorage.getItem(`commandes_${user.email}`) || '[]');
+        userOrders.forEach(order => {
+          // Enrichir les commandes avec les informations du vendeur
+          const vendor = vendors[order.vendorId];
+          const enrichedOrder = {
+            ...order,
+            customer: user.nom || user.email,
+            customerEmail: user.email,
+            vendor: vendor ? (vendor.nomEntreprise || vendor.email) : 'Vendeur inconnu',
+            vendorId: order.vendorId,
+            createdAt: order.date || order.createdAt || new Date().toISOString()
+          };
+          allOrders.push(enrichedOrder);
+        });
+      });
+      
+      // Trier par date de création (plus récentes en premier)
+      allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      setOrders(allOrders);
       setLoading(false);
-    }, 1000);
+    } catch (error) {
+      console.error('Erreur lors du chargement des commandes:', error);
+      setOrders([]);
+      setLoading(false);
+    }
   };
 
   const filterOrders = () => {

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAudit } from '../contexts/AuditContext';
+import { useReviews } from '../contexts/ReviewsContext';
+import { useVendor } from '../contexts/VendorContext';
 import { 
   BiStar, 
   BiSearch, 
@@ -16,6 +18,8 @@ import {
 } from 'react-icons/bi';
 
 export default function AdminReviews() {
+  const { reviews: contextReviews, pendingReviews, approveReview, rejectReview } = useReviews();
+  const { vendors } = useVendor();
   const [reviews, setReviews] = useState([]);
   const [filteredReviews, setFilteredReviews] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,7 +30,7 @@ export default function AdminReviews() {
 
   useEffect(() => {
     loadReviews();
-  }, []);
+  }, [contextReviews, pendingReviews, vendors]);
 
   useEffect(() => {
     filterReviews();
@@ -34,104 +38,41 @@ export default function AdminReviews() {
 
   const loadReviews = () => {
     setLoading(true);
-    // Simuler des données de test
-    const mockReviews = [
-      {
-        id: 'REV-001',
-        customer: 'Marie Dupont',
-        customerEmail: 'marie.dupont@email.com',
-        product: 'Chaussures Nike Air Max',
-        productId: 'PROD-001',
-        vendor: 'Boutique Sport',
-        vendorId: 'VD-001',
-        rating: 5,
-        title: 'Excellent produit !',
-        comment: 'Très satisfaite de mon achat. Les chaussures sont confortables et de bonne qualité. Livraison rapide.',
-        status: 'approved',
-        reported: false,
-        reportReason: null,
-        createdAt: '2024-01-15T10:30:00Z',
-        helpful: 12,
-        notHelpful: 1
-      },
-      {
-        id: 'REV-002',
-        customer: 'Jean Martin',
-        customerEmail: 'jean.martin@email.com',
-        product: 'Sac à dos Adidas',
-        productId: 'PROD-002',
-        vendor: 'Mode & Style',
-        vendorId: 'VD-002',
-        rating: 4,
-        title: 'Bon produit',
-        comment: 'Sac de bonne qualité, mais la fermeture éclair pourrait être plus solide.',
-        status: 'approved',
-        reported: false,
-        reportReason: null,
-        createdAt: '2024-01-14T15:20:00Z',
-        helpful: 8,
-        notHelpful: 2
-      },
-      {
-        id: 'REV-003',
-        customer: 'Sophie Bernard',
-        customerEmail: 'sophie.bernard@email.com',
-        product: 'Apple Watch Series 7',
-        productId: 'PROD-003',
-        vendor: 'Tech Store',
-        vendorId: 'VD-003',
-        rating: 1,
-        title: 'Produit défectueux',
-        comment: 'La montre ne fonctionne pas du tout. Je demande un remboursement immédiat !',
-        status: 'pending',
-        reported: true,
-        reportReason: 'Contenu inapproprié',
-        createdAt: '2024-01-13T09:15:00Z',
-        helpful: 0,
-        notHelpful: 5
-      },
-      {
-        id: 'REV-004',
-        customer: 'Pierre Durand',
-        customerEmail: 'pierre.durand@email.com',
-        product: 'Veste Nike',
-        productId: 'PROD-004',
-        vendor: 'Sport Plus',
-        vendorId: 'VD-004',
-        rating: 3,
-        title: 'Correct',
-        comment: 'La veste est correcte mais pas exceptionnelle. Le prix est un peu élevé pour la qualité.',
-        status: 'rejected',
-        reported: false,
-        reportReason: null,
-        createdAt: '2024-01-12T14:45:00Z',
-        helpful: 3,
-        notHelpful: 1
-      },
-      {
-        id: 'REV-005',
-        customer: 'Anonyme',
-        customerEmail: 'anonyme@email.com',
-        product: 'Chaussures Nike Air Max',
-        productId: 'PROD-001',
-        vendor: 'Boutique Sport',
-        vendorId: 'VD-001',
-        rating: 2,
-        title: 'Déçu',
-        comment: 'Produit pas conforme à la description. Taille incorrecte et qualité médiocre.',
-        status: 'pending',
-        reported: true,
-        reportReason: 'Avis suspect',
-        createdAt: '2024-01-11T16:30:00Z',
-        helpful: 1,
-        notHelpful: 8
-      }
-    ];
-
-    setTimeout(() => {
-      setReviews(mockReviews);
+    
+    try {
+      // Combiner les avis approuvés et en attente
+      const allReviews = [];
+      
+      // Ajouter les avis approuvés du contexte
+      Object.values(contextReviews || {}).forEach(review => {
+        const vendor = vendors[review.vendorId];
+        allReviews.push({
+          ...review,
+          vendor: vendor ? (vendor.nomEntreprise || vendor.email) : 'Vendeur inconnu',
+          status: 'approved'
+        });
+      });
+      
+      // Ajouter les avis en attente
+      (pendingReviews || []).forEach(review => {
+        const vendor = vendors[review.vendorId];
+        allReviews.push({
+          ...review,
+          vendor: vendor ? (vendor.nomEntreprise || vendor.email) : 'Vendeur inconnu',
+          status: 'pending'
+        });
+      });
+      
+      // Trier par date de création (plus récents en premier)
+      allReviews.sort((a, b) => new Date(b.createdAt || b.submittedAt) - new Date(a.createdAt || a.submittedAt));
+      
+      setReviews(allReviews);
       setLoading(false);
-    }, 1000);
+    } catch (error) {
+      console.error('Erreur lors du chargement des avis:', error);
+      setReviews([]);
+      setLoading(false);
+    }
   };
 
   const filterReviews = () => {
@@ -160,32 +101,34 @@ export default function AdminReviews() {
     setFilteredReviews(filtered);
   };
 
-  const approveReview = (reviewId) => {
+  const handleApproveReview = (reviewId) => {
     const review = reviews.find(r => r.id === reviewId);
-    setReviews(prev => prev.map(r => 
-      r.id === reviewId ? { ...r, status: 'approved' } : r
-    ));
-    // Enregistrer dans l'audit
-    addAuditEntry('review_approved', { type: 'review', id: reviewId }, { 
-      reviewId: reviewId,
-      rating: review?.rating || 'inconnu',
-      product: review?.product || 'Produit inconnu',
-      customer: review?.customer || 'Client inconnu'
-    });
+    if (review) {
+      // Utiliser la fonction du contexte
+      approveReview(reviewId);
+      // Enregistrer dans l'audit
+      addAuditEntry('review_approved', { type: 'review', id: reviewId }, { 
+        reviewId: reviewId,
+        rating: review?.rating || 'inconnu',
+        product: review?.product || 'Produit inconnu',
+        customer: review?.customer || 'Client inconnu'
+      });
+    }
   };
 
-  const rejectReview = (reviewId) => {
+  const handleRejectReview = (reviewId) => {
     const review = reviews.find(r => r.id === reviewId);
-    setReviews(prev => prev.map(r => 
-      r.id === reviewId ? { ...r, status: 'rejected' } : r
-    ));
-    // Enregistrer dans l'audit
-    addAuditEntry('review_rejected', { type: 'review', id: reviewId }, { 
-      reviewId: reviewId,
-      rating: review?.rating || 'inconnu',
-      product: review?.product || 'Produit inconnu',
-      customer: review?.customer || 'Client inconnu'
-    });
+    if (review) {
+      // Utiliser la fonction du contexte
+      rejectReview(reviewId);
+      // Enregistrer dans l'audit
+      addAuditEntry('review_rejected', { type: 'review', id: reviewId }, { 
+        reviewId: reviewId,
+        rating: review?.rating || 'inconnu',
+        product: review?.product || 'Produit inconnu',
+        customer: review?.customer || 'Client inconnu'
+      });
+    }
   };
 
   const deleteReview = (reviewId) => {
@@ -485,14 +428,14 @@ export default function AdminReviews() {
                               <button 
                                 className="btn btn-sm btn-success" 
                                 title="Approuver"
-                                onClick={() => approveReview(review.id)}
+                                onClick={() => handleApproveReview(review.id)}
                               >
                                 <BiCheckCircle />
                               </button>
                               <button 
                                 className="btn btn-sm btn-danger" 
                                 title="Rejeter"
-                                onClick={() => rejectReview(review.id)}
+                                onClick={() => handleRejectReview(review.id)}
                               >
                                 <BiXCircle />
                               </button>

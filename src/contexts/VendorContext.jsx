@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 // Création du contexte
 const VendorContext = createContext();
@@ -21,16 +21,22 @@ export const VendorProvider = ({ children }) => {
   const [vendorNotifications, setVendorNotifications] = useState([]);
   const [vendorHistory, setVendorHistory] = useState({});
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
 
-  useEffect(() => {
-    loadVendors();
-  }, []);
-
-  const loadVendors = () => {
+  // Fonction pour charger les vendeurs depuis localStorage
+  const loadVendors = useCallback(() => {
     try {
       // Charger les vendeurs depuis localStorage
       const storedVendors = JSON.parse(localStorage.getItem('vendors') || '{}');
-      setVendors(storedVendors);
+      // Nettoyer automatiquement les vendeurs simulés (VD-TEST-*)
+      const cleaned = Object.fromEntries(
+        Object.entries(storedVendors).filter(([id]) => !String(id).startsWith('VD-TEST-'))
+      );
+      if (Object.keys(cleaned).length !== Object.keys(storedVendors).length) {
+        localStorage.setItem('vendors', JSON.stringify(cleaned));
+      }
+      setVendors(cleaned);
+      setLastUpdate(new Date());
 
       // Charger les commandes des vendeurs
       const storedOrders = JSON.parse(localStorage.getItem('vendorOrders') || '{}');
@@ -53,7 +59,76 @@ export const VendorProvider = ({ children }) => {
       console.error('Erreur lors du chargement des vendeurs:', error);
       setLoading(false);
     }
+  }, []); // Pas de dépendances car les fonctions setState sont stables
+
+  useEffect(() => {
+    loadVendors();
+    
+    // Écouteur pour les changements de localStorage (entre onglets)
+    const handleStorageChange = (e) => {
+      if (e.key === 'vendors') {
+        loadVendors();
+      }
+    };
+
+    // Écouteur pour les messages entre onglets
+    const channel = new BroadcastChannel('vendor-updates');
+    const handleMessage = (e) => {
+      if (e.data === 'vendors_updated') {
+        loadVendors();
+      }
+    };
+
+    // Polling intelligent pour vérifier les changements
+    const pollInterval = setInterval(() => {
+      try {
+        const currentVendors = JSON.parse(localStorage.getItem('vendors') || '{}');
+        const currentKeys = Object.keys(currentVendors).sort();
+        
+        // Charger les vendeurs actuels depuis le state pour comparaison
+        const storedVendors = JSON.parse(localStorage.getItem('vendors') || '{}');
+        const cleaned = Object.fromEntries(
+          Object.entries(storedVendors).filter(([id]) => !String(id).startsWith('VD-TEST-'))
+        );
+        const stateKeys = Object.keys(cleaned).sort();
+        
+        // Vérifier si les clés ont changé (nouveaux vendeurs, suppressions)
+        if (JSON.stringify(currentKeys) !== JSON.stringify(stateKeys)) {
+          loadVendors();
+        }
+      } catch (error) {
+        console.error('Erreur lors du polling des vendeurs:', error);
+      }
+    }, 5000); // Vérification toutes les 5 secondes
+
+    // Ajouter les écouteurs
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+      channel.addEventListener('message', handleMessage);
+    }
+
+    // Cleanup
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleStorageChange);
+        channel.removeEventListener('message', handleMessage);
+        channel.close();
+      }
+      clearInterval(pollInterval);
+    };
+  }, [loadVendors]); // loadVendors est maintenant stable grâce à useCallback
+
+  // Fonction pour notifier les changements aux autres onglets
+  const notifyVendorUpdate = () => {
+    try {
+      const channel = new BroadcastChannel('vendor-updates');
+      channel.postMessage('vendors_updated');
+      channel.close();
+    } catch (error) {
+      console.error('Erreur lors de la notification de mise à jour:', error);
+    }
   };
+
 
   // Fonction pour créer un nouveau vendeur
   const createVendor = (vendorData) => {
@@ -65,6 +140,12 @@ export const VendorProvider = ({ children }) => {
         status: 'pending',
         createdAt: new Date().toISOString(),
         isVerified: false,
+        verification: {
+          kyc: { status: 'pending', updatedAt: null, actor: null, notes: null },
+          bank: { status: 'pending', updatedAt: null, actor: null, notes: null },
+          tax: { status: 'pending', updatedAt: null, actor: null, notes: null },
+          compliance: { status: 'pending', updatedAt: null, actor: null, notes: null }
+        },
         rating: 0,
         totalSales: 0,
         totalOrders: 0,
@@ -89,6 +170,9 @@ export const VendorProvider = ({ children }) => {
       const updatedVendors = { ...vendors, [vendorId]: newVendor };
       setVendors(updatedVendors);
       localStorage.setItem('vendors', JSON.stringify(updatedVendors));
+      
+      // Notifier les autres onglets du changement
+      notifyVendorUpdate();
 
       // Initialiser les statistiques
       const newStats = {
@@ -129,9 +213,36 @@ export const VendorProvider = ({ children }) => {
       };
       setVendors(updatedVendors);
       localStorage.setItem('vendors', JSON.stringify(updatedVendors));
+      
+      // Notifier les autres onglets du changement
+      notifyVendorUpdate();
+      
       return { success: true };
     } catch (error) {
       console.error('Erreur lors de la mise à jour du vendeur:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Mise à jour d'une étape de vérification
+  const updateVendorVerificationStep = (vendorId, step, status, notes = null) => {
+    try {
+      const vendor = vendors[vendorId];
+      if (!vendor) return { success: false, error: 'Vendor not found' };
+      const actor = (() => {
+        try {
+          const storedUser = localStorage.getItem('user');
+          const currentUser = storedUser ? JSON.parse(storedUser) : null;
+          return currentUser?.email || 'admin@unknown.com';
+        } catch (_) { return 'admin@unknown.com'; }
+      })();
+      const newVerification = {
+        ...(vendor.verification || {}),
+        [step]: { status, updatedAt: new Date().toISOString(), actor, notes }
+      };
+      return updateVendor(vendorId, { verification: newVerification });
+    } catch (error) {
+      console.error('Erreur updateVendorVerificationStep:', error);
       return { success: false, error: error.message };
     }
   };
@@ -505,84 +616,20 @@ export const VendorProvider = ({ children }) => {
     return filteredOrders.reduce((total, order) => total + (order.total || 0), 0);
   };
 
-  // Fonction pour créer un vendeur de test validé
-  const createTestVendor = (email) => {
-    const vendorId = 'VD-TEST-' + Date.now();
-    const testVendor = {
-      id: vendorId,
-      email: email,
-      businessName: 'Boutique Test',
-      contactName: 'Vendeur Test',
-      phone: '+33123456789',
-      address: {
-        street: '123 Rue de Test',
-        city: 'Paris',
-        postalCode: '75001',
-        country: 'France'
-      },
-      status: 'active',
-      createdAt: new Date().toISOString(),
-      isVerified: true,
-      rating: 4.5,
-      totalSales: 1250.50,
-      totalOrders: 45,
-      totalProducts: 12,
-      balance: 850.30,
-      commission: 0.15,
-      settings: {
-        autoAcceptOrders: true,
-        notifications: {
-          newOrder: true,
-          lowStock: true,
-          negativeReview: true,
-          paymentReceived: true
-        },
-        shipping: {
-          freeShippingThreshold: 50,
-          defaultShippingCost: 5.99
-        }
-      }
-    };
-
-    const updatedVendors = { ...vendors, [vendorId]: testVendor };
-    setVendors(updatedVendors);
-    localStorage.setItem('vendors', JSON.stringify(updatedVendors));
-
-    // Initialiser les statistiques de test
-    const testStats = {
-      [vendorId]: {
-        dailySales: [
-          { date: '2024-01-01', amount: 125.50 },
-          { date: '2024-01-02', amount: 89.30 },
-          { date: '2024-01-03', amount: 156.80 }
-        ],
-        monthlySales: [
-          { month: '2024-01', amount: 1250.50 },
-          { month: '2023-12', amount: 980.20 }
-        ],
-        topProducts: [
-          { id: '1', name: 'Produit Test 1', sales: 25 },
-          { id: '2', name: 'Produit Test 2', sales: 18 }
-        ],
-        customerMetrics: {
-          newCustomers: 12,
-          returningCustomers: 8,
-          averageOrderValue: 27.80
-        },
-        performance: {
-          orderFulfillmentRate: 98.5,
-          customerSatisfaction: 4.5,
-          responseTime: 2.3
-        }
-      }
-    };
-
-    const updatedStats = { ...vendorStats, ...testStats };
-    setVendorStats(updatedStats);
-    localStorage.setItem('vendorStats', JSON.stringify(updatedStats));
-
-    return testVendor;
+  // Fonction de nettoyage des vendeurs simulés (optionnel)
+  const purgeSimulatedVendors = () => {
+    try {
+      const filtered = Object.fromEntries(Object.entries(vendors).filter(([id]) => !String(id).startsWith('VD-TEST-')));
+      setVendors(filtered);
+      localStorage.setItem('vendors', JSON.stringify(filtered));
+      
+      // Notifier les autres onglets du changement
+      notifyVendorUpdate();
+    } catch (error) {
+      console.error('Erreur purgeSimulatedVendors:', error);
+    }
   };
+
 
   const value = {
     vendors,
@@ -592,8 +639,9 @@ export const VendorProvider = ({ children }) => {
     vendorNotifications,
     vendorHistory,
     loading,
+    lastUpdate,
     createVendor,
-    createTestVendor,
+    purgeSimulatedVendors,
     updateVendor,
     getVendor,
     getVendorStats,
@@ -612,7 +660,8 @@ export const VendorProvider = ({ children }) => {
     suspendVendor,
     unsuspendVendor,
     bulkApproveVendors,
-    bulkRejectVendors
+    bulkRejectVendors,
+    updateVendorVerificationStep
   };
 
   return (

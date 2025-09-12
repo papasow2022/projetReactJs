@@ -17,12 +17,12 @@ const etapesOnboarding = [
   },
   {
     id: 'configuration',
-    titre: 'Configuration du compte',
-    description: 'Configurez vos informations bancaires, fiscales et de livraison',
+    titre: 'Paramètres de la boutique',
+    description: 'Logo, bannières, politiques de retour, livraison et préférences',
     icone: BiCog,
     route: '/vendeur/configuration',
     duree: '5-7 min',
-    obligatoire: true
+    obligatoire: false
   },
   {
     id: 'formation',

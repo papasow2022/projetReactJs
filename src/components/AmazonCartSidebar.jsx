@@ -109,6 +109,7 @@ const AmazonCartSidebar = () => {
                             <button 
                               className="btn btn-outline-secondary btn-sm"
                               onClick={() => updateQuantity(item.id, item.qty - 1)}
+                              disabled={item.qty <= 1}
                             >
                               <i className="bi bi-dash"></i>
                             </button>
@@ -116,13 +117,21 @@ const AmazonCartSidebar = () => {
                               type="number" 
                               className="form-control text-center"
                               value={item.qty}
-                              onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
-                              min="1"
+                              onChange={(e) => {
+                                const raw = parseInt(e.target.value, 10);
+                                const min = 1;
+                                const max = Math.max(1, Number(item.stock ?? 1));
+                                const next = isNaN(raw) ? min : Math.min(Math.max(raw, min), max);
+                                if (next !== item.qty) updateQuantity(item.id, next);
+                              }}
+                              min={1}
+                              max={Math.max(1, Number(item.stock ?? 1))}
                               style={{ fontSize: '0.8rem' }}
                             />
                             <button 
                               className="btn btn-outline-secondary btn-sm"
                               onClick={() => updateQuantity(item.id, item.qty + 1)}
+                              disabled={Number(item.stock ?? 0) <= item.qty}
                             >
                               <i className="bi bi-plus"></i>
                             </button>

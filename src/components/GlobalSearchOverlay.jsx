@@ -7,18 +7,41 @@ import { useNavigate } from 'react-router-dom';
 export default function GlobalSearchOverlay() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
-  const { products } = useProducts();
+  const { approvedProducts } = useProducts();
   const { vendors } = useVendor();
   const navigate = useNavigate();
 
   useEffect(() => {
     const onKey = (e) => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const cmd = isMac ? e.metaKey : e.ctrlKey;
-      if (cmd && e.key.toLowerCase() === 'k') {
+      const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+      const isInputTarget = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target?.tagName || '').toUpperCase()) || e.target?.isContentEditable;
+
+      // Ctrl/Cmd+K (peut être intercepté par le navigateur selon les réglages)
+      if (cmdOrCtrl && e.key.toLowerCase() === 'k' && !e.shiftKey) {
         e.preventDefault();
         setOpen((v) => !v);
+        return;
       }
+      // Ctrl/Cmd+Shift+K (alternative fiable)
+      if (cmdOrCtrl && e.shiftKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setOpen(true);
+        return;
+      }
+      // Alt+K (autre alternative)
+      if (e.altKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setOpen(true);
+        return;
+      }
+      // Touche "/" pour ouvrir quand on n'est pas en train de saisir dans un champ
+      if (!isInputTarget && e.key === '/') {
+        e.preventDefault();
+        setOpen(true);
+        return;
+      }
+      // Escape pour fermer
       if (e.key === 'Escape') setOpen(false);
     };
     window.addEventListener('keydown', onKey);
@@ -28,14 +51,14 @@ export default function GlobalSearchOverlay() {
   const results = useMemo(() => {
     const term = q.trim().toLowerCase();
     if (!term) return [];
-    const prodRes = (products || []).filter(p =>
+    const prodRes = (approvedProducts || []).filter(p =>
       p.name?.toLowerCase().includes(term) || p.brand?.toLowerCase().includes(term) || String(p.id || '').toLowerCase().includes(term)
     ).slice(0, 5).map(p => ({ type: 'product', id: p.id, title: p.name, subtitle: p.brand, to: `/product/${p.slug || p.id}` }));
     const vendRes = Object.values(vendors || {}).filter(v =>
       v.informations?.email?.toLowerCase().includes(term) || v.businessName?.toLowerCase().includes(term) || String(v.id || '').toLowerCase().includes(term)
     ).slice(0, 5).map(v => ({ type: 'vendor', id: v.id, title: v.businessName || `${v.informations?.prenom || ''} ${v.informations?.nom || ''}`.trim(), subtitle: v.informations?.email, to: `/admin/vendors` }));
     return [...vendRes, ...prodRes];
-  }, [q, products, vendors]);
+  }, [q, approvedProducts, vendors]);
 
   if (!open) return null;
 
@@ -48,7 +71,7 @@ export default function GlobalSearchOverlay() {
               <div className="card-body">
                 <div className="input-group mb-3">
                   <span className="input-group-text"><BiSearch/></span>
-                  <input autoFocus className="form-control" placeholder="Rechercher produits, vendeurs... (Ctrl/Cmd+K pour ouvrir)" value={q} onChange={e=>setQ(e.target.value)} />
+                  <input autoFocus className="form-control" placeholder="Rechercher produits, vendeurs... (Ctrl/Cmd+K, Ctrl+Shift+K ou /)" value={q} onChange={e=>setQ(e.target.value)} />
                   <button className="btn btn-outline-secondary" onClick={()=>setOpen(false)}><BiX/></button>
                 </div>
                 <ul className="list-group list-group-flush">

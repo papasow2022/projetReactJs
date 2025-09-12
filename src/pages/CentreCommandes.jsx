@@ -775,7 +775,7 @@ const CentreCommandes = () => {
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {console.log('Affichage des commandes:', filteredOrders.length, 'commandes')}
+            {/* Console log removed - use browser dev tools instead */}
             {filteredOrders.map(order => {
               console.log('Commande affichée:', order.id, 'Suivi:', order.suivi);
               const statusConfig = getStatusColor(order.status);

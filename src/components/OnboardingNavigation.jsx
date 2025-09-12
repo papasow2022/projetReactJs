@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BiLeftArrow, BiRightArrow, BiCheckCircle, BiHome } from 'react-icons/bi';
+import { useProducts } from '../contexts/ProductsContext';
+import { useAuth } from '../hooks/useAuth.jsx';
 
 const etapesOnboarding = [
   { id: 'dashboard', titre: 'Dashboard', route: '/vendeur/dashboard' },
@@ -13,8 +15,11 @@ const etapesOnboarding = [
 export default function OnboardingNavigation() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { allProducts } = useProducts();
+  const { user } = useAuth();
   const [etapesCompletees, setEtapesCompletees] = useState([]);
   const [etapeActuelle, setEtapeActuelle] = useState(0);
+  const vendorProductCount = (allProducts || []).filter(p => user?.vendorId && p.vendorId === user.vendorId).length;
 
   useEffect(() => {
     // Récupérer les étapes complétées
@@ -121,7 +126,8 @@ export default function OnboardingNavigation() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: '0.5rem'
+                  marginBottom: '0.5rem',
+                  position: 'relative'
                 }}>
                   {completee ? (
                     <BiCheckCircle style={{ color: 'white', fontSize: '1.2rem' }} />
@@ -130,9 +136,10 @@ export default function OnboardingNavigation() {
                       color: active ? 'white' : '#6c757d',
                       fontWeight: 'bold'
                     }}>
-                      {index + 1}
+                      {etape.id === 'produits' ? vendorProductCount : (index + 1)}
                     </span>
                   )}
+                  {/* Badge supprimé pour éviter l'effet "exposant" */}
                 </div>
                 <small className={`text-center ${active ? 'fw-bold' : ''}`}>
                   {etape.titre}

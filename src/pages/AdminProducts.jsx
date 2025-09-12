@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { exportToCsv } from '../utils/csvExport';
 import { Link } from 'react-router-dom';
 import { useAudit } from '../contexts/AuditContext';
+import { useProducts } from '../contexts/ProductsContext';
 import { 
   BiPackage, 
   BiSearch, 
@@ -17,6 +18,7 @@ import {
 } from 'react-icons/bi';
 
 export default function AdminProducts() {
+  const { allProducts, updateProductStatus, deleteProduct: ctxDeleteProduct } = useProducts();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,11 +28,12 @@ export default function AdminProducts() {
   const [dateTo, setDateTo] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [viewProduct, setViewProduct] = useState(null);
   const { addAuditEntry } = useAudit();
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    setProducts(allProducts || []);
+  }, [allProducts]);
 
   useEffect(() => {
     filterProducts();
@@ -38,70 +41,8 @@ export default function AdminProducts() {
 
   const loadProducts = () => {
     setLoading(true);
-    // Simuler des données de test
-    const mockProducts = [
-      {
-        id: 'PROD-001',
-        name: 'Chaussures Nike Air Max',
-        vendor: 'Boutique Sport',
-        vendorId: 'VD-001',
-        category: 'Chaussures',
-        price: 89.99,
-        status: 'pending',
-        submittedAt: '2024-01-15T10:30:00Z',
-        images: ['product1.jpg'],
-        description: 'Chaussures de sport Nike Air Max en excellent état',
-        reported: false,
-        reportReason: null
-      },
-      {
-        id: 'PROD-002',
-        name: 'Sac à dos Adidas',
-        vendor: 'Mode & Style',
-        vendorId: 'VD-002',
-        category: 'Accessoires',
-        price: 45.50,
-        status: 'approved',
-        submittedAt: '2024-01-14T15:20:00Z',
-        images: ['product2.jpg'],
-        description: 'Sac à dos Adidas noir, parfait pour le sport',
-        reported: false,
-        reportReason: null
-      },
-      {
-        id: 'PROD-003',
-        name: 'Montre Apple Watch',
-        vendor: 'Tech Store',
-        vendorId: 'VD-003',
-        category: 'Électronique',
-        price: 299.99,
-        status: 'rejected',
-        submittedAt: '2024-01-13T09:15:00Z',
-        images: ['product3.jpg'],
-        description: 'Apple Watch Series 7, état neuf',
-        reported: true,
-        reportReason: 'Prix suspect'
-      },
-      {
-        id: 'PROD-004',
-        name: 'Veste Nike',
-        vendor: 'Sport Plus',
-        vendorId: 'VD-004',
-        category: 'Vêtements',
-        price: 75.00,
-        status: 'pending',
-        submittedAt: '2024-01-12T14:45:00Z',
-        images: ['product4.jpg'],
-        description: 'Veste Nike bleue, taille M',
-        reported: false,
-        reportReason: null
-      }
-    ];
-
-    setTimeout(() => {
-      setProducts(mockProducts);
-      setLoading(false);
-    }, 1000);
+    setProducts(allProducts || []);
+    setLoading(false);
   };
 
   const filterProducts = () => {
@@ -140,38 +81,65 @@ export default function AdminProducts() {
     setFilteredProducts(filtered);
   };
 
-  const approveProduct = (productId) => {
-    const product = products.find(p => p.id === productId);
-    setProducts(prev => prev.map(p => 
-      p.id === productId ? { ...p, status: 'approved' } : p
-    ));
-    // Enregistrer dans l'audit
-    addAuditEntry('product_approved', { type: 'product', id: productId }, { 
-      productName: product?.name || 'Produit inconnu',
-      vendor: product?.vendor || 'Vendeur inconnu'
-    });
+  const approveProduct = async (productId) => {
+    try {
+      console.log('[Admin] Approve click', productId);
+      const product = products.find(p => p.id === productId);
+      const res = await updateProductStatus(productId, 'approved');
+      if (res?.success) {
+        loadProducts();
+        addAuditEntry('product_approved', { type: 'product', id: productId }, { 
+          productName: product?.name || 'Produit inconnu',
+          vendor: product?.vendor || 'Vendeur inconnu'
+        });
+      } else {
+        alert('Echec approbation: ' + (res?.error || 'inconnu'));
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erreur approbation: ' + e.message);
+    }
   };
 
-  const rejectProduct = (productId) => {
-    const product = products.find(p => p.id === productId);
-    setProducts(prev => prev.map(p => 
-      p.id === productId ? { ...p, status: 'rejected' } : p
-    ));
-    // Enregistrer dans l'audit
-    addAuditEntry('product_rejected', { type: 'product', id: productId }, { 
-      productName: product?.name || 'Produit inconnu',
-      vendor: product?.vendor || 'Vendeur inconnu'
-    });
+  const rejectProduct = async (productId) => {
+    try {
+      console.log('[Admin] Reject click', productId);
+      const product = products.find(p => p.id === productId);
+      const res = await updateProductStatus(productId, 'rejected');
+      if (res?.success) {
+        loadProducts();
+        addAuditEntry('product_rejected', { type: 'product', id: productId }, { 
+          productName: product?.name || 'Produit inconnu',
+          vendor: product?.vendor || 'Vendeur inconnu'
+        });
+      } else {
+        alert('Echec rejet: ' + (res?.error || 'inconnu'));
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erreur rejet: ' + e.message);
+    }
   };
 
-  const deleteProduct = (productId) => {
-    const product = products.find(p => p.id === productId);
-    setProducts(prev => prev.filter(p => p.id !== productId));
-    // Enregistrer dans l'audit
-    addAuditEntry('product_deleted', { type: 'product', id: productId }, { 
-      productName: product?.name || 'Produit inconnu',
-      vendor: product?.vendor || 'Vendeur inconnu'
-    });
+  const deleteProduct = async (productId) => {
+    try {
+      if (!window.confirm('Supprimer ce produit ?')) return;
+      console.log('[Admin] Delete click', productId);
+      const product = products.find(p => p.id === productId);
+      const res = await ctxDeleteProduct(productId);
+      if (res?.success) {
+        loadProducts();
+        addAuditEntry('product_deleted', { type: 'product', id: productId }, { 
+          productName: product?.name || 'Produit inconnu',
+          vendor: product?.vendor || 'Vendeur inconnu'
+        });
+      } else {
+        alert('Echec suppression: ' + (res?.error || 'inconnu'));
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erreur suppression: ' + e.message);
+    }
   };
 
   const toggleSelect = (id) => {
@@ -182,29 +150,39 @@ export default function AdminProducts() {
     if (isAllSelected) setSelectedIds([]);
     else setSelectedIds(filteredProducts.map(p => p.id));
   };
-  const approveSelected = () => {
-    setProducts(prev => prev.map(p => selectedIds.includes(p.id) ? { ...p, status: 'approved' } : p));
-    // Enregistrer dans l'audit
-    selectedIds.forEach(id => {
-      const product = products.find(p => p.id === id);
-      addAuditEntry('product_approved_bulk', { type: 'product', id }, { 
-        productName: product?.name || 'Produit inconnu',
-        vendor: product?.vendor || 'Vendeur inconnu'
-      });
-    });
-    setSelectedIds([]);
+  const approveSelected = async () => {
+    try {
+      for (const id of selectedIds) {
+        await updateProductStatus(id, 'approved');
+        const product = products.find(p => p.id === id);
+        addAuditEntry('product_approved_bulk', { type: 'product', id }, { 
+          productName: product?.name || 'Produit inconnu',
+          vendor: product?.vendor || 'Vendeur inconnu'
+        });
+      }
+      setSelectedIds([]);
+      loadProducts();
+    } catch (e) {
+      console.error(e);
+      alert('Erreur approbation en masse: ' + e.message);
+    }
   };
-  const rejectSelected = () => {
-    setProducts(prev => prev.map(p => selectedIds.includes(p.id) ? { ...p, status: 'rejected' } : p));
-    // Enregistrer dans l'audit
-    selectedIds.forEach(id => {
-      const product = products.find(p => p.id === id);
-      addAuditEntry('product_rejected_bulk', { type: 'product', id }, { 
-        productName: product?.name || 'Produit inconnu',
-        vendor: product?.vendor || 'Vendeur inconnu'
-      });
-    });
-    setSelectedIds([]);
+  const rejectSelected = async () => {
+    try {
+      for (const id of selectedIds) {
+        await updateProductStatus(id, 'rejected');
+        const product = products.find(p => p.id === id);
+        addAuditEntry('product_rejected_bulk', { type: 'product', id }, { 
+          productName: product?.name || 'Produit inconnu',
+          vendor: product?.vendor || 'Vendeur inconnu'
+        });
+      }
+      setSelectedIds([]);
+      loadProducts();
+    } catch (e) {
+      console.error(e);
+      alert('Erreur rejet en masse: ' + e.message);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -413,8 +391,8 @@ export default function AdminProducts() {
                       </td>
                       <td>
                         <div>
-                          <div className="fw-medium">{product.vendor}</div>
-                          <small className="text-muted">{product.vendorId}</small>
+                          <div className="fw-medium">{product.vendor || product.sellerName || 'N/A'}</div>
+                          <small className="text-muted">{product.vendorId || product.id}</small>
                         </div>
                       </td>
                       <td>
@@ -432,17 +410,18 @@ export default function AdminProducts() {
                       <td>
                         <small className="text-muted">
                           <BiCalendar className="me-1" />
-                          {new Date(product.submittedAt).toLocaleDateString()}
+                          {product.submittedAt ? new Date(product.submittedAt).toLocaleDateString() : 'N/A'}
                         </small>
                       </td>
                       <td>
                         <div className="d-flex gap-1">
-                          <button className="btn btn-sm btn-outline-primary" title="Voir">
+                          <button type="button" className="btn btn-sm btn-outline-primary" title="Voir" onClick={() => setViewProduct(product)}>
                             <BiInfoCircle />
                           </button>
                           {product.status === 'pending' && (
                             <>
                               <button 
+                                type="button"
                                 className="btn btn-sm btn-success" 
                                 title="Approuver"
                                 onClick={() => approveProduct(product.id)}
@@ -450,6 +429,7 @@ export default function AdminProducts() {
                                 <BiCheckCircle />
                               </button>
                               <button 
+                                type="button"
                                 className="btn btn-sm btn-danger" 
                                 title="Rejeter"
                                 onClick={() => rejectProduct(product.id)}
@@ -459,6 +439,7 @@ export default function AdminProducts() {
                             </>
                           )}
                           <button 
+                            type="button"
                             className="btn btn-sm btn-outline-danger" 
                             title="Supprimer"
                             onClick={() => deleteProduct(product.id)}
@@ -475,6 +456,29 @@ export default function AdminProducts() {
           )}
         </div>
       </div>
+      {viewProduct && (
+        <div className="modal fade show" style={{ display: 'block', background: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Détails du produit</h5>
+                <button type="button" className="btn-close" onClick={() => setViewProduct(null)} />
+              </div>
+              <div className="modal-body">
+                <p><strong>Nom:</strong> {viewProduct.name}</p>
+                <p><strong>Vendeur:</strong> {viewProduct.vendor || viewProduct.sellerName}</p>
+                <p><strong>Catégorie:</strong> {viewProduct.category}</p>
+                <p><strong>Prix:</strong> €{viewProduct.price}</p>
+                <p><strong>Statut:</strong> {viewProduct.status}</p>
+                <p><strong>Date:</strong> {viewProduct.submittedAt ? new Date(viewProduct.submittedAt).toLocaleString() : 'N/A'}</p>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setViewProduct(null)}>Fermer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

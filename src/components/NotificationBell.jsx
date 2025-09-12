@@ -37,7 +37,7 @@ const NotificationBell = () => {
         onClick={() => setShowDropdown(!showDropdown)}
         style={{ border: 'none', background: 'transparent' }}
       >
-        <BiBell style={{ fontSize: '1.5rem' }} />
+        <BiBell style={{ fontSize: '1.5rem', color: '#fff' }} />
         {unreadCount > 0 && (
           <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
             {unreadCount > 99 ? '99+' : unreadCount}

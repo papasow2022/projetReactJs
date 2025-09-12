@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useLanguage } from "../contexts/LanguageContext";
 import Header from '../components/Header';
@@ -7,24 +7,17 @@ import Footer from '../components/Footer';
 
 export default function ConfirmationVendeur() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
+  const isValidated = user?.vendorStatus === 'validated';
+  // Aligné avec un flux type Amazon: pas d'actions d'onboarding avant validation
   const { numeroDemande, email } = location.state || { 
     numeroDemande: 'VD-' + Date.now(), 
     email: 'exemple@email.com' 
   };
+  const vendorStatus = (user && user.vendorStatus) || 'pending';
+  const steps = (user && user.vendorId && JSON.parse(localStorage.getItem('vendors') || '{}')[user.vendorId]?.verification) || null;
 
-  // Fonction pour simuler la validation du vendeur (pour les tests)
-  const simulateValidation = () => {
-    if (user) {
-      updateUser({
-        isVendorValidated: true,
-        vendorStatus: 'validated'
-      });
-      alert('Vendeur validé ! Vous allez être redirigé vers l\'onboarding.');
-      navigate('/vendeur/onboarding');
-    }
-  };
+  //
 
   const prochainesEtapes = [
     {
@@ -93,6 +86,80 @@ export default function ConfirmationVendeur() {
               </div>
             </div>
 
+            {/* Statut de vérification */}
+            <div className="card mb-4">
+              <div className="card-header bg-secondary text-white">
+                <h4 className="mb-0">
+                  <i className="bi bi-shield-check me-2"></i>
+                  Statut de vérification
+                </h4>
+              </div>
+              <div className="card-body">
+                <div className="row g-4">
+                  <div className="col-12 col-md-6">
+                    <div className="d-flex align-items-start gap-3">
+                      <div className="bg-light rounded-circle d-flex align-items-center justify-content-center border" style={{width: 46, height: 46, flexShrink: 0}}>
+                        <i className={`bi ${(steps?.kyc?.status === 'approved' || isValidated) ? 'bi-check-circle-fill text-success' : steps?.kyc?.status === 'rejected' ? 'bi-x-circle-fill text-danger' : 'bi-hourglass-split text-warning'} fs-5`}></i>
+                      </div>
+                      <div className="flex-grow-1">
+                        <h6 className="fw-bold mb-1">Vérification d'identité (KYC)</h6>
+                        <p className="small text-muted mb-1">Contrôle de vos informations personnelles et documents d'identité.</p>
+                        <span className={`badge ${steps?.kyc?.status === 'approved' ? 'bg-success' : steps?.kyc?.status === 'rejected' ? 'bg-danger' : steps?.kyc?.status === 'needs_more_info' ? 'bg-warning text-dark' : isValidated ? 'bg-success' : 'bg-warning text-dark'}`}>{steps?.kyc?.status === 'approved' ? 'Validé' : steps?.kyc?.status === 'rejected' ? 'Refusé' : steps?.kyc?.status === 'needs_more_info' ? 'À compléter' : isValidated ? 'Validé' : 'En cours'}</span>
+                        {steps?.kyc?.status === 'needs_more_info' && steps?.kyc?.notes && (
+                          <div className="small text-muted mt-1">Note: {steps.kyc.notes}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <div className="d-flex align-items-start gap-3">
+                      <div className="bg-light rounded-circle d-flex align-items-center justify-content-center border" style={{width: 46, height: 46, flexShrink: 0}}>
+                        <i className={`bi ${(steps?.bank?.status === 'approved' || isValidated) ? 'bi-check-circle-fill text-success' : steps?.bank?.status === 'rejected' ? 'bi-x-circle-fill text-danger' : 'bi-hourglass-split text-warning'} fs-5`}></i>
+                      </div>
+                      <div className="flex-grow-1">
+                        <h6 className="fw-bold mb-1">Vérification bancaire</h6>
+                        <p className="small text-muted mb-1">Validation de votre moyen de paiement et compte bancaire.</p>
+                        <span className={`badge ${steps?.bank?.status === 'approved' ? 'bg-success' : steps?.bank?.status === 'rejected' ? 'bg-danger' : steps?.bank?.status === 'needs_more_info' ? 'bg-warning text-dark' : isValidated ? 'bg-success' : 'bg-warning text-dark'}`}>{steps?.bank?.status === 'approved' ? 'Validé' : steps?.bank?.status === 'rejected' ? 'Refusé' : steps?.bank?.status === 'needs_more_info' ? 'À compléter' : isValidated ? 'Validé' : 'En cours'}</span>
+                        {steps?.bank?.status === 'needs_more_info' && steps?.bank?.notes && (
+                          <div className="small text-muted mt-1">Note: {steps.bank.notes}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <div className="d-flex align-items-start gap-3">
+                      <div className="bg-light rounded-circle d-flex align-items-center justify-content-center border" style={{width: 46, height: 46, flexShrink: 0}}>
+                        <i className={`bi ${(steps?.tax?.status === 'approved' || isValidated) ? 'bi-check-circle-fill text-success' : steps?.tax?.status === 'rejected' ? 'bi-x-circle-fill text-danger' : 'bi-hourglass-split text-warning'} fs-5`}></i>
+                      </div>
+                      <div className="flex-grow-1">
+                        <h6 className="fw-bold mb-1">Documents fiscaux (TVA si applicable)</h6>
+                        <p className="small text-muted mb-1">Contrôle des informations fiscales et d'immatriculation.</p>
+                        <span className={`badge ${steps?.tax?.status === 'approved' ? 'bg-success' : steps?.tax?.status === 'rejected' ? 'bg-danger' : steps?.tax?.status === 'needs_more_info' ? 'bg-warning text-dark' : isValidated ? 'bg-success' : 'bg-warning text-dark'}`}>{steps?.tax?.status === 'approved' ? 'Validé' : steps?.tax?.status === 'rejected' ? 'Refusé' : steps?.tax?.status === 'needs_more_info' ? 'À compléter' : isValidated ? 'Validé' : 'En cours'}</span>
+                        {steps?.tax?.status === 'needs_more_info' && steps?.tax?.notes && (
+                          <div className="small text-muted mt-1">Note: {steps.tax.notes}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <div className="d-flex align-items-start gap-3">
+                      <div className="bg-light rounded-circle d-flex align-items-center justify-content-center border" style={{width: 46, height: 46, flexShrink: 0}}>
+                        <i className={`bi ${(steps?.compliance?.status === 'approved' || isValidated) ? 'bi-check-circle-fill text-success' : steps?.compliance?.status === 'rejected' ? 'bi-x-circle-fill text-danger' : 'bi-hourglass-split text-warning'} fs-5`}></i>
+                      </div>
+                      <div className="flex-grow-1">
+                        <h6 className="fw-bold mb-1">Revue de conformité</h6>
+                        <p className="small text-muted mb-1">Examen final de votre dossier par notre équipe.</p>
+                        <span className={`badge ${steps?.compliance?.status === 'approved' ? 'bg-success' : steps?.compliance?.status === 'rejected' ? 'bg-danger' : steps?.compliance?.status === 'needs_more_info' ? 'bg-warning text-dark' : isValidated ? 'bg-success' : 'bg-warning text-dark'}`}>{steps?.compliance?.status === 'approved' ? 'Validé' : steps?.compliance?.status === 'rejected' ? 'Refusé' : steps?.compliance?.status === 'needs_more_info' ? 'À compléter' : isValidated ? 'Validé' : 'En cours'}</span>
+                        {steps?.compliance?.status === 'needs_more_info' && steps?.compliance?.notes && (
+                          <div className="small text-muted mt-1">Note: {steps.compliance.notes}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Prochaines étapes */}
             <div className="card mb-4">
               <div className="card-header bg-primary text-white">
@@ -141,7 +208,7 @@ export default function ConfirmationVendeur() {
               </div>
             </div>
 
-            {/* Actions rapides */}
+            {/* Actions rapides (alignées Amazon) */}
             <div className="card mb-4">
               <div className="card-header bg-info text-white">
                 <h4 className="mb-0">
@@ -152,21 +219,9 @@ export default function ConfirmationVendeur() {
               <div className="card-body">
                 <div className="row g-3">
                   <div className="col-md-6">
-                    <Link to="/vendeur/onboarding" className="btn btn-primary w-100">
-                      <i className="bi bi-rocket me-2"></i>
-                      Commencer l'onboarding
-                    </Link>
-                  </div>
-                  <div className="col-md-6">
-                    <Link to="/vendeur/dashboard" className="btn btn-outline-success w-100">
-                      <i className="bi bi-shop me-2"></i>
-                      Accéder au Dashboard vendeur
-                    </Link>
-                  </div>
-                  <div className="col-md-6">
                     <Link to="/support-vendeur" className="btn btn-outline-primary w-100">
                       <i className="bi bi-headset me-2"></i>
-                      Contacter le support vendeur
+                      Consulter l'aide vendeur
                     </Link>
                   </div>
                   <div className="col-md-6">
@@ -174,23 +229,6 @@ export default function ConfirmationVendeur() {
                       <i className="bi bi-house me-2"></i>
                       Retour à l'accueil
                     </Link>
-                  </div>
-                  <div className="col-md-6">
-                    <button className="btn btn-outline-info w-100" onClick={() => window.print()}>
-                      <i className="bi bi-printer me-2"></i>
-                      Imprimer cette page
-                    </button>
-                  </div>
-                  {/* Bouton de test pour simuler la validation */}
-                  <div className="col-12">
-                    <button 
-                      className="btn btn-warning w-100" 
-                      onClick={simulateValidation}
-                      style={{ marginTop: '1rem' }}
-                    >
-                      <i className="bi bi-check-circle me-2"></i>
-                      🧪 TEST : Simuler la validation du vendeur
-                    </button>
                   </div>
                 </div>
               </div>
