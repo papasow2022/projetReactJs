@@ -1,0 +1,51 @@
+/* Slick Carousel Font Override - Prevents slow network font loading */
+@font-face {
+  font-family: 'slick';
+  font-weight: normal;
+  font-style: normal;
+  src: url('data:font/woff;base64,') format('woff');
+  font-display: swap;
+}
+
+/* Override slick carousel font loading to prevent network requests */
+.slick-prev:before,
+.slick-next:before {
+  font-family: 'slick' !important;
+  font-size: 20px;
+  line-height: 1;
+  opacity: 0.75;
+  color: white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure slick arrows use system fonts instead of external fonts */
+.slick-prev:before {
+  content: '←';
+}
+
+.slick-next:before {
+  content: '→';
+}
+
+/* Fix accessibility issues with aria-hidden */
+.slick-slide[aria-hidden="true"] {
+  pointer-events: none;
+}
+
+.slick-slide[aria-hidden="true"] * {
+  pointer-events: none;
+}
+
+/* Ensure focusable elements in hidden slides are not focusable */
+.slick-slide[aria-hidden="true"] [tabindex] {
+  tabindex: -1;
+}
+
+.slick-slide[aria-hidden="true"] button,
+.slick-slide[aria-hidden="true"] a,
+.slick-slide[aria-hidden="true"] input,
+.slick-slide[aria-hidden="true"] select,
+.slick-slide[aria-hidden="true"] textarea {
+  tabindex: -1;
+}

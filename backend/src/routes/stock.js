@@ -16,7 +16,7 @@ const EnfantImageSchema = new mongoose.Schema(
     tags: { type: [String], default: [] },
     source: { type: String, default: 'public/chaussures/enfant' },
     active: { type: Boolean, default: true },
-    quantité: { type: Number, default: 5 }
+    stock: { type: Number, default: 5 }
   },
   { timestamps: true, collection: "enfant_images" }
 );
@@ -32,7 +32,7 @@ const HommeImageSchema = new mongoose.Schema(
     tags: { type: [String], default: [] },
     source: { type: String, default: 'public/chaussures/homme' },
     active: { type: Boolean, default: true },
-    quantité: { type: Number, default: 5 }
+    stock: { type: Number, default: 5 }
   },
   { timestamps: true, collection: "homme_images" }
 );
@@ -48,7 +48,7 @@ const FemmeImageSchema = new mongoose.Schema(
     tags: { type: [String], default: [] },
     source: { type: String, default: 'public/chaussures/femme' },
     active: { type: Boolean, default: true },
-    quantité: { type: Number, default: 5 }
+    stock: { type: Number, default: 5 }
   },
   { timestamps: true, collection: "femme_images" }
 );
@@ -71,7 +71,6 @@ function getModelByCategory(category) {
 router.post('/check', async (req, res) => {
   try {
     console.log('🔍 Requête de vérification de stock:', req.body);
-    await connectMongo();
     
     const { productId, category, quantity = 1 } = req.body;
     
@@ -84,13 +83,23 @@ router.post('/check', async (req, res) => {
     }
     
     console.log('📦 Recherche dans la catégorie:', category);
-    const Model = getModelByCategory(category);
+    let Model;
+    switch (category) {
+      case 'enfant': Model = EnfantImage; break;
+      case 'homme': Model = HommeImage; break;
+      case 'femme': Model = FemmeImage; break;
+      default: 
+        return res.status(400).json({ 
+          error: 'Catégorie non supportée',
+          success: false 
+        });
+    }
     console.log('📊 Modèle utilisé:', Model.modelName);
     
-    // Pour les produits aléatoires du frontend, récupérer un produit aléatoire
+    // Pour les produits aléatoires du frontend ou les IDs synthétiques, récupérer un produit aléatoire
     let product;
-    if (productId.includes('-random')) {
-      console.log('🎲 Produit aléatoire détecté, récupération d\'un produit aléatoire...');
+    if (productId.includes('-random') || productId.includes('synthetic-')) {
+      console.log('🎲 Produit aléatoire/synthétique détecté, récupération d\'un produit aléatoire...');
       const count = await Model.countDocuments({ active: true });
       if (count === 0) {
         return res.status(404).json({ 
@@ -144,7 +153,7 @@ router.post('/check', async (req, res) => {
       });
     }
     
-    const availableStock = product.quantité || 0;
+    const availableStock = product.stock || product.quantité || 0;
     const canAdd = availableStock >= quantity;
     
     console.log('📊 Stock disponible:', availableStock, 'Demandé:', quantity, 'Peut ajouter:', canAdd);
@@ -173,7 +182,6 @@ router.post('/check', async (req, res) => {
 // Réserver du stock (déduire la quantité)
 router.post('/reserve', async (req, res) => {
   try {
-    await connectMongo();
     
     const { productId, category, quantity = 1 } = req.body;
     
@@ -238,18 +246,18 @@ router.post('/reserve', async (req, res) => {
       });
     }
     
-    if (product.quantité < quantity) {
-      return res.status(400).json({ 
-        error: `Stock insuffisant. Disponible: ${product.quantité}, Demandé: ${quantity}`,
+    if (product.stock < quantity) {
+      return res.status(400).json({
+        error: `Stock insuffisant. Disponible: ${product.stock}, Demandé: ${quantity}`,
         success: false,
-        availableStock: product.quantité
+        availableStock: product.stock
       });
     }
     
     // Déduire la quantité
     const updatedProduct = await Model.findByIdAndUpdate(
       product._id,
-      { $inc: { quantité: -quantity } },
+      { $inc: { stock: -quantity } },
       { new: true }
     );
     
@@ -257,8 +265,8 @@ router.post('/reserve', async (req, res) => {
       success: true,
       productId: product._id,
       reservedQuantity: quantity,
-      remainingStock: updatedProduct.quantité,
-      message: `${quantity} exemplaire(s) réservé(s). Stock restant: ${updatedProduct.quantité}`
+      remainingStock: updatedProduct.stock,
+      message: `${quantity} exemplaire(s) réservé(s). Stock restant: ${updatedProduct.stock}`
     });
     
   } catch (err) {
@@ -273,7 +281,6 @@ router.post('/reserve', async (req, res) => {
 // Restaurer du stock (annuler une commande)
 router.post('/restore', async (req, res) => {
   try {
-    await connectMongo();
     
     const { productId, category, quantity = 1 } = req.body;
     
@@ -319,7 +326,7 @@ router.post('/restore', async (req, res) => {
       
       updatedProduct = await Model.findOneAndUpdate(
         query,
-        { $inc: { quantité: quantity } },
+        { $inc: { stock: quantity } },
         { new: true }
       );
 
@@ -332,7 +339,7 @@ router.post('/restore', async (req, res) => {
           if (randomProduct) {
             updatedProduct = await Model.findByIdAndUpdate(
               randomProduct._id,
-              { $inc: { quantité: quantity } },
+              { $inc: { stock: quantity } },
               { new: true }
             );
           }
@@ -351,8 +358,8 @@ router.post('/restore', async (req, res) => {
       success: true,
       productId: updatedProduct._id,
       restoredQuantity: quantity,
-      currentStock: updatedProduct.quantité,
-      message: `${quantity} exemplaire(s) restauré(s). Stock actuel: ${updatedProduct.quantité}`
+      currentStock: updatedProduct.stock,
+      message: `${quantity} exemplaire(s) restauré(s). Stock actuel: ${updatedProduct.stock}`
     });
     
   } catch (err) {
@@ -367,7 +374,6 @@ router.post('/restore', async (req, res) => {
 // Obtenir le stock d'un produit
 router.get('/:category/:productId', async (req, res) => {
   try {
-    await connectMongo();
     
     const { category, productId } = req.params;
     
@@ -378,7 +384,7 @@ router.get('/:category/:productId', async (req, res) => {
         { path: productId }
       ],
       active: true 
-    }).select({ quantité: 1, brand: 1, model: 1, color: 1, _id: 1 });
+    }).select({ stock: 1, brand: 1, model: 1, color: 1, _id: 1 });
     
     if (!product) {
       return res.status(404).json({ 
@@ -393,7 +399,7 @@ router.get('/:category/:productId', async (req, res) => {
       brand: product.brand,
       model: product.model,
       color: product.color,
-      stock: product.quantité
+      stock: product.stock
     });
     
   } catch (err) {

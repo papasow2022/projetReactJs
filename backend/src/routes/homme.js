@@ -15,7 +15,12 @@ const HommeImageSchema = new mongoose.Schema(
     category: { type: String, default: 'homme' },
     tags: { type: [String], default: [] },
     source: { type: String, default: 'public/chaussures/homme' },
-    active: { type: Boolean, default: true }
+    active: { type: Boolean, default: true },
+    // Ajout des informations de stock
+    stock: { type: Number, default: 5 },
+    price: { type: Number, default: 250000 },
+    name: { type: String, default: '' },
+    description: { type: String, default: '' }
   },
   { timestamps: true, collection: "homme_images" }
 );
@@ -35,12 +40,28 @@ router.get('/random', async (req, res) => {
     const randomIndex = Math.floor(Math.random() * count);
     const randomImage = await HommeImage.findOne({ active: true })
       .skip(randomIndex)
-      .select({ path: 1, alt: 1, brand: 1, model: 1, color: 1, _id: 0 })
+      .select({ path: 1, alt: 1, brand: 1, model: 1, color: 1, stock: 1, price: 1, name: 1, description: 1, _id: 1 })
       .lean();
     
     res.json(randomImage);
   } catch (err) {
     console.error('Erreur /api/homme/random:', err);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Endpoint pour récupérer toutes les images homme avec stock
+router.get('/', async (req, res) => {
+  try {
+    await connectMongo();
+    
+    const images = await HommeImage.find({ active: true })
+      .select({ path: 1, alt: 1, brand: 1, model: 1, color: 1, stock: 1, price: 1, name: 1, description: 1, _id: 1 })
+      .lean();
+    
+    res.json(images);
+  } catch (err) {
+    console.error('Erreur /api/homme:', err);
     res.status(500).json({ error: 'server_error' });
   }
 });

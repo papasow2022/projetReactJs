@@ -1,0 +1,6 @@
+<svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="50" height="50" rx="8" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+  <path d="M25 15L35 25L25 35L15 25L25 15Z" fill="#6c757d" opacity="0.3"/>
+  <circle cx="25" cy="25" r="3" fill="#6c757d" opacity="0.5"/>
+  <text x="25" y="42" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#6c757d" opacity="0.7">Produit</text>
+</svg>

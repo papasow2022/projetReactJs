@@ -15,7 +15,12 @@ const EnfantImageSchema = new mongoose.Schema(
     category: { type: String, default: 'enfant' },
     tags: { type: [String], default: [] },
     source: { type: String, default: 'public/chaussures/enfant' },
-    active: { type: Boolean, default: true }
+    active: { type: Boolean, default: true },
+    // Ajout des informations de stock
+    stock: { type: Number, default: 5 },
+    price: { type: Number, default: 200000 },
+    name: { type: String, default: '' },
+    description: { type: String, default: '' }
   },
   { timestamps: true, collection: "enfant_images" }
 );
@@ -35,7 +40,7 @@ router.get('/random', async (req, res) => {
     const randomIndex = Math.floor(Math.random() * count);
     const randomImage = await EnfantImage.findOne({ active: true })
       .skip(randomIndex)
-      .select({ path: 1, alt: 1, brand: 1, model: 1, color: 1, _id: 0 })
+      .select({ path: 1, alt: 1, brand: 1, model: 1, color: 1, stock: 1, price: 1, name: 1, description: 1, _id: 0 })
       .lean();
     
     res.json(randomImage);
@@ -57,10 +62,26 @@ router.get('/', async (req, res) => {
     const items = await EnfantImage.find(query)
       .sort({ createdAt: -1 })
       .limit(limit)
-      .select({ path: 1, alt: 1, brand: 1, model: 1, color: 1, _id: 0 })
+      .select({ path: 1, alt: 1, brand: 1, model: 1, color: 1, stock: 1, price: 1, name: 1, description: 1, _id: 1 })
       .lean();
 
     res.json({ items });
+  } catch (err) {
+    console.error('Erreur /api/enfant:', err);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Endpoint pour récupérer toutes les images enfant avec stock
+router.get('/', async (req, res) => {
+  try {
+    await connectMongo();
+    
+    const images = await EnfantImage.find({ active: true })
+      .select({ path: 1, alt: 1, brand: 1, model: 1, color: 1, stock: 1, price: 1, name: 1, description: 1, _id: 0 })
+      .lean();
+    
+    res.json(images);
   } catch (err) {
     console.error('Erreur /api/enfant:', err);
     res.status(500).json({ error: 'server_error' });

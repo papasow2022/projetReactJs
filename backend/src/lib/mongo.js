@@ -8,7 +8,7 @@ let isConnected = false;
 export async function connectMongo() {
   if (isConnected) return mongoose.connection;
 
-  const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/projetReactJsa';
+  const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/papasow';
   const dbName = process.env.MONGODB_DB || undefined; // optionnel
 
   await mongoose.connect(mongoUri, {
